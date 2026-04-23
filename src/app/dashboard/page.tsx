@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from 'react';
 import { 
   DollarSign, 
   Clock, 
@@ -44,6 +45,12 @@ const transactions = [
 
 export default function DashboardHome() {
   const { user } = useAuth();
+  const [selectedFilter, setSelectedFilter] = useState('Últimos 7 dias');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Pix');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const filters = ['Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Personalizado'];
+  const paymentMethods = ['Pix', 'Cartão', 'Boleto', 'Recorrência'];
 
   return (
     <DashboardLayout>
@@ -54,16 +61,31 @@ export default function DashboardHome() {
             <h1>Bem-vindo de volta, {user?.name.split(' ')[0] || 'Produtor'}!</h1>
           </div>
           <div className="welcome-logo">
-            <h2 className="gradient-text">TRONNUS</h2>
+            <h2 style={{ color: 'white', opacity: 0.5, letterSpacing: '4px', fontSize: '1.2rem' }}>TRONNUS</h2>
           </div>
         </div>
 
         {/* Filters */}
         <div className="dashboard-actions">
-          <button className="filter-select">
-            Últimos 7 dias <ChevronDown size={16} />
-          </button>
-          <button className="clear-filters">
+          <div className="filter-dropdown-container">
+            <button className="filter-select" onClick={() => setIsFilterOpen(!isFilterOpen)}>
+              {selectedFilter} <ChevronDown size={16} />
+            </button>
+            {isFilterOpen && (
+              <div className="filter-menu glass-panel">
+                {filters.map(f => (
+                  <button 
+                    key={f} 
+                    className={`filter-item ${selectedFilter === f ? 'active' : ''}`}
+                    onClick={() => { setSelectedFilter(f); setIsFilterOpen(false); }}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button className="clear-filters" onClick={() => setSelectedFilter('Últimos 7 dias')}>
             <XCircle size={14} /> Limpar filtros
           </button>
           <RotateCcw size={16} className="text-muted" style={{ cursor: 'pointer' }} />
@@ -94,17 +116,23 @@ export default function DashboardHome() {
 
           <div className="stat-card">
             <div className="stat-top">
-              <span className="stat-title">Total em vendas no Pix</span>
+              <span className="stat-title">Total em vendas no {selectedPaymentMethod}</span>
               <div className="stat-icon-wrapper"><TrendingUp size={20} /></div>
             </div>
             <div className="stat-value">R$ 301.234,55</div>
             <div className="stat-footer">
               <span className="stat-trend trend-up">+4%</span>
               <div className="payment-chips">
-                <span className="chip active">Pix</span>
-                <span className="chip">Cartão</span>
-                <span className="chip">Boleto</span>
-                <span className="chip">Recorrência</span>
+                {paymentMethods.map(m => (
+                  <span 
+                    key={m} 
+                    className={`chip ${selectedPaymentMethod === m ? 'active' : ''}`}
+                    onClick={() => setSelectedPaymentMethod(m)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {m}
+                  </span>
+                ))}
               </div>
             </div>
           </div>

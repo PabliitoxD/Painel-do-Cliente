@@ -16,6 +16,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
+  theme: 'dark' | 'light';
+  toggleTheme: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const router = useRouter();
 
   useEffect(() => {
@@ -31,8 +34,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+    
+    const storedTheme = localStorage.getItem('tronnus_theme') as 'dark' | 'light';
+    if (storedTheme) {
+      setTheme(storedTheme);
+      document.documentElement.setAttribute('data-theme', storedTheme);
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+    
     setIsLoading(false);
   }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('tronnus_theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
