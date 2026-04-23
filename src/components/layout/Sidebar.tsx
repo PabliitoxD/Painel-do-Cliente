@@ -26,17 +26,20 @@ const NAV_ITEMS = [
   { label: 'Suporte', href: '/dashboard/support', icon: HelpCircle },
 ];
 
+import { useAuth } from '@/context/AuthContext';
+
 export function Sidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   return (
     <aside className="sidebar">
       <div className="sidebar-profile">
         <div className="profile-avatar">
-          <img src="https://ui-avatars.com/api/?name=Joao+Silva&background=1b2932&color=65839a" alt="Joao Silva" />
+          <img src={user?.avatar || "https://ui-avatars.com/api/?name=User&background=1b2932&color=65839a"} alt={user?.name || "User"} />
         </div>
         <div className="profile-info">
-          <span className="profile-name">João Silva</span>
+          <span className="profile-name">{user?.name || 'Carregando...'}</span>
         </div>
       </div>
 
@@ -64,6 +67,9 @@ export function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
+        <button className="logout-btn" onClick={logout} style={{ marginBottom: '1rem', width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', color: 'var(--danger)', fontSize: '0.85rem', fontWeight: '600' }}>
+          <LogOut size={16} /> Sair da Conta
+        </button>
         <div className="footer-logo">
           <h2 className="gradient-text">TRONNUS</h2>
         </div>

@@ -72,6 +72,16 @@
   font-size: 0.95rem;
 }
 
+.login-error {
+  background: rgba(203, 86, 86, 0.1);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  margin-top: 1rem;
+}
+
 .login-form {
   text-align: left;
   display: flex;

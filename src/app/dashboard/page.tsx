@@ -21,6 +21,7 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { useAuth } from '@/context/AuthContext';
 import './dashboard.css';
 
 const chartData = [
@@ -42,13 +43,15 @@ const transactions = [
 ];
 
 export default function DashboardHome() {
+  const { user } = useAuth();
+
   return (
     <DashboardLayout>
       <div className="dashboard-home animate-fade-in">
         {/* Welcome Section */}
         <div className="welcome-card">
           <div className="welcome-content">
-            <h1>Bem-vindo de volta, João!</h1>
+            <h1>Bem-vindo de volta, {user?.name.split(' ')[0] || 'Produtor'}!</h1>
           </div>
           <div className="welcome-logo">
             <h2 className="gradient-text">TRONNUS</h2>

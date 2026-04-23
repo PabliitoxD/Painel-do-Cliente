@@ -1,16 +1,24 @@
 "use client";
 
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import './login.css';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const { login, isLoading } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Logic for login will go here
-    window.location.href = '/dashboard';
+    setError('');
+    
+    try {
+      await login(email, password);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao entrar');
+    }
   };
 
   return (
@@ -29,6 +37,7 @@ export default function LoginPage() {
           />
           <h1 className="gradient-text">Painel do Produtor</h1>
           <p>Acesse sua conta para gerenciar seus negócios</p>
+          {error && <div className="login-error animate-fade-in">{error}</div>}
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
@@ -65,8 +74,8 @@ export default function LoginPage() {
             <a href="#" className="forgot-password">Esqueceu a senha?</a>
           </div>
 
-          <button type="submit" className="btn-primary login-submit">
-            Entrar no Painel
+          <button type="submit" className="btn-primary login-submit" disabled={isLoading}>
+            {isLoading ? 'Entrando...' : 'Entrar no Painel'}
           </button>
         </form>
 
