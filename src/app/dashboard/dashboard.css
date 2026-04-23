@@ -149,7 +149,9 @@
 .stat-value {
   font-size: 2rem;
   font-weight: 500;
-  color: var(--text-main);
+  background: linear-gradient(135deg, #65839a 0%, #aabccb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .stat-trend {

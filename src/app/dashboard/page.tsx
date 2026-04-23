@@ -61,7 +61,7 @@ export default function DashboardHome() {
             <h1>Bem-vindo de volta, {user?.name.split(' ')[0] || 'Produtor'}!</h1>
           </div>
           <div className="welcome-logo">
-            <h2 style={{ color: 'white', opacity: 0.5, letterSpacing: '4px', fontSize: '1.2rem' }}>TRONNUS</h2>
+            <img src="https://tronnus.com/wp-content/uploads/2026/01/tronnus-png-001.png" alt="TRONNUS" style={{ width: '100px', filter: 'brightness(0) invert(1)', opacity: 0.6 }} />
           </div>
         </div>
 

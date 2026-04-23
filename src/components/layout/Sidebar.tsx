@@ -71,7 +71,7 @@ export function Sidebar() {
           <LogOut size={16} /> Sair da Conta
         </button>
         <div className="footer-logo">
-          <h2 className="gradient-text">TRONNUS</h2>
+          <img src="https://tronnus.com/wp-content/uploads/2026/01/tronnus-png-001.png" alt="TRONNUS" style={{ width: '120px', filter: 'brightness(0) invert(1)', opacity: 0.8 }} />
         </div>
       </div>
     </aside>
