@@ -10,10 +10,10 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="dashboard-wrapper">
+    <div className="dashboard-container">
+      <Sidebar />
       <Topbar />
-      <div className="dashboard-container">
-        <Sidebar />
+      <div className="dashboard-main">
         <main className="dashboard-content">
           {children}
         </main>

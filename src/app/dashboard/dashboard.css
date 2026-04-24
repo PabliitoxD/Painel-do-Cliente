@@ -147,7 +147,7 @@
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: 2.8em;
   font-weight: 500;
   background: linear-gradient(135deg, #65839a 0%, #aabccb 100%);
   -webkit-background-clip: text;
@@ -224,13 +224,20 @@
 }
 
 .btn-ghost {
-  background: var(--surface-hover);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  padding: 0.4rem 0.8rem;
+  background: rgba(101, 131, 154, 0.1);
+  border: 1px solid rgba(101, 131, 154, 0.2);
+  color: var(--primary);
+  padding: 0.5rem 1rem;
   border-radius: 10px;
   font-size: 0.75rem;
+  font-weight: 600;
   transition: all 0.2s;
+}
+
+.btn-ghost:hover {
+  background: rgba(101, 131, 154, 0.2);
+  border-color: var(--primary);
+  color: var(--text-main);
 }
 
 /* Table Styles */
@@ -241,10 +248,12 @@
 
 .transactions-table th {
   text-align: left;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  padding: 1rem 0.5rem;
-  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  padding: 1.25rem 0.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .transactions-table td {
@@ -265,7 +274,12 @@
 .status-pill.aguardando { background: #ffb15622; color: #ffb156; border: 1px solid #ffb15644; }
 .status-pill.recusada { background: #cb565622; color: #cb5656; border: 1px solid #cb565644; }
 
-.id-text { color: var(--text-muted); font-family: monospace; }
+.id-text { 
+  color: var(--primary); 
+  font-family: monospace; 
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
 .valor-text { font-weight: 600; }
 
 @media (max-width: 1200px) {

@@ -221,13 +221,13 @@ export default function DashboardHome() {
                     dataKey="name" 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fill: '#3a3d40', fontSize: 12 }} 
+                    tick={{ fill: '#8a949e', fontSize: 11, fontWeight: 500 }} 
                     dy={10}
                   />
                   <YAxis 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fill: '#3a3d40', fontSize: 12 }} 
+                    tick={{ fill: '#8a949e', fontSize: 11, fontWeight: 500 }} 
                     tickFormatter={(val) => `$${val/1000}k`}
                   />
                   <Tooltip 
