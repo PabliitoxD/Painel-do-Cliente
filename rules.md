@@ -21,3 +21,9 @@ Mantenha os padrões de design definidos:
 - Uso de variáveis de CSS (`globals.css`).
 - Efeitos de profundidade (3D/Shadows) em elementos fixos.
 - Micro-animações e estados de hover consistentes.
+
+## 5. Documentação de Código
+Sempre adicione comentários explicativos no código, especialmente em componentes complexos, funções de lógica de negócio e arquivos de estilo. Isso facilita a colaboração e a manutenção futura por outros desenvolvedores.
+- Use comentários JSDoc para componentes e funções principais.
+- Explique o "porquê" de certas decisões de design ou lógica.
+- Mantenha os comentários em português, conforme o padrão do projeto.
