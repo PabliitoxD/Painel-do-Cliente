@@ -12,8 +12,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="dashboard-container">
       <Sidebar />
+      <Topbar />
       <div className="dashboard-main">
-        <Topbar />
         <main className="dashboard-content">
           {children}
         </main>

@@ -11,6 +11,7 @@
   min-width: 0;
   margin-left: var(--sidebar-width);
   transition: margin-left 0.3s ease;
+  padding-top: var(--header-height);
 }
 
 .dashboard-content {
@@ -32,6 +33,7 @@
   flex-direction: column;
   z-index: 100;
   border-top-right-radius: 40px;
+  box-shadow: 10px 0 40px rgba(0, 0, 0, 0.4);
 }
 
 .sidebar-profile {
@@ -43,12 +45,19 @@
 }
 
 .profile-avatar {
-  width: 64px;
-  height: 64px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
-  padding: 3px;
+  padding: 4px;
   border: 2px solid var(--primary);
   overflow: hidden;
+  box-shadow: 0 0 25px rgba(101, 131, 154, 0.2);
+  transition: all 0.3s ease;
+}
+
+.profile-avatar:hover {
+  transform: scale(1.05);
+  border-color: var(--primary-hover);
 }
 
 .profile-avatar img {
@@ -63,9 +72,11 @@
 }
 
 .profile-name {
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 700;
+  font-size: 1.4rem;
   color: var(--text-main);
+  margin-top: 0.5rem;
+  letter-spacing: -0.5px;
 }
 
 .sidebar-search {
@@ -104,17 +115,18 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.85rem 1.25rem;
+  padding: 0.9rem 1.25rem;
   border-radius: var(--radius-md);
-  color: var(--text-muted);
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-link:hover {
   color: var(--text-main);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(4px);
 }
 
 .sidebar-link.active {
@@ -141,10 +153,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 2rem;
+  padding-left: calc(var(--sidebar-width) + 2rem);
   background: var(--header-bg);
   border-bottom: 1px solid var(--border);
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  width: 100%;
   z-index: 50;
 }
 
@@ -183,13 +198,16 @@
   border-radius: 50%;
   background: var(--header-icon-bg);
   border: 1px solid var(--border);
-  color: var(--text-muted);
-  transition: all 0.2s;
+  color: var(--text-dim);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .icon-btn:hover {
   border-color: var(--primary);
-  color: var(--primary);
+  color: var(--text-main);
+  background: rgba(101, 131, 154, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(101, 131, 154, 0.1);
 }
 
 .badge {
@@ -243,5 +261,8 @@
   }
   .sidebar {
     transform: translateX(-100%);
+  }
+  .topbar {
+    padding-left: 2rem;
   }
 }

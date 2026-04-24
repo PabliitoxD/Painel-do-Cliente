@@ -11,8 +11,7 @@ import {
   Users2, 
   Settings, 
   HelpCircle,
-  Search,
-  LogOut
+  Search
 } from 'lucide-react';
 
 const NAV_ITEMS = [
