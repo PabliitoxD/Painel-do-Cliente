@@ -130,22 +130,24 @@
 }
 
 .stat-title {
-  font-size: 1.05rem;
+  font-size: 1.25rem;
   color: white;
-  font-weight: 600;
-  opacity: 0.9;
+  font-weight: 700;
+  opacity: 1;
+  letter-spacing: -0.5px;
 }
 
 .stat-icon-wrapper {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   background: var(--surface-hover);
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--primary);
   border: 1px solid var(--border);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .stat-value {
