@@ -13,99 +13,102 @@ import {
 
 /**
  * Página de Recebíveis.
- * Fornece uma visão detalhada do fluxo de caixa futuro e liquidez atual.
+ * Refinada para corresponder exatamente ao design premium solicitado.
  */
 export default function ReceivablesPage() {
   return (
     <DashboardLayout>
       <div className="receivables-page animate-fade-in">
-        {/* Cabeçalho com ação de antecipação */}
-        <div className="page-header">
+        {/* Cabeçalho da Página */}
+        <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
           <div>
-            <h1>Recebíveis</h1>
-            <p className="text-muted">Gestão de valores futuros e liquidez</p>
+            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.25rem' }}>Recebíveis</h1>
+            <p className="text-muted" style={{ fontSize: '0.95rem' }}>Gestão de valores futuros e liquidez</p>
           </div>
-          <button className="btn-ghost">
+          <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.7rem 1.2rem', borderRadius: '12px' }}>
             <Calendar size={18} /> Antecipar Valores
           </button>
         </div>
 
         {/* Estatísticas Principais (Valor Total, Liberado, Aguardando, Bloqueado) */}
-        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '2rem' }}>
-          {/* Card: Valor Total Bruto */}
-          <div className="stat-card" style={{ borderBottom: '3px solid var(--primary)' }}>
+        <div className="stats-grid" style={{ marginBottom: '2.5rem' }}>
+          {/* Card: Valor Total */}
+          <div className="stat-card receivable-card card-blue">
             <div className="stat-top">
               <span className="stat-title">Valor Total</span>
-              <TrendingUp size={18} className="text-muted" />
+              <TrendingUp size={18} className="stat-icon-dim" />
             </div>
-            <div className="stat-value" style={{ fontSize: '2rem' }}>R$ 45.230,00</div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.5rem' }}>Soma de todos os valores</p>
+            <div className="stat-value-large">R$ 45.230,00</div>
+            <p className="stat-desc">Soma de todos os valores</p>
+            <div className="card-indicator"></div>
           </div>
 
-          {/* Card: Valor Liberado (Pronto para Saque) */}
-          <div className="stat-card" style={{ borderBottom: '3px solid var(--success)' }}>
+          {/* Card: Valor Liberado */}
+          <div className="stat-card receivable-card card-green">
             <div className="stat-top">
               <span className="stat-title">Valor Liberado</span>
-              <Unlock size={18} style={{ color: 'var(--success)' }} />
+              <Unlock size={18} className="stat-icon-dim" />
             </div>
-            <div className="stat-value" style={{ fontSize: '2rem' }}>R$ 18.500,00</div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--success)', marginTop: '0.5rem' }}>Disponível para saque imediato</p>
+            <div className="stat-value-large">R$ 18.500,00</div>
+            <p className="stat-desc" style={{ color: 'var(--success)', opacity: 0.8 }}>Disponível para saque imediato</p>
+            <div className="card-indicator"></div>
           </div>
 
-          {/* Card: Valor Aguardando Liberação (Processamento Bancário/D+30) */}
-          <div className="stat-card" style={{ borderBottom: '3px solid var(--warning)' }}>
+          {/* Card: Aguardando Liberação */}
+          <div className="stat-card receivable-card card-yellow">
             <div className="stat-top">
               <span className="stat-title">Aguardando Liberação</span>
-              <Clock size={18} style={{ color: 'var(--warning)' }} />
+              <Clock size={18} className="stat-icon-dim" />
             </div>
-            <div className="stat-value" style={{ fontSize: '2rem' }}>R$ 24.730,00</div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--warning)', marginTop: '0.5rem' }}>Em processamento (D+30)</p>
+            <div className="stat-value-large">R$ 24.730,00</div>
+            <p className="stat-desc" style={{ color: 'var(--warning)', opacity: 0.8 }}>Em processamento (D+30)</p>
+            <div className="card-indicator"></div>
           </div>
 
-          {/* Card: Valor Bloqueado (Segurança/Chargeback) */}
-          <div className="stat-card" style={{ borderBottom: '3px solid var(--danger)' }}>
+          {/* Card: Valor Bloqueado */}
+          <div className="stat-card receivable-card card-red">
             <div className="stat-top">
               <span className="stat-title">Valor Bloqueado</span>
-              <Lock size={18} style={{ color: 'var(--danger)' }} />
+              <Lock size={18} className="stat-icon-dim" />
             </div>
-            <div className="stat-value" style={{ fontSize: '2rem' }}>R$ 2.000,00</div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.5rem' }}>Retenção de segurança / Chargeback</p>
+            <div className="stat-value-large">R$ 2.000,00</div>
+            <p className="stat-desc" style={{ color: 'var(--danger)', opacity: 0.8 }}>Retenção de segurança / Chargeback</p>
+            <div className="card-indicator"></div>
           </div>
         </div>
 
-        <div className="bottom-grid" style={{ gridTemplateColumns: '1.5fr 1fr' }}>
-          {/* Lista de Agenda de Recebimentos por dia */}
-          <div className="table-card">
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Agenda de Recebimentos</h3>
+        {/* Layout Inferior: Agenda e Dica */}
+        <div className="bottom-grid">
+          {/* Agenda de Recebimentos */}
+          <div className="table-card" style={{ padding: '2rem' }}>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '2rem', fontWeight: 600 }}>Agenda de Recebimentos</h3>
             <div className="agenda-list">
               {[
-                { date: 'Amanhã, 25 Abr', amount: 1250.00, count: 12, status: 'confirmado' },
-                { date: 'Segunda, 27 Abr', amount: 3420.50, count: 24, status: 'confirmado' },
-                { date: 'Terça, 28 Abr', amount: 980.00, count: 8, status: 'pendente' },
-                { date: 'Quarta, 29 Abr', amount: 2100.00, count: 15, status: 'pendente' },
+                { date: 'Amanhã, 25 Abr', amount: 1250.00, count: 12, status: 'CONFIRMADO' },
+                { date: 'Segunda, 27 Abr', amount: 3420.50, count: 24, status: 'CONFIRMADO' },
+                { date: 'Terça, 28 Abr', amount: 980.00, count: 8, status: 'PENDENTE' },
+                { date: 'Quarta, 29 Abr', amount: 2100.00, count: 15, status: 'PENDENTE' },
               ].map((day, i) => (
                 <div key={i} className="agenda-item" style={{ 
                   display: 'flex', 
                   justifyContent: 'space-between', 
                   alignItems: 'center',
-                  padding: '1.25rem',
+                  padding: '1.5rem 0',
                   borderBottom: i === 3 ? 'none' : '1px solid var(--border)',
-                  transition: 'background 0.2s',
-                  cursor: 'pointer'
                 }}>
                   <div>
-                    <p style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '0.2rem' }}>{day.date}</p>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>{day.count} vendas processadas</p>
+                    <p style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.3rem' }}>{day.date}</p>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>{day.count} vendas processadas</p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-main)' }}>
-                      {day.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    <p style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '0.2rem' }}>
+                      R$ {day.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                     <span style={{ 
                       fontSize: '0.7rem', 
-                      textTransform: 'uppercase', 
-                      color: day.status === 'confirmado' ? 'var(--success)' : 'var(--warning)',
-                      fontWeight: 700
+                      letterSpacing: '0.5px',
+                      color: day.status === 'CONFIRMADO' ? 'var(--success)' : 'var(--warning)',
+                      fontWeight: 800
                     }}>
                       {day.status}
                     </span>
@@ -115,16 +118,35 @@ export default function ReceivablesPage() {
             </div>
           </div>
 
-          {/* Banner de Antecipação (Upsell/Liquidez) */}
-          <div className="card" style={{ height: 'fit-content', background: 'linear-gradient(135deg, var(--surface) 0%, #1a2932 100%)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-              <AlertTriangle size={24} style={{ color: 'var(--warning)' }} />
+          {/* Dica de Liquidez */}
+          <div className="card tip-card" style={{ 
+            height: 'fit-content', 
+            background: 'linear-gradient(135deg, var(--surface) 0%, rgba(26, 41, 50, 0.5) 100%)',
+            padding: '2rem',
+            border: '1px solid var(--border)',
+            position: 'relative'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{ color: 'var(--warning)' }}><AlertTriangle size={24} /></div>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Dica de Liquidez</h3>
             </div>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-              Você possui <strong>R$ 24.730,00</strong> aguardando liberação. Se precisar de fluxo de caixa imediato, você pode antecipar até 80% desse valor com taxas reduzidas.
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: '2rem' }}>
+              Você possui <strong style={{ color: 'var(--text-main)' }}>R$ 24.730,00</strong> aguardando liberação. Se precisar de fluxo de caixa imediato, você pode antecipar até 80% desse valor com taxas reduzidas.
             </p>
-            <button className="btn-primary" style={{ width: '100%', justifyContent: 'space-between' }}>
+            <button className="btn-simulation" style={{ 
+              width: '100%', 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              padding: '1rem 1.5rem',
+              background: 'rgba(101, 131, 154, 0.15)',
+              border: '1px solid rgba(101, 131, 154, 0.2)',
+              borderRadius: '12px',
+              color: 'var(--text-main)',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              transition: 'all 0.2s'
+            }}>
               Simular Antecipação <ChevronRight size={18} />
             </button>
           </div>
@@ -132,22 +154,44 @@ export default function ReceivablesPage() {
       </div>
 
       <style jsx>{`
-        .page-header {
-          display: flex;
+        .receivable-card {
+          padding: 2rem 1.5rem;
+          min-height: 180px;
           justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
+          border-bottom: none;
         }
-        .page-header h1 {
-          font-size: 1.8rem;
-          margin-bottom: 0.25rem;
+        .stat-icon-dim {
+          color: var(--text-dim);
+          opacity: 0.5;
         }
-        .text-muted {
-          color: var(--text-muted);
-          font-size: 0.9rem;
+        .stat-value-large {
+          font-size: 2.4rem;
+          font-weight: 700;
+          color: var(--text-main);
+          margin: 0.5rem 0;
+          letter-spacing: -1px;
         }
-        .agenda-item:hover {
-          background: var(--surface-hover);
+        .stat-desc {
+          font-size: 0.8rem;
+          color: var(--text-dim);
+          margin: 0;
+        }
+        .card-indicator {
+          position: absolute;
+          bottom: 0;
+          left: 5%;
+          width: 90%;
+          height: 3px;
+          border-radius: 10px 10px 0 0;
+        }
+        .card-blue .card-indicator { background: var(--primary); box-shadow: 0 -2px 10px rgba(101, 131, 154, 0.3); }
+        .card-green .card-indicator { background: var(--success); box-shadow: 0 -2px 10px rgba(49, 120, 44, 0.3); }
+        .card-yellow .card-indicator { background: var(--warning); box-shadow: 0 -2px 10px rgba(255, 177, 86, 0.3); }
+        .card-red .card-indicator { background: var(--danger); box-shadow: 0 -2px 10px rgba(203, 86, 86, 0.3); }
+        
+        .btn-simulation:hover {
+          background: rgba(101, 131, 154, 0.25);
+          transform: translateY(-2px);
         }
       `}</style>
     </DashboardLayout>
