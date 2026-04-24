@@ -11,10 +11,15 @@ import {
   ChevronRight
 } from 'lucide-react';
 
+/**
+ * Página de Recebíveis.
+ * Fornece uma visão detalhada do fluxo de caixa futuro e liquidez atual.
+ */
 export default function ReceivablesPage() {
   return (
     <DashboardLayout>
       <div className="receivables-page animate-fade-in">
+        {/* Cabeçalho com ação de antecipação */}
         <div className="page-header">
           <div>
             <h1>Recebíveis</h1>
@@ -25,8 +30,9 @@ export default function ReceivablesPage() {
           </button>
         </div>
 
-        {/* Main Stats */}
+        {/* Estatísticas Principais (Valor Total, Liberado, Aguardando, Bloqueado) */}
         <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '2rem' }}>
+          {/* Card: Valor Total Bruto */}
           <div className="stat-card" style={{ borderBottom: '3px solid var(--primary)' }}>
             <div className="stat-top">
               <span className="stat-title">Valor Total</span>
@@ -36,6 +42,7 @@ export default function ReceivablesPage() {
             <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.5rem' }}>Soma de todos os valores</p>
           </div>
 
+          {/* Card: Valor Liberado (Pronto para Saque) */}
           <div className="stat-card" style={{ borderBottom: '3px solid var(--success)' }}>
             <div className="stat-top">
               <span className="stat-title">Valor Liberado</span>
@@ -45,6 +52,7 @@ export default function ReceivablesPage() {
             <p style={{ fontSize: '0.75rem', color: 'var(--success)', marginTop: '0.5rem' }}>Disponível para saque imediato</p>
           </div>
 
+          {/* Card: Valor Aguardando Liberação (Processamento Bancário/D+30) */}
           <div className="stat-card" style={{ borderBottom: '3px solid var(--warning)' }}>
             <div className="stat-top">
               <span className="stat-title">Aguardando Liberação</span>
@@ -54,6 +62,7 @@ export default function ReceivablesPage() {
             <p style={{ fontSize: '0.75rem', color: 'var(--warning)', marginTop: '0.5rem' }}>Em processamento (D+30)</p>
           </div>
 
+          {/* Card: Valor Bloqueado (Segurança/Chargeback) */}
           <div className="stat-card" style={{ borderBottom: '3px solid var(--danger)' }}>
             <div className="stat-top">
               <span className="stat-title">Valor Bloqueado</span>
@@ -65,6 +74,7 @@ export default function ReceivablesPage() {
         </div>
 
         <div className="bottom-grid" style={{ gridTemplateColumns: '1.5fr 1fr' }}>
+          {/* Lista de Agenda de Recebimentos por dia */}
           <div className="table-card">
             <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Agenda de Recebimentos</h3>
             <div className="agenda-list">
@@ -105,6 +115,7 @@ export default function ReceivablesPage() {
             </div>
           </div>
 
+          {/* Banner de Antecipação (Upsell/Liquidez) */}
           <div className="card" style={{ height: 'fit-content', background: 'linear-gradient(135deg, var(--surface) 0%, #1a2932 100%)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
               <AlertTriangle size={24} style={{ color: 'var(--warning)' }} />

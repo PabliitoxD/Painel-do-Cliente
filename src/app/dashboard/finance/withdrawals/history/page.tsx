@@ -10,6 +10,9 @@ import {
   Calendar
 } from 'lucide-react';
 
+/**
+ * Dados de exemplo para o histórico de saques.
+ */
 const WITHDRAWAL_HISTORY = [
   { id: 1, date: '24/04/2026 09:00', bank: 'Banco do Brasil', amount: 2500.00, status: 'processado', method: 'PIX' },
   { id: 2, date: '20/04/2026 14:20', bank: 'Nubank', amount: 1200.50, status: 'processado', method: 'TED' },
@@ -17,6 +20,10 @@ const WITHDRAWAL_HISTORY = [
   { id: 4, date: '10/04/2026 16:45', bank: 'Santander', amount: 800.00, status: 'processado', method: 'PIX' },
 ];
 
+/**
+ * Página de Histórico de Saques.
+ * Permite visualizar todos os resgates solicitados e seus comprovantes.
+ */
 export default function WithdrawalHistoryPage() {
   return (
     <DashboardLayout>
@@ -36,6 +43,7 @@ export default function WithdrawalHistoryPage() {
           </div>
         </div>
 
+        {/* Tabela de Registros de Saque */}
         <div className="table-card">
           <table className="transactions-table">
             <thead>
@@ -51,21 +59,26 @@ export default function WithdrawalHistoryPage() {
             <tbody>
               {WITHDRAWAL_HISTORY.map((item) => (
                 <tr key={item.id}>
+                  {/* Data e Hora da transação */}
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <History size={16} className="text-muted" />
                       {item.date}
                     </div>
                   </td>
+                  {/* Banco de destino */}
                   <td>{item.bank}</td>
+                  {/* Método de transferência (Badge) */}
                   <td>
                     <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: 'var(--surface-hover)', borderRadius: '4px' }}>
                       {item.method}
                     </span>
                   </td>
+                  {/* Valor bruto do saque */}
                   <td style={{ fontWeight: 600 }}>
                     {item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </td>
+                  {/* Status do saque com ícone e pill colorida */}
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       {item.status === 'processado' ? (
@@ -77,8 +90,10 @@ export default function WithdrawalHistoryPage() {
                         {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                       </span>
                     </div>
+                    {/* Exibe o motivo em caso de recusa */}
                     {item.reason && <p style={{ fontSize: '0.7rem', color: 'var(--danger)', marginTop: '0.25rem' }}>{item.reason}</p>}
                   </td>
+                  {/* Ação para baixar/ver comprovante se disponível */}
                   <td>
                     {item.status === 'processado' && (
                       <button className="btn-ghost" style={{ fontSize: '0.75rem' }}>Ver PDF</button>
