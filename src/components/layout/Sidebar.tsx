@@ -66,9 +66,6 @@ export function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
-        <button className="logout-btn" onClick={logout} style={{ marginBottom: '1rem', width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', color: 'var(--danger)', fontSize: '0.85rem', fontWeight: '600' }}>
-          <LogOut size={16} /> Sair da Conta
-        </button>
         <div className="footer-logo">
           <img src="https://tronnus.com/wp-content/uploads/2026/01/tronnus-png-001.png" alt="TRONNUS" style={{ width: '120px', filter: 'brightness(0) invert(1)', opacity: 0.8 }} />
         </div>
