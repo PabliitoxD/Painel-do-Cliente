@@ -1,0 +1,137 @@
+/* Shared Dashboard Components for all subpages */
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.stat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.stat-title {
+  font-size: 1rem;
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -1px;
+}
+
+.stat-trend {
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.trend-up { background: rgba(49, 120, 44, 0.1); color: var(--success); }
+.trend-down { background: rgba(203, 86, 86, 0.1); color: var(--danger); }
+
+/* Table Styles (Moved from tables.css) */
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.5rem;
+  overflow-x: auto;
+  display: block;
+  width: 100%;
+}
+
+.transactions-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 0.5rem;
+  table-layout: auto;
+  min-width: 1000px;
+}
+
+.transactions-table th {
+  text-align: left;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  padding: 1.25rem 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.transactions-table td {
+  padding: 1.25rem 1rem;
+  font-size: 0.85rem;
+  border-top: 1px solid var(--border);
+  vertical-align: middle;
+  white-space: nowrap;
+  background: inherit;
+}
+
+.status-pill {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-pill.aprovada { background: #31782c22; color: #31782c; border: 1px solid #31782c44; }
+.status-pill.aguardando { background: #ffb15622; color: #ffb156; border: 1px solid #ffb15644; }
+.status-pill.recusada { background: #cb565622; color: #cb5656; border: 1px solid #cb565644; }
+
+.id-text { 
+  color: var(--primary); 
+  font-family: monospace; 
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.valor-text { font-weight: 600; }
+
+/* Buttons */
+.btn-ghost {
+  background: rgba(101, 131, 154, 0.1);
+  border: 1px solid rgba(101, 131, 154, 0.2);
+  color: var(--primary);
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-ghost:hover {
+  background: rgba(101, 131, 154, 0.2);
+  border-color: var(--primary);
+  color: var(--text-main);
+}
