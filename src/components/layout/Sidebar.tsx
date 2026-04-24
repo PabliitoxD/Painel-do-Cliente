@@ -39,7 +39,17 @@ const NAV_ITEMS = [
       { label: 'Recebíveis', href: '/dashboard/finance/receivables' },
     ]
   },
-  { label: 'Vendas', href: '/dashboard/sales', icon: ShoppingBag },
+  { 
+    label: 'Vendas', 
+    icon: ShoppingBag,
+    subItems: [
+      { label: 'Aprovadas', href: '/dashboard/sales/approved' },
+      { label: 'Não Concluídas', href: '/dashboard/sales/not-completed' },
+      { label: 'Aguardando Pagamento', href: '/dashboard/sales/waiting' },
+      { label: 'Estornos/Reembolsos', href: '/dashboard/sales/reversals' },
+      { label: 'Chargebacks', href: '/dashboard/sales/chargebacks' },
+    ]
+  },
   { label: 'Recorrência', href: '/dashboard/recurring', icon: RefreshCcw },
   { label: 'Recebedores', href: '/dashboard/receivers', icon: Users },
   { label: 'Minha equipe', href: '/dashboard/team', icon: Users2 },
