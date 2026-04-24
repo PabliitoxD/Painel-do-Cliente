@@ -161,7 +161,7 @@ export default function DashboardHome() {
               <div className="stat-icon-wrapper"><AlertCircle size={30} /></div>
             </div>
             <div className="stat-value">2</div>
-            <span className="stat-trend trend-up">+2%</span>
+            <span className="stat-trend trend-down">-2%</span>
           </div>
         </div>
 
