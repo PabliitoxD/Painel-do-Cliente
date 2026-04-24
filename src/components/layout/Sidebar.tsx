@@ -11,12 +11,29 @@ import {
   Users2, 
   Settings, 
   HelpCircle,
-  Search
+  Search,
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Financeiro', href: '/dashboard/finance', icon: Wallet },
+  { 
+    label: 'Financeiro', 
+    icon: Wallet,
+    subItems: [
+      { label: 'Extratos', href: '/dashboard/finance/statements' },
+      { 
+        label: 'Saques', 
+        href: '/dashboard/finance/withdrawals',
+        subItems: [
+          { label: 'Histórico de saque', href: '/dashboard/finance/withdrawals/history' },
+          { label: 'Solicitações de saque', href: '/dashboard/finance/withdrawals/requests' },
+        ]
+      },
+      { label: 'Recebíveis', href: '/dashboard/finance/receivables' },
+    ]
+  },
   { label: 'Vendas', href: '/dashboard/sales', icon: ShoppingBag },
   { label: 'Recorrência', href: '/dashboard/recurring', icon: RefreshCcw },
   { label: 'Recebedores', href: '/dashboard/receivers', icon: Users },
@@ -52,15 +69,63 @@ export function Sidebar() {
       <nav className="sidebar-nav">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
+          const hasSubItems = item.subItems && item.subItems.length > 0;
+          const isActive = pathname === item.href || (hasSubItems && pathname.startsWith(item.href || ''));
+          
           return (
-            <Link 
-              key={item.href} 
-              href={item.href}
-              className={`sidebar-link ${pathname === item.href ? 'active' : ''}`}
-            >
-              <Icon size={20} className="sidebar-icon" />
-              {item.label}
-            </Link>
+            <div key={item.label} className="nav-group">
+              {item.href ? (
+                <Link 
+                  href={item.href}
+                  className={`sidebar-link ${isActive ? 'active' : ''}`}
+                >
+                  <Icon size={20} className="sidebar-icon" />
+                  {item.label}
+                  {hasSubItems && <ChevronDown size={14} className="chevron" />}
+                </Link>
+              ) : (
+                <div className={`sidebar-link non-clickable ${isActive ? 'active' : ''}`}>
+                  <Icon size={20} className="sidebar-icon" />
+                  {item.label}
+                  {hasSubItems && <ChevronDown size={14} className="chevron" />}
+                </div>
+              )}
+              
+              {hasSubItems && (
+                <div className="sidebar-subnav">
+                  {item.subItems.map((sub) => {
+                    const subHasNested = sub.subItems && sub.subItems.length > 0;
+                    const subIsActive = pathname === sub.href || (subHasNested && pathname.startsWith(sub.href || ''));
+                    
+                    return (
+                      <div key={sub.label} className="sub-nav-group">
+                        <Link 
+                          href={sub.href || '#'}
+                          className={`sidebar-sublink ${subIsActive ? 'active' : ''}`}
+                        >
+                          {sub.label}
+                          {subHasNested && <ChevronDown size={12} className="chevron" />}
+                        </Link>
+                        
+                        {subHasNested && (
+                          <div className="sidebar-sub-subnav">
+                            {sub.subItems.map((nested) => (
+                              <Link 
+                                key={nested.label}
+                                href={nested.href}
+                                className={`sidebar-sub-sublink ${pathname === nested.href ? 'active' : ''}`}
+                              >
+                                {nested.label}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>
