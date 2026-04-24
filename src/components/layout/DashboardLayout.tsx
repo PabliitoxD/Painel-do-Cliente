@@ -3,6 +3,7 @@
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import './Layout.css';
+import '../../app/dashboard/components.css';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

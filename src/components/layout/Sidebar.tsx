@@ -13,7 +13,6 @@ import {
   Settings, 
   HelpCircle,
   Search,
-  ChevronRight,
   ChevronDown
 } from 'lucide-react';
 
@@ -60,25 +59,34 @@ const NAV_ITEMS = [
 import { useAuth } from '@/context/AuthContext';
 
 /**
- * Componente Sidebar principal.
- * Gerencia a navegação, perfil do usuário e estados de colapso dos menus.
+ * Componente Sidebar principal com comportamento de Acordeão.
+ * Gerencia a navegação e garante que apenas um submenu principal esteja aberto por vez.
  */
 export function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
   
-  // Estado para controlar quais menus e submenus estão abertos/expandidos
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
+  // Estado para controlar qual menu principal está expandido (Accordion)
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  // Estado para controlar submenus de nível 2
+  const [openSubMenu, setOpenSubMenu] = useState<string | null>(null);
 
   /**
-   * Alterna o estado de exibição de um menu específico.
+   * Alterna o estado de exibição de um menu principal.
    * @param label O nome do menu a ser alternado.
    */
   const toggleMenu = (label: string) => {
-    setExpandedMenus(prev => ({
-      ...prev,
-      [label]: !prev[label]
-    }));
+    setOpenMenu(openMenu === label ? null : label);
+    setOpenSubMenu(null); // Fecha submenus internos ao trocar de menu principal
+  };
+
+  /**
+   * Alterna o estado de exibição de um submenu.
+   * @param label O nome do submenu a ser alternado.
+   */
+  const toggleSubMenu = (label: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpenSubMenu(openSubMenu === label ? null : label);
   };
 
   return (
@@ -89,7 +97,7 @@ export function Sidebar() {
           <img src={user?.avatar || "https://ui-avatars.com/api/?name=User&background=1b2932&color=65839a"} alt={user?.name || "User"} />
         </div>
         <div className="profile-info">
-          <span className="profile-name">{user?.name || 'Carregando...'}</span>
+          <span className="profile-name">{user?.name || 'Administrador'}</span>
         </div>
       </div>
 
@@ -106,13 +114,15 @@ export function Sidebar() {
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const hasSubItems = item.subItems && item.subItems.length > 0;
-          // Verifica se o item principal ou algum de seus filhos está ativo
-          const isActive = pathname === item.href || (hasSubItems && pathname.startsWith(item.href || '/dashboard/finance'));
-          const isExpanded = expandedMenus[item.label] || isActive;
+          
+          // Verifica se o item está ativo baseado na URL
+          const isActive = pathname === item.href || (hasSubItems && pathname.startsWith(item.href || '/dashboard/finance') || pathname.startsWith(item.href || '/dashboard/sales'));
+          
+          // O menu expande se for clicado OU se estiver ativo pela URL (e nada mais foi clicado)
+          const isExpanded = openMenu === item.label || (openMenu === null && isActive);
           
           return (
             <div key={item.label} className="nav-group">
-              {/* Item de Menu Principal */}
               <div 
                 className={`sidebar-link ${isActive ? 'active' : ''}`}
                 onClick={() => hasSubItems && toggleMenu(item.label)}
@@ -144,13 +154,13 @@ export function Sidebar() {
                   {item.subItems.map((sub) => {
                     const subHasNested = sub.subItems && sub.subItems.length > 0;
                     const subIsActive = pathname === sub.href || (subHasNested && pathname.startsWith(sub.href || ''));
-                    const subIsExpanded = expandedMenus[sub.label] || subIsActive;
+                    const subIsExpanded = openSubMenu === sub.label || (openSubMenu === null && subIsActive);
                     
                     return (
                       <div key={sub.label} className="sub-nav-group">
                         <div 
                           className={`sidebar-sublink ${subIsActive ? 'active' : ''}`}
-                          onClick={() => subHasNested && toggleMenu(sub.label)}
+                          onClick={(e) => subHasNested && toggleSubMenu(sub.label, e)}
                           style={{ cursor: 'pointer' }}
                         >
                           {sub.href && !subHasNested ? (
