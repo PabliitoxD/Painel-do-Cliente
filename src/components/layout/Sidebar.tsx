@@ -115,8 +115,11 @@ export function Sidebar() {
           const Icon = item.icon;
           const hasSubItems = item.subItems && item.subItems.length > 0;
           
-          // Verifica se o item está ativo baseado na URL
-          const isActive = pathname === item.href || (hasSubItems && pathname.startsWith(item.href || '/dashboard/finance') || pathname.startsWith(item.href || '/dashboard/sales'));
+          // Verifica se o item está ativo baseado na URL ou se algum subitem está ativo
+          const isActive = item.href ? pathname === item.href : 
+            hasSubItems ? item.subItems?.some(sub => 
+              pathname === sub.href || sub.subItems?.some(nested => pathname === nested.href)
+            ) : false;
           
           // O menu expande se for clicado OU se estiver ativo pela URL (e nada mais foi clicado)
           const isExpanded = openMenu === item.label || (openMenu === null && isActive);

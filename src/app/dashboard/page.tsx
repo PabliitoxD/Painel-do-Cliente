@@ -96,10 +96,10 @@ export default function DashboardHome() {
           <div className="stat-card">
             <div className="stat-top">
               <span className="stat-title">Faturamento total</span>
-              <div className="stat-icon-wrapper"><DollarSign size={30} /></div>
+              <div className="stat-icon-wrapper"><DollarSign size={24} /></div>
             </div>
             <div className="stat-value">R$ 534.321,23</div>
-            <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="stat-footer">
               <span className="stat-trend trend-up">+55,3%</span>
               <button className="saque-btn">Solicitar saque</button>
             </div>
@@ -108,7 +108,7 @@ export default function DashboardHome() {
           <div className="stat-card">
             <div className="stat-top">
               <span className="stat-title">Quantidade de vendas</span>
-              <div className="stat-icon-wrapper"><Clock size={30} /></div>
+              <div className="stat-icon-wrapper"><Clock size={24} /></div>
             </div>
             <div className="stat-value">10.432</div>
             <span className="stat-trend trend-up">+2,1%</span>
@@ -116,8 +116,8 @@ export default function DashboardHome() {
 
           <div className="stat-card">
             <div className="stat-top">
-              <span className="stat-title">Total em vendas no {selectedPaymentMethod}</span>
-              <div className="stat-icon-wrapper"><TrendingUp size={30} /></div>
+              <span className="stat-title">Vendas no {selectedPaymentMethod}</span>
+              <div className="stat-icon-wrapper"><TrendingUp size={24} /></div>
             </div>
             <div className="stat-value">R$ 301.234,55</div>
             <div className="stat-footer">
@@ -128,7 +128,6 @@ export default function DashboardHome() {
                     key={m} 
                     className={`chip ${selectedPaymentMethod === m ? 'active' : ''}`}
                     onClick={() => setSelectedPaymentMethod(m)}
-                    style={{ cursor: 'pointer' }}
                   >
                     {m}
                   </span>
@@ -140,7 +139,7 @@ export default function DashboardHome() {
           <div className="stat-card">
             <div className="stat-top">
               <span className="stat-title">Estornos</span>
-              <div className="stat-icon-wrapper"><RotateCcw size={30} /></div>
+              <div className="stat-icon-wrapper"><RotateCcw size={24} /></div>
             </div>
             <div className="stat-value">22</div>
             <span className="stat-trend trend-down">-55,3%</span>
@@ -149,7 +148,7 @@ export default function DashboardHome() {
           <div className="stat-card">
             <div className="stat-top">
               <span className="stat-title">Cancelamentos</span>
-              <div className="stat-icon-wrapper"><XCircle size={30} /></div>
+              <div className="stat-icon-wrapper"><XCircle size={24} /></div>
             </div>
             <div className="stat-value">2</div>
             <span className="stat-trend trend-up">+2,1%</span>
@@ -158,7 +157,7 @@ export default function DashboardHome() {
           <div className="stat-card">
             <div className="stat-top">
               <span className="stat-title">Chargeback</span>
-              <div className="stat-icon-wrapper"><AlertCircle size={30} /></div>
+              <div className="stat-icon-wrapper"><AlertCircle size={24} /></div>
             </div>
             <div className="stat-value">2</div>
             <span className="stat-trend trend-down">-2%</span>

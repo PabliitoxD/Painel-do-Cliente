@@ -3,7 +3,7 @@
 /* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
 }
 
@@ -13,13 +13,15 @@
   gap: 2rem;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .bottom-grid { grid-template-columns: 1fr; }
+  .stat-card.main-stat { grid-column: span 2; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .stats-grid { grid-template-columns: 1fr; }
+  .stat-card.main-stat { grid-column: span 1; }
+  .bottom-grid { grid-template-columns: 1fr; }
 }
 
 .stat-card {
@@ -71,6 +73,62 @@
 
 .trend-up { background: rgba(49, 120, 44, 0.1); color: var(--success); }
 .trend-down { background: rgba(203, 86, 86, 0.1); color: var(--danger); }
+
+.stat-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  gap: 1rem;
+}
+
+.saque-btn {
+  background: var(--primary);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.saque-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.payment-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.chip {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+
+.chip.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.stat-icon-wrapper {
+  color: var(--primary);
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 /* Table Styles (Moved from tables.css) */
 .table-card {
