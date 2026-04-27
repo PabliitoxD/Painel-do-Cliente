@@ -31,12 +31,12 @@ export default function ReceivablesPage() {
         </div>
 
         {/* Estatísticas Principais (Valor Total, Liberado, Aguardando, Bloqueado) */}
-        <div className="stats-grid" style={{ marginBottom: '2.5rem' }}>
+        <div className="stats-grid" style={{ marginBottom: '2.5rem', gridTemplateColumns: 'repeat(2, 1fr)' }}>
           {/* Card: Valor Total */}
           <div className="stat-card receivable-card card-blue">
             <div className="stat-top">
               <span className="stat-title">Valor Total</span>
-              <TrendingUp size={18} className="stat-icon-dim" />
+              <TrendingUp size={24} className="stat-icon-dim" />
             </div>
             <div className="stat-value-large">R$ 45.230,00</div>
             <p className="stat-desc">Soma de todos os valores</p>
@@ -47,7 +47,7 @@ export default function ReceivablesPage() {
           <div className="stat-card receivable-card card-green">
             <div className="stat-top">
               <span className="stat-title">Valor Liberado</span>
-              <Unlock size={18} className="stat-icon-dim" />
+              <Unlock size={24} className="stat-icon-dim" />
             </div>
             <div className="stat-value-large">R$ 18.500,00</div>
             <p className="stat-desc" style={{ color: 'var(--success)', opacity: 0.8 }}>Disponível para saque imediato</p>
@@ -58,7 +58,7 @@ export default function ReceivablesPage() {
           <div className="stat-card receivable-card card-yellow">
             <div className="stat-top">
               <span className="stat-title">Aguardando Liberação</span>
-              <Clock size={18} className="stat-icon-dim" />
+              <Clock size={24} className="stat-icon-dim" />
             </div>
             <div className="stat-value-large">R$ 24.730,00</div>
             <p className="stat-desc" style={{ color: 'var(--warning)', opacity: 0.8 }}>Em processamento (D+30)</p>
@@ -69,7 +69,7 @@ export default function ReceivablesPage() {
           <div className="stat-card receivable-card card-red">
             <div className="stat-top">
               <span className="stat-title">Valor Bloqueado</span>
-              <Lock size={18} className="stat-icon-dim" />
+              <Lock size={24} className="stat-icon-dim" />
             </div>
             <div className="stat-value-large">R$ 2.000,00</div>
             <p className="stat-desc" style={{ color: 'var(--danger)', opacity: 0.8 }}>Retenção de segurança / Chargeback</p>
