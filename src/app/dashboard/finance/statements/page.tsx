@@ -26,7 +26,7 @@ const INITIAL_DATA = [
   { id: 5, type: 'Venda', date: '2026-04-21T08:12:00', description: 'Venda #45G53571E', value: 497.00, status: 'aprovado' },
   { id: 6, type: 'Venda', date: '2026-04-20T11:00:00', description: 'Venda #ABC123XYZ', value: 150.00, status: 'aprovado' },
   { id: 7, type: 'Venda', date: '2026-03-15T15:00:00', description: 'Venda Mês Passado', value: 200.00, status: 'aprovado' },
-  { id: 8, type: 'Venda', date: new Date().toISOString(), description: 'Venda de Hoje', value: 350.00, status: 'aprovado' },
+  { id: 8, type: 'Venda', date: '2026-04-27T10:00:00', description: 'Venda de Hoje', value: 350.00, status: 'aprovado' },
 ];
 
 export default function StatementsPage() {
