@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { 
   ArrowUpRight, 
@@ -9,30 +10,84 @@ import {
   Download,
   Calendar,
   Wallet,
-  ArrowRightLeft
+  ArrowRightLeft,
+  ChevronDown,
+  X
 } from 'lucide-react';
 
 /**
- * Dados fictícios para demonstração da tabela de extratos.
- * Em um cenário real, esses dados viriam de uma API.
+ * Dados fictícios expandidos para demonstração.
  */
-const EXTRACT_DATA = [
-  { id: 1, type: 'Venda', date: '24/04/2026 14:32', description: 'Venda #YXFQVFTFFX', value: 97.00, status: 'aprovado' },
-  { id: 2, type: 'Saque', date: '23/04/2026 10:15', description: 'Saque realizado - Bradesco', value: -1500.00, status: 'processado' },
-  { id: 3, type: 'Estorno', date: '22/04/2026 16:45', description: 'Estorno cliente Maria Rosa', value: -55.90, status: 'estornado' },
-  { id: 4, type: 'Chargeback', date: '21/04/2026 09:20', description: 'Contestação de venda #45G53571E', value: -497.00, status: 'bloqueado' },
-  { id: 5, type: 'Venda', date: '21/04/2026 08:12', description: 'Venda #45G53571E', value: 497.00, status: 'aprovado' },
+const INITIAL_DATA = [
+  { id: 1, type: 'Venda', date: '2026-04-24T14:32:00', description: 'Venda #YXFQVFTFFX', value: 97.00, status: 'aprovado' },
+  { id: 2, type: 'Saque', date: '2026-04-23T10:15:00', description: 'Saque realizado - Bradesco', value: -1500.00, status: 'processado' },
+  { id: 3, type: 'Estorno', date: '2026-04-22T16:45:00', description: 'Estorno cliente Maria Rosa', value: -55.90, status: 'estornado' },
+  { id: 4, type: 'Chargeback', date: '2026-04-21T09:20:00', description: 'Contestação de venda #45G53571E', value: -497.00, status: 'bloqueado' },
+  { id: 5, type: 'Venda', date: '2026-04-21T08:12:00', description: 'Venda #45G53571E', value: 497.00, status: 'aprovado' },
+  { id: 6, type: 'Venda', date: '2026-04-20T11:00:00', description: 'Venda #ABC123XYZ', value: 150.00, status: 'aprovado' },
+  { id: 7, type: 'Venda', date: '2026-03-15T15:00:00', description: 'Venda Mês Passado', value: 200.00, status: 'aprovado' },
+  { id: 8, type: 'Venda', date: new Date().toISOString(), description: 'Venda de Hoje', value: 350.00, status: 'aprovado' },
 ];
 
-/**
- * Página de Extratos Financeiros.
- * Permite ao usuário visualizar todas as entradas e saídas de sua conta.
- */
 export default function StatementsPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [timeRange, setTimeRange] = useState('Últimos 30 dias');
+  const [statusFilter, setStatusFilter] = useState('Todos');
+  const [isTimeMenuOpen, setIsTimeMenuOpen] = useState(false);
+  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+
+  const timeOptions = ['Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Esse mês', 'Personalizado'];
+  const statusOptions = ['Todos', 'aprovado', 'processado', 'estornado', 'bloqueado'];
+
+  // Lógica de filtragem
+  const filteredData = useMemo(() => {
+    return INITIAL_DATA.filter(item => {
+      const itemDate = new Date(item.date);
+      const now = new Date();
+      
+      // Filtro de Texto
+      const matchesSearch = item.description.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           item.id.toString().includes(searchQuery);
+
+      // Filtro de Status
+      const matchesStatus = statusFilter === 'Todos' || item.status === statusFilter;
+
+      // Filtro de Tempo
+      let matchesTime = true;
+      if (timeRange === 'Hoje') {
+        matchesTime = itemDate.toDateString() === now.toDateString();
+      } else if (timeRange === 'Últimos 7 dias') {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(now.getDate() - 7);
+        matchesTime = itemDate >= sevenDaysAgo;
+      } else if (timeRange === 'Últimos 30 dias') {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(now.getDate() - 30);
+        matchesTime = itemDate >= thirtyDaysAgo;
+      } else if (timeRange === 'Esse mês') {
+        matchesTime = itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+      }
+
+      return matchesSearch && matchesStatus && matchesTime;
+    });
+  }, [searchQuery, timeRange, statusFilter]);
+
+  // Cálculos de métricas baseados nos dados filtrados
+  const metrics = useMemo(() => {
+    const inflows = filteredData.reduce((acc, item) => item.value > 0 ? acc + item.value : acc, 0);
+    const outflows = filteredData.reduce((acc, item) => item.value < 0 ? acc + item.value : acc, 0);
+    const balance = inflows + outflows;
+
+    return { inflows, outflows, balance };
+  }, [filteredData]);
+
+  const formatCurrency = (val: number) => {
+    return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
   return (
     <DashboardLayout>
       <div className="statements-page animate-fade-in">
-        {/* Cabeçalho da Página com Título e Ação Global */}
         <div className="page-header">
           <div>
             <h1>Extratos</h1>
@@ -43,49 +98,108 @@ export default function StatementsPage() {
           </button>
         </div>
 
-        {/* Sumário Financeiro: Cards com métricas consolidadas */}
-        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '2rem' }}>
-          {/* Card: Vendas Aprovadas */}
+        {/* Métricas Dinâmicas */}
+        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '2rem' }}>
           <div className="stat-card">
-            <span className="stat-title">Vendas Aprovadas</span>
-            <div className="stat-value" style={{ fontSize: '1.8rem' }}>R$ 12.432,00</div>
-            <span className="stat-trend trend-up">+12%</span>
+            <div className="stat-top">
+              <span className="stat-title">Saldo Acumulado</span>
+              <Wallet size={20} className="text-muted" />
+            </div>
+            <div className="stat-value" style={{ fontSize: '2.2rem' }}>{formatCurrency(metrics.balance)}</div>
+            <p className="text-muted" style={{ fontSize: '0.8rem' }}>Total líquido no período</p>
           </div>
-          {/* Card: Estornos e Reembolsos (Valor Negativo) */}
           <div className="stat-card">
-            <span className="stat-title">Estornos/Reembolsos</span>
-            <div className="stat-value" style={{ fontSize: '1.8rem', color: 'var(--danger)' }}>R$ -850,40</div>
-            <span className="stat-trend trend-down">-5%</span>
+            <div className="stat-top">
+              <span className="stat-title">Entradas (+)</span>
+              <ArrowUpRight size={20} style={{ color: 'var(--success)' }} />
+            </div>
+            <div className="stat-value" style={{ fontSize: '2.2rem', color: 'var(--success)' }}>{formatCurrency(metrics.inflows)}</div>
+            <p className="text-muted" style={{ fontSize: '0.8rem' }}>Soma de todos os ganhos</p>
           </div>
-          {/* Card: Chargebacks (Métrica Crítica) */}
           <div className="stat-card">
-            <span className="stat-title">Chargebacks</span>
-            <div className="stat-value" style={{ fontSize: '1.8rem', color: 'var(--danger)' }}>R$ -497,00</div>
-            <span className="stat-trend trend-down">+2%</span>
-          </div>
-          {/* Card: Total de Saques */}
-          <div className="stat-card">
-            <span className="stat-title">Saques Realizados</span>
-            <div className="stat-value" style={{ fontSize: '1.8rem' }}>R$ 5.000,00</div>
-            <span className="stat-trend trend-up">Este mês</span>
+            <div className="stat-top">
+              <span className="stat-title">Saídas (-)</span>
+              <ArrowDownLeft size={20} style={{ color: 'var(--danger)' }} />
+            </div>
+            <div className="stat-value" style={{ fontSize: '2.2rem', color: 'var(--danger)' }}>{formatCurrency(Math.abs(metrics.outflows))}</div>
+            <p className="text-muted" style={{ fontSize: '0.8rem' }}>Soma de todos os débitos</p>
           </div>
         </div>
 
-        {/* Barra de Filtros: Pesquisa por texto e filtros temporais */}
-        <div className="table-filters card" style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div className="search-box" style={{ flex: 1, background: 'var(--background)' }}>
+        {/* Filtros Funcionais */}
+        <div className="table-filters card glass-panel" style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', padding: '1rem' }}>
+          <div className="search-box" style={{ flex: 1, background: 'var(--background)', borderRadius: '12px', padding: '0 1rem' }}>
             <Search size={18} />
-            <input type="text" placeholder="Buscar por descrição ou ID..." style={{ background: 'none', border: 'none', color: 'white', width: '100%', padding: '0.5rem' }} />
+            <input 
+              type="text" 
+              placeholder="Buscar por descrição ou ID..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ background: 'none', border: 'none', color: 'white', width: '100%', padding: '0.8rem 0.5rem', outline: 'none' }} 
+            />
           </div>
-          <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Calendar size={18} /> Últimos 30 dias
-          </button>
-          <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Filter size={18} /> Filtros avançados
-          </button>
+
+          {/* Filtro de Tempo */}
+          <div style={{ position: 'relative' }}>
+            <button 
+              className="btn-ghost" 
+              onClick={() => setIsTimeMenuOpen(!isTimeMenuOpen)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.8rem 1.2rem', borderRadius: '12px', background: 'var(--background)' }}
+            >
+              <Calendar size={18} /> {timeRange} <ChevronDown size={14} />
+            </button>
+            {isTimeMenuOpen && (
+              <div className="filter-menu glass-panel animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 100, width: '200px', padding: '0.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                {timeOptions.map(opt => (
+                  <button 
+                    key={opt}
+                    onClick={() => { setTimeRange(opt); setIsTimeMenuOpen(false); }}
+                    className={`filter-item ${timeRange === opt ? 'active' : ''}`}
+                    style={{ width: '100%', textAlign: 'left', padding: '0.6rem 1rem', borderRadius: '8px', fontSize: '0.9rem' }}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Filtro Avançado (Status) */}
+          <div style={{ position: 'relative' }}>
+            <button 
+              className="btn-ghost" 
+              onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.8rem 1.2rem', borderRadius: '12px', background: 'var(--background)' }}
+            >
+              <Filter size={18} /> {statusFilter === 'Todos' ? 'Status' : statusFilter} <ChevronDown size={14} />
+            </button>
+            {isStatusMenuOpen && (
+              <div className="filter-menu glass-panel animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 100, width: '200px', padding: '0.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                {statusOptions.map(opt => (
+                  <button 
+                    key={opt}
+                    onClick={() => { setStatusFilter(opt); setIsStatusMenuOpen(false); }}
+                    className={`filter-item ${statusFilter === opt ? 'active' : ''}`}
+                    style={{ width: '100%', textAlign: 'left', padding: '0.6rem 1rem', borderRadius: '8px', fontSize: '0.9rem', textTransform: 'capitalize' }}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {(statusFilter !== 'Todos' || searchQuery !== '' || timeRange !== 'Últimos 30 dias') && (
+            <button 
+              onClick={() => { setStatusFilter('Todos'); setSearchQuery(''); setTimeRange('Últimos 30 dias'); }}
+              style={{ padding: '0.5rem', color: var(--danger), opacity: 0.8 }}
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
 
-        {/* Tabela de Extratos Detalhada */}
+        {/* Tabela de Extratos */}
         <div className="table-card">
           <table className="transactions-table">
             <thead>
@@ -99,9 +213,8 @@ export default function StatementsPage() {
               </tr>
             </thead>
             <tbody>
-              {EXTRACT_DATA.map((item) => (
+              {filteredData.length > 0 ? filteredData.map((item) => (
                 <tr key={item.id}>
-                  {/* Coluna Tipo: Mostra ícone e label baseado no valor (entrada/saída) */}
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <div style={{ 
@@ -120,11 +233,10 @@ export default function StatementsPage() {
                       <span style={{ fontWeight: 500 }}>{item.type}</span>
                     </div>
                   </td>
-                  <td className="text-muted">{item.date}</td>
+                  <td className="text-muted">{new Date(item.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                   <td>{item.description}</td>
-                  {/* Valor: Colorido dinamicamente (Preto/Branco para positivo, Vermelho para negativo) */}
                   <td style={{ fontWeight: 600, color: item.value > 0 ? 'var(--text-main)' : 'var(--danger)' }}>
-                    {item.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {formatCurrency(item.value)}
                   </td>
                   <td>
                     <span className={`status-pill ${item.status}`}>
@@ -137,13 +249,18 @@ export default function StatementsPage() {
                     </button>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-dim)' }}>
+                    Nenhuma movimentação encontrada para os filtros selecionados.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Estilos específicos da página (Scoped CSS) */}
       <style jsx>{`
         .page-header {
           display: flex;
@@ -158,6 +275,13 @@ export default function StatementsPage() {
         .text-muted {
           color: var(--text-muted);
           font-size: 0.9rem;
+        }
+        .filter-item:hover {
+          background: var(--surface-hover);
+        }
+        .filter-item.active {
+          background: var(--primary);
+          color: white;
         }
       `}</style>
     </DashboardLayout>
