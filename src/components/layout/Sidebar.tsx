@@ -57,12 +57,18 @@ const NAV_ITEMS = [
 ];
 
 import { useAuth } from '@/context/AuthContext';
+import { X } from 'lucide-react';
+
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
 /**
  * Componente Sidebar principal com comportamento de Acordeão.
  * Gerencia a navegação e garante que apenas um submenu principal esteja aberto por vez.
  */
-export function Sidebar() {
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
   
@@ -90,7 +96,12 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
+      {/* Botão de Fechar (apenas mobile) */}
+      <button className="sidebar-close-btn" onClick={onClose}>
+        <X size={24} />
+      </button>
+
       {/* Seção de Perfil do Usuário */}
       <div className="sidebar-profile">
         <div className="profile-avatar">
@@ -132,7 +143,7 @@ export function Sidebar() {
                 style={{ cursor: 'pointer' }}
               >
                 {item.href && !hasSubItems ? (
-                  <Link href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 'inherit', width: '100%', color: 'inherit' }}>
+                  <Link href={item.href} onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 'inherit', width: '100%', color: 'inherit' }}>
                     <Icon size={20} className="sidebar-icon" />
                     {item.label}
                   </Link>
@@ -167,7 +178,7 @@ export function Sidebar() {
                           style={{ cursor: 'pointer' }}
                         >
                           {sub.href && !subHasNested ? (
-                            <Link href={sub.href} style={{ flex: 1, color: 'inherit' }}>
+                            <Link href={sub.href} onClick={onClose} style={{ flex: 1, color: 'inherit' }}>
                               {sub.label}
                             </Link>
                           ) : (
@@ -191,6 +202,7 @@ export function Sidebar() {
                               <Link 
                                 key={nested.label}
                                 href={nested.href}
+                                onClick={onClose}
                                 className={`sidebar-sub-sublink ${pathname === nested.href ? 'active' : ''}`}
                               >
                                 {nested.label}

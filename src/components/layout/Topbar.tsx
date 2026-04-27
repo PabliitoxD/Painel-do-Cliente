@@ -1,16 +1,23 @@
 "use client";
 
-import { Bell, Settings, Sun, Moon, Power, ChevronLeft } from 'lucide-react';
+import { Bell, Settings, Sun, Moon, Power, ChevronLeft, Menu, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
-export function Topbar() {
+interface TopbarProps {
+  onMenuClick: () => void;
+}
+
+export function Topbar({ onMenuClick }: TopbarProps) {
   const { logout, theme, toggleTheme } = useAuth();
   const router = useRouter();
 
   return (
     <header className="topbar">
       <div className="topbar-left">
+        <button className="menu-toggle-btn" onClick={onMenuClick}>
+          <Menu size={24} />
+        </button>
         <button className="back-btn" onClick={() => router.back()}>
           <ChevronLeft size={20} />
         </button>
