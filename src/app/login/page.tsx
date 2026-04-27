@@ -16,8 +16,9 @@ export default function LoginPage() {
     
     try {
       await login(email, password);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao entrar');
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Erro ao entrar');
     }
   };
 
