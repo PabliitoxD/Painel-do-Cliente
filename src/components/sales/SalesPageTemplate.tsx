@@ -72,6 +72,21 @@ export function SalesPageTemplate({ title, description, children }: SalesPageTem
         .page-header h1 {
           color: var(--text-main);
         }
+        @media (max-width: 768px) {
+          .table-filters {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 0.75rem !important;
+          }
+          .page-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 1rem;
+          }
+          .btn-primary {
+            width: 100%;
+          }
+        }
       `}</style>
     </DashboardLayout>
   );

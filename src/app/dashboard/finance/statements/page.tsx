@@ -99,7 +99,7 @@ export default function StatementsPage() {
         </div>
 
         {/* Métricas Dinâmicas */}
-        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '2rem' }}>
+        <div className="stats-grid grid-3" style={{ marginBottom: '2rem' }}>
           <div className="stat-card">
             <div className="stat-top">
               <span className="stat-title">Saldo Acumulado</span>
@@ -282,6 +282,15 @@ export default function StatementsPage() {
         .filter-item.active {
           background: var(--primary);
           color: white;
+        }
+      `}</style>
+      <style jsx>{`
+        @media (max-width: 992px) {
+          .filter-bar {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 0.75rem !important;
+          }
         }
       `}</style>
     </DashboardLayout>

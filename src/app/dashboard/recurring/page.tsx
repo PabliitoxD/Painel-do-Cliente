@@ -121,7 +121,7 @@ export default function RecurringPage() {
         </div>
 
         {/* Métricas Rápidas */}
-        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '2rem' }}>
+        <div className="stats-grid grid-3" style={{ marginBottom: '2rem' }}>
           <div className="stat-card">
             <div className="stat-top">
               <span className="stat-title">Assinaturas Ativas</span>
@@ -244,6 +244,15 @@ export default function RecurringPage() {
           </table>
         </div>
       </div>
+      <style jsx>{`
+        @media (max-width: 768px) {
+          .table-filters {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 0.75rem !important;
+          }
+        }
+      `}</style>
     </DashboardLayout>
   );
 }

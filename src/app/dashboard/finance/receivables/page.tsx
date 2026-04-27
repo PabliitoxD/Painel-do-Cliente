@@ -31,7 +31,7 @@ export default function ReceivablesPage() {
         </div>
 
         {/* Estatísticas Principais (Valor Total, Liberado, Aguardando, Bloqueado) */}
-        <div className="stats-grid" style={{ marginBottom: '2.5rem', gridTemplateColumns: 'repeat(2, 1fr)' }}>
+        <div className="stats-grid grid-2" style={{ marginBottom: '2.5rem' }}>
           {/* Card: Valor Total */}
           <div className="stat-card receivable-card card-blue">
             <div className="stat-top">
