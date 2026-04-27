@@ -192,7 +192,7 @@ export default function StatementsPage() {
           {(statusFilter !== 'Todos' || searchQuery !== '' || timeRange !== 'Últimos 30 dias') && (
             <button 
               onClick={() => { setStatusFilter('Todos'); setSearchQuery(''); setTimeRange('Últimos 30 dias'); }}
-              style={{ padding: '0.5rem', color: var(--danger), opacity: 0.8 }}
+              style={{ padding: '0.5rem', color: 'var(--danger)', opacity: 0.8 }}
             >
               <X size={18} />
             </button>
