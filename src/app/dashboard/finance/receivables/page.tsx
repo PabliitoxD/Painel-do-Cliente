@@ -177,17 +177,24 @@ export default function ReceivablesPage() {
           margin: 0;
         }
         .card-indicator {
-          position: absolute;
-          bottom: 0;
-          left: 5%;
-          width: 90%;
-          height: 3px;
-          border-radius: 10px 10px 0 0;
+          display: none; /* Hide the old bottom indicator as we now use gradient backgrounds */
         }
-        .card-blue .card-indicator { background: var(--primary); box-shadow: 0 -2px 10px rgba(101, 131, 154, 0.3); }
-        .card-green .card-indicator { background: var(--success); box-shadow: 0 -2px 10px rgba(49, 120, 44, 0.3); }
-        .card-yellow .card-indicator { background: var(--warning); box-shadow: 0 -2px 10px rgba(255, 177, 86, 0.3); }
-        .card-red .card-indicator { background: var(--danger); box-shadow: 0 -2px 10px rgba(203, 86, 86, 0.3); }
+        .card-blue { 
+          background: linear-gradient(to right, rgba(101, 131, 154, 0.25), var(--surface)); 
+          border-color: rgba(101, 131, 154, 0.4);
+        }
+        .card-green { 
+          background: linear-gradient(to right, rgba(49, 120, 44, 0.3), var(--surface)); 
+          border-color: rgba(49, 120, 44, 0.4);
+        }
+        .card-yellow { 
+          background: linear-gradient(to right, rgba(255, 177, 86, 0.25), var(--surface)); 
+          border-color: rgba(255, 177, 86, 0.4);
+        }
+        .card-red { 
+          background: linear-gradient(to right, rgba(203, 86, 86, 0.25), var(--surface)); 
+          border-color: rgba(203, 86, 86, 0.4);
+        }
         
         .btn-simulation:hover {
           background: rgba(101, 131, 154, 0.25);

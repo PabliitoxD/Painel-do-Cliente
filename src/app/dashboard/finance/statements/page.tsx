@@ -244,9 +244,28 @@ export default function StatementsPage() {
                     </span>
                   </td>
                   <td>
-                    <button className="btn-ghost" style={{ padding: '0.25rem' }}>
-                      <ArrowRightLeft size={16} />
-                    </button>
+                    {item.type === 'Venda' ? (
+                      <button 
+                        className="btn-ghost" 
+                        style={{ 
+                          padding: '0.4rem', 
+                          borderRadius: '8px',
+                          opacity: metrics.balance <= 0 ? 0.5 : 1, 
+                          cursor: metrics.balance <= 0 ? 'not-allowed' : 'pointer' 
+                        }}
+                        title={metrics.balance <= 0 ? "Saldo insuficiente para estorno" : "Solicitar Estorno/Reembolso"}
+                        disabled={metrics.balance <= 0}
+                        onClick={() => {
+                          if (metrics.balance > 0) {
+                            alert(`Estorno solicitado para ${item.description}`);
+                          }
+                        }}
+                      >
+                        <ArrowRightLeft size={16} />
+                      </button>
+                    ) : (
+                      <span className="text-muted" style={{ fontSize: '0.8rem' }}>-</span>
+                    )}
                   </td>
                 </tr>
               )) : (

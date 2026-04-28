@@ -230,7 +230,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Rodapé do Menu com Logo */}
       <div className="sidebar-footer">
         <div className="footer-logo">
-          <img src="https://tronnus.com/wp-content/uploads/2026/01/tronnus-png-001.png" alt="TRONNUS" style={{ width: '120px', filter: 'brightness(0) invert(1)', opacity: 0.8 }} />
+          <img src="https://tronnus.com/wp-content/uploads/2026/01/tronnus-png-001.png" alt="TRONNUS" style={{ width: '180px', filter: 'brightness(0) invert(1) drop-shadow(0 4px 12px rgba(101, 131, 154, 0.6))', opacity: 0.9 }} />
         </div>
       </div>
     </aside>
