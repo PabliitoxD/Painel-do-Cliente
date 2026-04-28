@@ -36,11 +36,11 @@ const chartData = [
 ];
 
 const transactions = [
-  { id: '#YXFQVFTFFX', client: 'Maria Rosa Soares', date: '12/09/25 15:33', value: 'R$ 97,00', status: 'aprovada' },
-  { id: '#45G53571E', client: 'Hugo Costa', date: '12/09/25 14:57', value: 'R$ 55,90', status: 'aprovada' },
-  { id: '#YXFQVFTFFX', client: 'Teresa Cristina Nunes', date: '12/09/25 13:11', value: 'R$ 97,00', status: 'aguardando' },
-  { id: '#45G53571E', client: 'Olivia Schulz', date: '12/09/25 10:23', value: 'R$ 497,00', status: 'recusada' },
-  { id: '#45G53571E', client: 'Selina Fonseca', date: '12/09/25 07:13', value: 'R$ 97,00', status: 'aprovada' },
+  { id: '#YXFQVFTFFX', client: 'Maria Rosa Soares', date: '12/09/25 15:33', value: 'R$ 97,00', status: 'aprovada', method: 'Pix' },
+  { id: '#45G53571E', client: 'Hugo Costa', date: '12/09/25 14:57', value: 'R$ 55,90', status: 'aprovada', method: 'Cartão' },
+  { id: '#YXFQVFTFFX', client: 'Teresa Cristina Nunes', date: '12/09/25 13:11', value: 'R$ 97,00', status: 'aguardando', method: 'Boleto' },
+  { id: '#45G53571E', client: 'Olivia Schulz', date: '12/09/25 10:23', value: 'R$ 497,00', status: 'recusada', method: 'Cartão' },
+  { id: '#45G53571E', client: 'Selina Fonseca', date: '12/09/25 07:13', value: 'R$ 97,00', status: 'aprovada', method: 'Pix' },
 ];
 
 export default function DashboardHome() {
@@ -61,7 +61,7 @@ export default function DashboardHome() {
             <h1>Bem-vindo de volta, {user?.name.split(' ')[0] || 'Produtor'}!</h1>
           </div>
           <div className="welcome-logo">
-            <img src="https://tronnus.com/wp-content/uploads/2026/01/tronnus-png-001.png" alt="TRONNUS" style={{ width: '100px', filter: 'brightness(0) invert(1)', opacity: 0.6 }} />
+            <img src="https://tronnus.com/wp-content/uploads/2026/01/tronnus-png-001.png" alt="TRONNUS" style={{ width: '160px', filter: 'brightness(0) invert(1) drop-shadow(0 4px 12px rgba(101, 131, 154, 0.5))', opacity: 0.8 }} />
           </div>
         </div>
 
@@ -116,7 +116,11 @@ export default function DashboardHome() {
 
           <div className="stat-card">
             <div className="stat-top">
-              <span className="stat-title">Vendas no {selectedPaymentMethod}</span>
+              <span className="stat-title">
+                {selectedPaymentMethod === 'Recorrência' 
+                  ? 'Vendas na Recorrência' 
+                  : `Vendas no ${selectedPaymentMethod}`}
+              </span>
               <div className="stat-icon-wrapper"><TrendingUp size={24} /></div>
             </div>
             <div className="stat-value">R$ 301.234,55</div>
@@ -188,7 +192,10 @@ export default function DashboardHome() {
                     <td className="id-text">{t.id}</td>
                     <td>{t.client}</td>
                     <td>{t.date}</td>
-                    <td className="valor-text">{t.value}</td>
+                    <td>
+                      <div className="valor-text">{t.value}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>{t.method}</div>
+                    </td>
                     <td>
                       <span className={`status-pill ${t.status}`}>
                         {t.status.charAt(0).toUpperCase() + t.status.slice(1)}
