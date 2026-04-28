@@ -113,6 +113,20 @@ export default function WithdrawalRequestsPage() {
           color: var(--text-muted);
           font-size: 0.9rem;
         }
+        @media (max-width: 768px) {
+          .stats-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+          }
+          .page-header button {
+            width: 100%;
+          }
+        }
       `}</style>
     </DashboardLayout>
   );

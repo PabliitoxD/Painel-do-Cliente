@@ -39,7 +39,7 @@ export function SalesPageTemplate({ title, description, children }: SalesPageTem
         {/* Barra de Filtros (Data e Produto) */}
         <div className="table-filters card" style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', padding: '1rem' }}>
           {/* Busca por texto */}
-          <div className="search-box" style={{ flex: 1, background: 'var(--background)', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 1rem', borderRadius: '10px' }}>
+          <div className="search-box filter-mobile-1" style={{ flex: 1, background: 'var(--background)', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 1rem', borderRadius: '10px' }}>
             <Search size={18} className="text-muted" />
             <input 
               type="text" 
@@ -49,17 +49,17 @@ export function SalesPageTemplate({ title, description, children }: SalesPageTem
           </div>
           
           {/* Filtro de Data */}
-          <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--border)' }}>
+          <button className="btn-ghost filter-mobile-2" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--border)' }}>
             <Calendar size={18} /> Mês Atual <ChevronDown size={14} />
           </button>
 
           {/* Filtro de Produto */}
-          <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--border)' }}>
+          <button className="btn-ghost filter-mobile-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--border)' }}>
             <Package size={18} /> Todos os Produtos <ChevronDown size={14} />
           </button>
 
           {/* Mais Filtros */}
-          <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--border)' }}>
+          <button className="btn-ghost filter-mobile-4" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--border)' }}>
             <Filter size={18} /> Filtros
           </button>
         </div>
@@ -78,12 +78,21 @@ export function SalesPageTemplate({ title, description, children }: SalesPageTem
             align-items: stretch !important;
             gap: 0.75rem !important;
           }
+          .filter-mobile-1 { order: 1; }
+          .filter-mobile-2 { order: 2; }
+          .filter-mobile-3 { order: 3; }
+          .filter-mobile-4 { order: 4; }
+          
           .page-header {
             flex-direction: column;
             align-items: flex-start !important;
-            gap: 1rem;
+            gap: 1.5rem;
           }
-          .btn-primary {
+          .page-header > div:first-child {
+            order: 1;
+          }
+          .page-header .btn-primary {
+            order: 2;
             width: 100%;
           }
         }
