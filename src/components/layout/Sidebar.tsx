@@ -27,6 +27,7 @@ const NAV_ITEMS = [
     icon: Wallet,
     subItems: [
       { label: 'Extratos', href: '/dashboard/finance/statements' },
+      { label: 'Recebíveis', href: '/dashboard/finance/receivables' },
       { 
         label: 'Saques', 
         href: '/dashboard/finance/withdrawals',
@@ -35,7 +36,6 @@ const NAV_ITEMS = [
           { label: 'Solicitações de saque', href: '/dashboard/finance/withdrawals/requests' },
         ]
       },
-      { label: 'Recebíveis', href: '/dashboard/finance/receivables' },
     ]
   },
   { 

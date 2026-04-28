@@ -22,17 +22,21 @@ export default function WithdrawalRequestsPage() {
             <h1>Solicitações de Saque</h1>
             <p className="text-muted">Gerencie seus pedidos de resgate em aberto</p>
           </div>
-          <button className="btn-primary">
-            <ArrowUpCircle size={18} /> Novo Saque
-          </button>
         </div>
 
         <div className="stats-grid" style={{ gridTemplateColumns: '1fr 2fr', gap: '2rem', marginBottom: '2rem' }}>
-          <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--surface) 0%, #1a2932 100%)' }}>
-            <span className="stat-title">Disponível para Saque</span>
-            <div className="stat-value" style={{ fontSize: '2.5rem' }}>R$ 8.432,10</div>
-            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-              <Info size={14} /> Mínimo para saque: R$ 50,00
+          <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--surface) 0%, #1a2932 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <span className="stat-title">Disponível para Saque</span>
+              <div className="stat-value" style={{ fontSize: '2.5rem' }}>R$ 8.432,10</div>
+            </div>
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                <Info size={14} /> Mínimo: R$ 50,00
+              </div>
+              <button className="btn-primary" style={{ padding: '0.6rem 1.2rem', fontSize: '0.9rem' }}>
+                <ArrowUpCircle size={16} /> Novo Saque
+              </button>
             </div>
           </div>
           

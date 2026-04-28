@@ -180,20 +180,20 @@ export default function ReceivablesPage() {
           display: none; /* Hide the old bottom indicator as we now use gradient backgrounds */
         }
         .card-blue { 
-          background: linear-gradient(to right, rgba(101, 131, 154, 0.25), var(--surface)); 
-          border-color: rgba(101, 131, 154, 0.4);
+          background: linear-gradient(to right, rgba(101, 131, 154, 0.45), var(--surface)); 
+          border-color: rgba(101, 131, 154, 0.6);
         }
         .card-green { 
-          background: linear-gradient(to right, rgba(49, 120, 44, 0.3), var(--surface)); 
-          border-color: rgba(49, 120, 44, 0.4);
+          background: linear-gradient(to right, rgba(49, 120, 44, 0.5), var(--surface)); 
+          border-color: rgba(49, 120, 44, 0.6);
         }
         .card-yellow { 
-          background: linear-gradient(to right, rgba(255, 177, 86, 0.25), var(--surface)); 
-          border-color: rgba(255, 177, 86, 0.4);
+          background: linear-gradient(to right, rgba(255, 177, 86, 0.45), var(--surface)); 
+          border-color: rgba(255, 177, 86, 0.6);
         }
         .card-red { 
-          background: linear-gradient(to right, rgba(203, 86, 86, 0.25), var(--surface)); 
-          border-color: rgba(203, 86, 86, 0.4);
+          background: linear-gradient(to right, rgba(203, 86, 86, 0.45), var(--surface)); 
+          border-color: rgba(203, 86, 86, 0.6);
         }
         
         .btn-simulation:hover {
