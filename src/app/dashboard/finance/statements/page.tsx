@@ -285,11 +285,19 @@ export default function StatementsPage() {
         }
       `}</style>
       <style jsx>{`
-        @media (max-width: 992px) {
-          .filter-bar {
+        @media (max-width: 768px) {
+          .table-filters {
             flex-direction: column;
             align-items: stretch !important;
             gap: 0.75rem !important;
+          }
+          .page-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 1rem;
+          }
+          .page-header .btn-primary {
+            width: 100%;
           }
         }
       `}</style>

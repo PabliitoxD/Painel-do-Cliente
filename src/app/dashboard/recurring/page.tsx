@@ -251,6 +251,14 @@ export default function RecurringPage() {
             align-items: stretch !important;
             gap: 0.75rem !important;
           }
+          .page-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 1rem;
+          }
+          .page-header .btn-primary {
+            width: 100%;
+          }
         }
       `}</style>
     </DashboardLayout>

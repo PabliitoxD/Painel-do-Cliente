@@ -121,6 +121,20 @@ export default function WithdrawalHistoryPage() {
           color: var(--text-muted);
           font-size: 0.9rem;
         }
+        @media (max-width: 768px) {
+          .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+          }
+          .page-header > div:last-child {
+            width: 100%;
+            flex-direction: column;
+          }
+          .page-header button {
+            width: 100%;
+          }
+        }
       `}</style>
     </DashboardLayout>
   );

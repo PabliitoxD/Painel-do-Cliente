@@ -27,3 +27,11 @@ Sempre adicione comentários explicativos no código, especialmente em component
 - Use comentários JSDoc para componentes e funções principais.
 - Explique o "porquê" de certas decisões de design ou lógica.
 - Mantenha os comentários em português, conforme o padrão do projeto.
+
+## 6. Padrão de Nomenclatura de Branches
+Sempre que uma nova branch for criada, ela deve seguir estritamente o padrão identificando o tipo (`fix` ou `feature`), seguido por um número sequencial de 4 dígitos e o nome em inglês da funcionalidade.
+**Formato:** `<tipo>/<numero_sequencial>/<nome-em-ingles>`
+**Exemplos:**
+- `feature/0001/sales`
+- `fix/0002/login`
+- `feature/0004/team-management`
