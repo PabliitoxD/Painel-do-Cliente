@@ -125,12 +125,20 @@
   color: var(--text-dim);
   border: 1px solid var(--border);
   transition: all 0.2s;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
 }
 
 .chip.active {
   background: var(--primary);
   color: white;
   border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(101, 131, 154, 0.4);
+  font-weight: 600;
 }
 
 .stat-icon-wrapper {

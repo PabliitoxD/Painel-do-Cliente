@@ -116,7 +116,11 @@ export default function DashboardHome() {
 
           <div className="stat-card">
             <div className="stat-top">
-              <span className="stat-title">Vendas no {selectedPaymentMethod}</span>
+              <span className="stat-title">
+                {selectedPaymentMethod === 'Recorrência' 
+                  ? 'Vendas na Recorrência' 
+                  : `Vendas no ${selectedPaymentMethod}`}
+              </span>
               <div className="stat-icon-wrapper"><TrendingUp size={24} /></div>
             </div>
             <div className="stat-value">R$ 301.234,55</div>
