@@ -51,7 +51,14 @@ const NAV_ITEMS = [
   },
   { label: 'Recorrência', href: '/dashboard/recurring', icon: RefreshCcw },
   { label: 'Recebedores', href: '/dashboard/receivers', icon: Users },
-  { label: 'Minha equipe', href: '/dashboard/team', icon: Users2 },
+  { 
+    label: 'Minha equipe', 
+    icon: Users2,
+    subItems: [
+      { label: 'Colaborador', href: '/dashboard/team/collaborators' },
+      { label: 'Perfil', href: '/dashboard/team/profiles' },
+    ]
+  },
   { label: 'Configurações', href: '/dashboard/settings', icon: Settings },
   { label: 'Suporte', href: '/dashboard/support', icon: HelpCircle },
 ];
