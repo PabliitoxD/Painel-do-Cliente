@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import './login.css';
+import '@/styles/login.css';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -79,6 +79,15 @@ export default function LoginPage() {
             {isLoading ? 'Entrando...' : 'Entrar no Painel'}
           </button>
         </form>
+
+        <div className="login-divider">
+          <span>OU</span>
+        </div>
+
+        <button type="button" className="btn-secondary oneid-btn" onClick={() => alert('Integração com OneID em breve!')}>
+          <img src="https://app.oneid.com.br/favicon.png" alt="OneID" className="oneid-logo" />
+          Entrar com OneID
+        </button>
 
         <div className="login-footer">
           <span>Ainda não é um parceiro?</span>

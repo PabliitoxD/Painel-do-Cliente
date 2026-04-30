@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
-import './Layout.css';
-import '../../app/dashboard/components.css';
+import '@/styles/layout.css';
+import '@/styles/components.css';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
