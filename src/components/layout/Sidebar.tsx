@@ -3,77 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Wallet, 
-  ShoppingBag, 
-  RefreshCcw, 
-  Users, 
-  Users2, 
-  Settings, 
-  HelpCircle,
-  Search,
-  ChevronDown
-} from 'lucide-react';
-
-/**
- * Definição dos itens de navegação da barra lateral.
- * Suporta sub-itens e sub-itens aninhados (até 3 níveis).
- */
-const NAV_ITEMS = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { 
-    label: 'Financeiro', 
-    icon: Wallet,
-    subItems: [
-      { label: 'Extratos', href: '/dashboard/finance/statements' },
-      { label: 'Recebíveis', href: '/dashboard/finance/receivables' },
-      { 
-        label: 'Saques', 
-        href: '/dashboard/finance/withdrawals',
-        subItems: [
-          { label: 'Histórico de saque', href: '/dashboard/finance/withdrawals/history' },
-          { label: 'Solicitações de saque', href: '/dashboard/finance/withdrawals/requests' },
-        ]
-      },
-    ]
-  },
-  { 
-    label: 'Vendas', 
-    icon: ShoppingBag,
-    subItems: [
-      { label: 'Aprovadas', href: '/dashboard/sales/approved' },
-      { label: 'Não Concluídas', href: '/dashboard/sales/not-completed' },
-      { label: 'Aguardando Pagamento', href: '/dashboard/sales/waiting' },
-      { label: 'Estornos/Reembolsos', href: '/dashboard/sales/reversals' },
-      { label: 'Chargebacks', href: '/dashboard/sales/chargebacks' },
-    ]
-  },
-  { label: 'Recorrência', href: '/dashboard/recurring', icon: RefreshCcw },
-  { label: 'Recebedores', href: '/dashboard/receivers', icon: Users },
-  { 
-    label: 'Minha equipe', 
-    icon: Users2,
-    subItems: [
-      { label: 'Colaborador', href: '/dashboard/team/collaborators' },
-      { label: 'Perfil', href: '/dashboard/team/profiles' },
-    ]
-  },
-  { 
-    label: 'Configurações', 
-    icon: Settings,
-    subItems: [
-      { label: 'Minha Conta', href: '/dashboard/settings/account' },
-      { label: 'Meu Plano', href: '/dashboard/settings/plan' },
-      { label: 'Webhooks', href: '/dashboard/settings/webhooks' },
-      { label: 'Integração via API', href: '/dashboard/settings/api' }
-    ]
-  },
-  { label: 'Suporte', href: '/dashboard/support', icon: HelpCircle },
-];
+import { Search, ChevronDown, X } from 'lucide-react';
+import { NAV_ITEMS } from '@/config/navigation';
 
 import { useAuth } from '@/context/AuthContext';
-import { X } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -181,7 +114,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               {/* Renderização de Submenus (Nível 2) */}
               {hasSubItems && isExpanded && (
                 <div className="sidebar-subnav">
-                  {item.subItems.map((sub) => {
+                  {item.subItems?.map((sub) => {
                     const subHasNested = sub.subItems && sub.subItems.length > 0;
                     const subIsActive = pathname === sub.href || (subHasNested && pathname.startsWith(sub.href || ''));
                     const subIsExpanded = openSubMenu === sub.label || (openSubMenu === null && subIsActive);

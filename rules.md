@@ -35,3 +35,8 @@ Sempre que uma nova branch for criada, ela deve seguir estritamente o padrão id
 - `feature/0001/sales`
 - `fix/0002/login`
 - `feature/0004/team-management`
+
+## 7. Estrutura de Rotas (Route Groups)
+Sempre que uma nova tela relacionada ao painel de controle (telas privadas que possuem Sidebar e Topbar) for criada, ela deve ser obrigatoriamente colocada dentro da pasta `src/app/(panel)/`. 
+- Isso garante que os módulos (ex: `/finance`, `/sales`, `/settings`) fiquem organizados e não usem prefixos longos (como `/dashboard/finance`).
+- Rotas públicas (como `/login` ou a `page.tsx` raiz) devem permanecer na raiz de `src/app/`.

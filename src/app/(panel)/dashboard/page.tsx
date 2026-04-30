@@ -23,7 +23,7 @@ import {
 } from 'recharts';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
-import './dashboard.css';
+import '@/styles/dashboard.css';
 
 const chartData = [
   { name: 'Seg', val: 15000 },
