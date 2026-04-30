@@ -59,7 +59,16 @@ const NAV_ITEMS = [
       { label: 'Perfil', href: '/dashboard/team/profiles' },
     ]
   },
-  { label: 'Configurações', href: '/dashboard/settings', icon: Settings },
+  { 
+    label: 'Configurações', 
+    icon: Settings,
+    subItems: [
+      { label: 'Minha Conta', href: '/dashboard/settings/account' },
+      { label: 'Meu Plano', href: '/dashboard/settings/plan' },
+      { label: 'Webhooks', href: '/dashboard/settings/webhooks' },
+      { label: 'Integração via API', href: '/dashboard/settings/api' }
+    ]
+  },
   { label: 'Suporte', href: '/dashboard/support', icon: HelpCircle },
 ];
 
