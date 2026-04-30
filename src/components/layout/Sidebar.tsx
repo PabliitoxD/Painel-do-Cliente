@@ -147,11 +147,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         {/* Renderização de Submenus Aninhados (Nível 3) */}
                         {subHasNested && subIsExpanded && (
                           <div className="sidebar-sub-subnav">
-                            {sub.subItems.map((nested) => (
-                              <Link 
-                                key={nested.label}
-                                href={nested.href}
-                                onClick={onClose}
+                            {sub.subItems?.map((nested) => (
+                                <Link 
+                                  key={nested.label}
+                                  href={nested.href || '#'}
+                                  onClick={onClose}
                                 className={`sidebar-sub-sublink ${pathname === nested.href ? 'active' : ''}`}
                               >
                                 {nested.label}
