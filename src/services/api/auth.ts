@@ -11,7 +11,24 @@ export interface AuthResponse {
   user: any; // Type to be refined
 }
 
+export interface LoginEmailPayload {
+  email: string;
+  password?: string;
+}
+
 export const authService = {
+  /**
+   * Login using standard Email and Password
+   */
+  loginEmail: (payload: LoginEmailPayload) => {
+    // Assuming standard /login or /authentication endpoint for email/password
+    // Adapt path if necessary when the backend is finalized
+    return fetchApi<AuthResponse>('/authentication', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
   /**
    * Login using OneID authentication
    */

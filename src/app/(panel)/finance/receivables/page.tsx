@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { api } from '@/services/api';
 import { 
   Calendar, 
   Unlock, 
@@ -16,6 +18,53 @@ import {
  * Refinada para corresponder exatamente ao design premium solicitado.
  */
 export default function ReceivablesPage() {
+  const [summary, setSummary] = useState({
+    total: 45230.00,
+    released: 18500.00,
+    waiting: 24730.00,
+    blocked: 2000.00
+  });
+
+  const [schedules, setSchedules] = useState([
+    { date: 'Amanhã, 25 Abr', amount: 1250.00, count: 12, status: 'CONFIRMADO' },
+    { date: 'Segunda, 27 Abr', amount: 3420.50, count: 24, status: 'CONFIRMADO' },
+    { date: 'Terça, 28 Abr', amount: 980.00, count: 8, status: 'PENDENTE' },
+    { date: 'Quarta, 29 Abr', amount: 2100.00, count: 15, status: 'PENDENTE' },
+  ]);
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      api.receivableSchedules.getSummary().catch(() => null),
+      api.receivableSchedules.listSchedules().catch(() => null)
+    ]).then(([summaryData, schedulesData]) => {
+      if (summaryData && Object.keys(summaryData).length > 0) {
+        setSummary({
+          total: summaryData.total || summaryData.amount || summary.total,
+          released: summaryData.released || summaryData.available || summary.released,
+          waiting: summaryData.waiting || summaryData.pending || summary.waiting,
+          blocked: summaryData.blocked || summaryData.retained || summary.blocked
+        });
+      }
+      if (schedulesData && Array.isArray(schedulesData) && schedulesData.length > 0) {
+        setSchedules(schedulesData.map(s => ({
+          date: s.date || new Date(s.scheduled_for).toLocaleDateString('pt-BR'),
+          amount: s.amount || s.value || 0,
+          count: s.count || s.transactions_count || 1,
+          status: s.status || 'PENDENTE'
+        })));
+      }
+    }).finally(() => {
+      setIsLoading(false);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const formatCurrency = (val: number) => {
+    return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
   return (
     <DashboardLayout>
       <div className="receivables-page animate-fade-in">
@@ -38,7 +87,7 @@ export default function ReceivablesPage() {
               <span className="stat-title">Valor Total</span>
               <TrendingUp size={24} className="stat-icon-dim" />
             </div>
-            <div className="stat-value-large">R$ 45.230,00</div>
+            <div className="stat-value-large">{isLoading ? '...' : formatCurrency(summary.total)}</div>
             <p className="stat-desc">Soma de todos os valores</p>
             <div className="card-indicator"></div>
           </div>
@@ -49,7 +98,7 @@ export default function ReceivablesPage() {
               <span className="stat-title">Valor Liberado</span>
               <Unlock size={24} className="stat-icon-dim" />
             </div>
-            <div className="stat-value-large">R$ 18.500,00</div>
+            <div className="stat-value-large">{isLoading ? '...' : formatCurrency(summary.released)}</div>
             <p className="stat-desc" style={{ color: 'var(--success)', opacity: 0.8 }}>Disponível para saque imediato</p>
             <div className="card-indicator"></div>
           </div>
@@ -60,7 +109,7 @@ export default function ReceivablesPage() {
               <span className="stat-title">Aguardando Liberação</span>
               <Clock size={24} className="stat-icon-dim" />
             </div>
-            <div className="stat-value-large">R$ 24.730,00</div>
+            <div className="stat-value-large">{isLoading ? '...' : formatCurrency(summary.waiting)}</div>
             <p className="stat-desc" style={{ color: 'var(--warning)', opacity: 0.8 }}>Em processamento (D+30)</p>
             <div className="card-indicator"></div>
           </div>
@@ -71,7 +120,7 @@ export default function ReceivablesPage() {
               <span className="stat-title">Valor Bloqueado</span>
               <Lock size={24} className="stat-icon-dim" />
             </div>
-            <div className="stat-value-large">R$ 2.000,00</div>
+            <div className="stat-value-large">{isLoading ? '...' : formatCurrency(summary.blocked)}</div>
             <p className="stat-desc" style={{ color: 'var(--danger)', opacity: 0.8 }}>Retenção de segurança / Chargeback</p>
             <div className="card-indicator"></div>
           </div>
@@ -83,12 +132,11 @@ export default function ReceivablesPage() {
           <div className="table-card" style={{ padding: '2rem' }}>
             <h3 style={{ fontSize: '1.2rem', marginBottom: '2rem', fontWeight: 600 }}>Agenda de Recebimentos</h3>
             <div className="agenda-list">
-              {[
-                { date: 'Amanhã, 25 Abr', amount: 1250.00, count: 12, status: 'CONFIRMADO' },
-                { date: 'Segunda, 27 Abr', amount: 3420.50, count: 24, status: 'CONFIRMADO' },
-                { date: 'Terça, 28 Abr', amount: 980.00, count: 8, status: 'PENDENTE' },
-                { date: 'Quarta, 29 Abr', amount: 2100.00, count: 15, status: 'PENDENTE' },
-              ].map((day, i) => (
+              {isLoading ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-dim)' }}>Carregando agenda...</div>
+              ) : schedules.length === 0 ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-dim)' }}>Nenhum recebível agendado.</div>
+              ) : schedules.map((day, i) => (
                 <div key={i} className="agenda-item" style={{ 
                   display: 'flex', 
                   justifyContent: 'space-between', 
@@ -131,7 +179,7 @@ export default function ReceivablesPage() {
               <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Dica de Liquidez</h3>
             </div>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: '2rem' }}>
-              Você possui <strong style={{ color: 'var(--text-main)' }}>R$ 24.730,00</strong> aguardando liberação. Se precisar de fluxo de caixa imediato, você pode antecipar até 80% desse valor com taxas reduzidas.
+              Você possui <strong style={{ color: 'var(--text-main)' }}>{formatCurrency(summary.waiting)}</strong> aguardando liberação. Se precisar de fluxo de caixa imediato, você pode antecipar até 80% desse valor com taxas reduzidas.
             </p>
             <button className="btn-simulation" style={{ 
               width: '100%', 

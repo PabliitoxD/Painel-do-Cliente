@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   DollarSign, 
   Clock, 
@@ -35,19 +35,31 @@ const chartData = [
   { name: 'Dom', val: 38000 },
 ];
 
-const transactions = [
-  { id: '#YXFQVFTFFX', client: 'Maria Rosa Soares', date: '12/09/25 15:33', value: 'R$ 97,00', status: 'aprovada', method: 'Pix' },
-  { id: '#45G53571E', client: 'Hugo Costa', date: '12/09/25 14:57', value: 'R$ 55,90', status: 'aprovada', method: 'Cartão' },
-  { id: '#YXFQVFTFFX', client: 'Teresa Cristina Nunes', date: '12/09/25 13:11', value: 'R$ 97,00', status: 'aguardando', method: 'Boleto' },
-  { id: '#45G53571E', client: 'Olivia Schulz', date: '12/09/25 10:23', value: 'R$ 497,00', status: 'recusada', method: 'Cartão' },
-  { id: '#45G53571E', client: 'Selina Fonseca', date: '12/09/25 07:13', value: 'R$ 97,00', status: 'aprovada', method: 'Pix' },
-];
-
 export default function DashboardHome() {
   const { user } = useAuth();
   const [selectedFilter, setSelectedFilter] = useState('Últimos 7 dias');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Pix');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    import('@/services/api').then(({ api }) => {
+      api.transactions.listOrders()
+        .then(res => {
+          // Assuming the API returns an array or an object with data property
+          const data = res.data || res || [];
+          setTransactions(Array.isArray(data) ? data.slice(0, 5) : []);
+        })
+        .catch(err => {
+          console.error("Erro ao buscar transações:", err);
+          // Fallback to empty or mocked if needed, keeping empty for now
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    });
+  }, []);
 
   const filters = ['Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Personalizado'];
   const paymentMethods = ['Pix', 'Cartão', 'Boleto', 'Recorrência'];
@@ -187,18 +199,26 @@ export default function DashboardHome() {
                 </tr>
               </thead>
               <tbody>
-                {transactions.map((t, i) => (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Carregando transações...</td>
+                  </tr>
+                ) : transactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Nenhuma transação recente encontrada.</td>
+                  </tr>
+                ) : transactions.map((t, i) => (
                   <tr key={i}>
-                    <td className="id-text">{t.id}</td>
-                    <td>{t.client}</td>
-                    <td>{t.date}</td>
+                    <td className="id-text">{t.id || t.token || 'N/A'}</td>
+                    <td>{t.client || t.customer_name || 'N/A'}</td>
+                    <td>{t.date || new Date(t.created_at).toLocaleString() || 'N/A'}</td>
                     <td>
-                      <div className="valor-text">{t.value}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>{t.method}</div>
+                      <div className="valor-text">{t.value || `R$ ${(t.amount || 0).toFixed(2)}`}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>{t.method || t.payment_method || 'N/A'}</div>
                     </td>
                     <td>
-                      <span className={`status-pill ${t.status}`}>
-                        {t.status.charAt(0).toUpperCase() + t.status.slice(1)}
+                      <span className={`status-pill ${t.status?.toLowerCase() || 'aprovada'}`}>
+                        {(t.status || 'Aprovada').charAt(0).toUpperCase() + (t.status || 'aprovada').slice(1).toLowerCase()}
                       </span>
                     </td>
                     <td><MoreHorizontal size={16} className="text-muted" /></td>

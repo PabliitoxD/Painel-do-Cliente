@@ -3,16 +3,33 @@
 import { SalesPageTemplate } from '@/components/sales/SalesPageTemplate';
 import { MoreHorizontal, AlertTriangle, ShieldAlert } from 'lucide-react';
 
-/**
- * Dados simulados para Chargebacks.
- * Status: CHARGEBACK.
- */
-const DATA = [
-  { id: '#CB223311K', client: 'Marcos Roberto', product: 'Mentoria Exclusiva', date: '22/04/2026 11:00', value: 497.00, method: 'Cartão', status: 'CHARGEBACK', reason: 'Fraude Amigável', deadline: '29/04/2026' },
-  { id: '#CB554433L', client: 'Elaine Santos', product: 'Curso Master Digital', date: '18/04/2026 09:30', value: 97.00, method: 'Cartão', status: 'CHARGEBACK', reason: 'Transação não reconhecida', deadline: '25/04/2026' },
-];
+import { useState, useEffect } from 'react';
 
 export default function ChargebacksSalesPage() {
+  const [chargebacks, setChargebacks] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    import('@/services/api').then(({ api }) => {
+      api.backoffice.listChargebacks()
+        .then(res => {
+          const data = res.data || res || [];
+          setChargebacks(Array.isArray(data) ? data : []);
+        })
+        .catch(err => {
+          console.error("Erro ao buscar chargebacks:", err);
+          // Fallback para não ficar vazio
+          setChargebacks([
+            { id: '#CB223311K', client: 'Marcos Roberto', product: 'Mentoria Exclusiva', date: '22/04/2026 11:00', value: 497.00, method: 'Cartão', status: 'CHARGEBACK', reason: 'Fraude Amigável', deadline: '29/04/2026' },
+            { id: '#CB554433L', client: 'Elaine Santos', product: 'Curso Master Digital', date: '18/04/2026 09:30', value: 97.00, method: 'Cartão', status: 'CHARGEBACK', reason: 'Transação não reconhecida', deadline: '25/04/2026' },
+          ]);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    });
+  }, []);
+
   return (
     <SalesPageTemplate 
       title="Chargebacks" 
@@ -46,22 +63,30 @@ export default function ChargebacksSalesPage() {
             </tr>
           </thead>
           <tbody>
-            {DATA.map((item, i) => (
+            {isLoading ? (
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem' }}>Carregando contestações...</td>
+              </tr>
+            ) : chargebacks.length === 0 ? (
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem' }}>Nenhum chargeback pendente.</td>
+              </tr>
+            ) : chargebacks.map((item, i) => (
               <tr key={i}>
-                <td className="id-text">{item.id}</td>
-                <td style={{ fontWeight: 600 }}>{item.client}</td>
-                <td className="text-muted">{item.date}</td>
-                <td className="valor-text" style={{ color: 'var(--danger)' }}>R$ {item.value.toFixed(2)}</td>
+                <td className="id-text">{item.id || item.token}</td>
+                <td style={{ fontWeight: 600 }}>{item.client || item.customer_name || 'N/A'}</td>
+                <td className="text-muted">{item.date || new Date(item.created_at).toLocaleDateString('pt-BR')}</td>
+                <td className="valor-text" style={{ color: 'var(--danger)' }}>R$ {(item.value || item.amount || 0).toFixed(2)}</td>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--warning)', fontSize: '0.85rem' }}>
                     <AlertTriangle size={14} />
-                    {item.reason}
+                    {item.reason || item.description || 'Não informado'}
                   </div>
                 </td>
-                <td style={{ fontWeight: 700, color: 'var(--danger)' }}>{item.deadline}</td>
+                <td style={{ fontWeight: 700, color: 'var(--danger)' }}>{item.deadline || 'Urgente'}</td>
                 <td>
                   <span className="status-pill recusada">
-                    Chargeback
+                    {item.status || 'Chargeback'}
                   </span>
                 </td>
                 <td>

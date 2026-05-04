@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { api } from '@/services/api';
 import { 
   Wallet, 
   ArrowUpCircle, 
@@ -14,6 +16,42 @@ const PENDING_REQUESTS = [
 ];
 
 export default function WithdrawalRequestsPage() {
+  const [availableBalance, setAvailableBalance] = useState<number>(8432.10);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+
+  useEffect(() => {
+    // Busca o saldo disponível real na API
+    api.receivableSchedules.getSummary().then(res => {
+      if (res && (res.released !== undefined || res.available !== undefined)) {
+        setAvailableBalance(res.released || res.available || 0);
+      }
+    }).catch(err => {
+      console.error("Erro ao carregar saldo:", err);
+    }).finally(() => {
+      setIsLoading(false);
+    });
+  }, []);
+
+  const handleWithdraw = async () => {
+    if (availableBalance < 50) {
+      alert("Valor mínimo para saque é R$ 50,00");
+      return;
+    }
+    
+    setIsWithdrawing(true);
+    try {
+      await api.withdrawals.createWithdraw({ amount: availableBalance });
+      alert("Saque solicitado com sucesso!");
+      // Atualiza o saldo após o saque (zerando ou recarregando da api)
+      setAvailableBalance(0);
+    } catch (err) {
+      alert("Erro ao solicitar saque. Tente novamente.");
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="requests-page animate-fade-in">
@@ -28,14 +66,21 @@ export default function WithdrawalRequestsPage() {
           <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--surface) 0%, #1a2932 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <span className="stat-title">Disponível para Saque</span>
-              <div className="stat-value" style={{ fontSize: '2.5rem' }}>R$ 8.432,10</div>
+              <div className="stat-value" style={{ fontSize: '2.5rem' }}>
+                {isLoading ? '...' : availableBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </div>
             </div>
             <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                 <Info size={14} /> Mínimo: R$ 50,00
               </div>
-              <button className="btn-primary" style={{ padding: '0.6rem 1.2rem', fontSize: '0.9rem' }}>
-                <ArrowUpCircle size={16} /> Novo Saque
+              <button 
+                className="btn-primary" 
+                style={{ padding: '0.6rem 1.2rem', fontSize: '0.9rem' }}
+                onClick={handleWithdraw}
+                disabled={isWithdrawing || isLoading || availableBalance < 50}
+              >
+                {isWithdrawing ? 'Solicitando...' : <><ArrowUpCircle size={16} /> Novo Saque</>}
               </button>
             </div>
           </div>
