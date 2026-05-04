@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { 
   ArrowUpRight, 
@@ -35,13 +35,36 @@ export default function StatementsPage() {
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [isTimeMenuOpen, setIsTimeMenuOpen] = useState(false);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  
+  const [statementsData, setStatementsData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const timeOptions = ['Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Esse mês', 'Personalizado'];
   const statusOptions = ['Todos', 'aprovado', 'processado', 'estornado', 'bloqueado'];
 
+  useEffect(() => {
+    import('@/services/api').then(({ api }) => {
+      // Usamos listOrders como fallback. Se houver um endpoint específico para extrato,
+      // basta substituir para api.statements.listStatements() no futuro.
+      api.transactions.listOrders()
+        .then(res => {
+          const data = res.data || res || [];
+          setStatementsData(Array.isArray(data) ? data : []);
+        })
+        .catch(err => {
+          console.error("Erro ao buscar extratos:", err);
+          // Fallback visual temporário caso falhe
+          setStatementsData(INITIAL_DATA);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    });
+  }, []);
+
   // Lógica de filtragem
   const filteredData = useMemo(() => {
-    return INITIAL_DATA.filter(item => {
+    return statementsData.filter(item => {
       const itemDate = new Date(item.date);
       const now = new Date();
       
@@ -213,38 +236,44 @@ export default function StatementsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredData.length > 0 ? filteredData.map((item) => (
-                <tr key={item.id}>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-dim)' }}>
+                    Carregando extrato...
+                  </td>
+                </tr>
+              ) : filteredData.length > 0 ? filteredData.map((item) => (
+                <tr key={item.id || Math.random()}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <div style={{ 
                         width: '32px', 
                         height: '32px', 
                         borderRadius: '8px', 
-                        background: item.value > 0 ? 'rgba(49, 120, 44, 0.1)' : 'rgba(203, 86, 86, 0.1)',
+                        background: (item.value || item.amount) > 0 ? 'rgba(49, 120, 44, 0.1)' : 'rgba(203, 86, 86, 0.1)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: item.value > 0 ? 'var(--success)' : 'var(--danger)'
+                        color: (item.value || item.amount) > 0 ? 'var(--success)' : 'var(--danger)'
                       }}>
                         {item.type === 'Venda' ? <ArrowUpRight size={16} /> : 
                          item.type === 'Saque' ? <Wallet size={16} /> : <ArrowDownLeft size={16} />}
                       </div>
-                      <span style={{ fontWeight: 500 }}>{item.type}</span>
+                      <span style={{ fontWeight: 500 }}>{item.type || 'Venda'}</span>
                     </div>
                   </td>
-                  <td className="text-muted">{new Date(item.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-                  <td>{item.description}</td>
-                  <td style={{ fontWeight: 600, color: item.value > 0 ? 'var(--text-main)' : 'var(--danger)' }}>
-                    {formatCurrency(item.value)}
+                  <td className="text-muted">{new Date(item.date || item.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                  <td>{item.description || item.token || 'Transação'}</td>
+                  <td style={{ fontWeight: 600, color: (item.value || item.amount) > 0 ? 'var(--text-main)' : 'var(--danger)' }}>
+                    {formatCurrency(item.value || item.amount || 0)}
                   </td>
                   <td>
-                    <span className={`status-pill ${item.status}`}>
-                      {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                    <span className={`status-pill ${item.status?.toLowerCase() || 'aprovado'}`}>
+                      {(item.status || 'aprovado').charAt(0).toUpperCase() + (item.status || 'aprovado').slice(1).toLowerCase()}
                     </span>
                   </td>
                   <td>
-                    {item.type === 'Venda' ? (
+                    {(item.type || 'Venda') === 'Venda' ? (
                       <button 
                         className="btn-ghost" 
                         style={{ 
@@ -257,7 +286,7 @@ export default function StatementsPage() {
                         disabled={metrics.balance <= 0}
                         onClick={() => {
                           if (metrics.balance > 0) {
-                            alert(`Estorno solicitado para ${item.description}`);
+                            alert(`Estorno solicitado para ${item.description || item.token}`);
                           }
                         }}
                       >

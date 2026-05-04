@@ -1,14 +1,27 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useSearchParams } from 'next/navigation';
 import '@/styles/login.css';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, isLoading } = useAuth();
+  const { login, loginWithOneId, isLoading } = useAuth();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const company_token = searchParams.get('company_token');
+    
+    if (token && company_token) {
+      loginWithOneId(token, company_token).catch(err => {
+        setError(err.message || 'Falha ao logar com OneID');
+      });
+    }
+  }, [searchParams, loginWithOneId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,9 +97,19 @@ export default function LoginPage() {
           <span>OU</span>
         </div>
 
-        <button type="button" className="btn-secondary oneid-btn" onClick={() => alert('Integração com OneID em breve!')}>
+        <button 
+          type="button" 
+          className="btn-secondary oneid-btn" 
+          onClick={() => {
+            // Substitua esta URL pelo endpoint de autorização correto do OneID 
+            // e passe a URL atual como redirect_uri se necessário
+            const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+            window.location.href = `https://app.oneid.com.br/oauth?client_id=SEU_CLIENT_ID&redirect_uri=${encodeURIComponent(currentUrl)}`;
+          }}
+          disabled={isLoading}
+        >
           <img src="https://app.oneid.com.br/favicon.png" alt="OneID" className="oneid-logo" />
-          Entrar com OneID
+          {isLoading ? 'Autenticando...' : 'Entrar com OneID'}
         </button>
 
         <div className="login-footer">

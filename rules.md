@@ -40,3 +40,6 @@ Sempre que uma nova branch for criada, ela deve seguir estritamente o padrão id
 Sempre que uma nova tela relacionada ao painel de controle (telas privadas que possuem Sidebar e Topbar) for criada, ela deve ser obrigatoriamente colocada dentro da pasta `src/app/(panel)/`. 
 - Isso garante que os módulos (ex: `/finance`, `/sales`, `/settings`) fiquem organizados e não usem prefixos longos (como `/dashboard/finance`).
 - Rotas públicas (como `/login` ou a `page.tsx` raiz) devem permanecer na raiz de `src/app/`.
+
+## 8. Verificação de Dados Sensíveis
+Sempre que formos finalizar o dia de trabalho, deve ser feita uma varredura para identificar se qualquer dado sensível (como arquivos .env, chaves de API, senhas ou tokens) foi exposto ou adicionado ao projeto. Caso afirmativo, esses arquivos devem ser adicionados imediatamente ao `.gitignore`, removidos do controle de versão e feito um commit com essas proteções.

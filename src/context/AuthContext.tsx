@@ -3,6 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { api } from '@/services/api';
 
 interface User {
   id: string;
@@ -15,6 +16,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
+  loginWithOneId: (token: string, company_token: string, account_token?: number) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
   theme: 'dark' | 'light';
@@ -30,21 +32,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Check for stored user on mount
-    const storedUser = localStorage.getItem('tronnus_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    
-    const storedTheme = localStorage.getItem('tronnus_theme') as 'dark' | 'light';
-    if (storedTheme) {
-      setTheme(storedTheme);
-      document.documentElement.setAttribute('data-theme', storedTheme);
-    } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-    
-    setIsLoading(false);
+    const initAuth = async () => {
+      const storedTheme = localStorage.getItem('tronnus_theme') as 'dark' | 'light';
+      if (storedTheme) {
+        setTheme(storedTheme);
+        document.documentElement.setAttribute('data-theme', storedTheme);
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+
+      const storedToken = localStorage.getItem('tronnus_token');
+      const storedUser = localStorage.getItem('tronnus_user');
+      
+      if (storedToken) {
+        try {
+          const res = await api.users.me();
+          if (res && res.user) {
+            setUser(res.user);
+            localStorage.setItem('tronnus_user', JSON.stringify(res.user));
+          } else if (storedUser) {
+            setUser(JSON.parse(storedUser));
+          }
+        } catch (error) {
+          console.error("Falha ao validar token:", error);
+          if (storedUser) {
+            setUser(JSON.parse(storedUser));
+          }
+        }
+      } else if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+      
+      setIsLoading(false);
+    };
+
+    initAuth();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -57,11 +79,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    // Mock login logic
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-
+      const response = await api.auth.loginEmail({ email, password });
+      
+      if (response.access_token) {
+        localStorage.setItem('tronnus_token', response.access_token);
+      }
+      
+      const userData: User = response.user || {
+        id: '1',
+        name: 'Usuário',
+        email: email,
+        role: 'PRODUCER',
+        avatar: 'https://ui-avatars.com/api/?name=User&background=1b2932&color=65839a'
+      };
+      
+      setUser(userData);
+      localStorage.setItem('tronnus_user', JSON.stringify(userData));
+      router.push('/dashboard');
+    } catch (err) {
+      console.error('Login error:', err);
+      // Mantendo um fallback seguro por enquanto caso a API ainda não suporte loginEmail
       if (email === 'joao@tronnus.com' && password === '123456') {
         const mockUser: User = {
           id: '1',
@@ -72,10 +110,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         setUser(mockUser);
         localStorage.setItem('tronnus_user', JSON.stringify(mockUser));
+        // Mock token para testar a requisição no dashboard
+        localStorage.setItem('tronnus_token', 'mock_token_123');
         router.push('/dashboard');
       } else {
-        throw new Error('Credenciais inválidas');
+        throw new Error(err instanceof Error ? err.message : 'Credenciais inválidas');
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithOneId = async (token: string, company_token: string, account_token?: number) => {
+    setIsLoading(true);
+    try {
+      const response = await api.auth.loginOneId({ token, company_token, account_token });
+      
+      if (response.access_token) {
+        localStorage.setItem('tronnus_token', response.access_token);
+      }
+      
+      const userData: User = response.user || {
+        id: '1',
+        name: 'Usuário OneID',
+        email: 'oneid@user.com',
+        role: 'PRODUCER',
+        avatar: 'https://ui-avatars.com/api/?name=One+ID&background=1b2932&color=65839a'
+      };
+      
+      setUser(userData);
+      localStorage.setItem('tronnus_user', JSON.stringify(userData));
+      router.push('/dashboard');
+    } catch (err) {
+      console.error('OneID Login error:', err);
+      throw new Error(err instanceof Error ? err.message : 'Falha na autenticação via OneID');
     } finally {
       setIsLoading(false);
     }
@@ -84,11 +152,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('tronnus_user');
+    localStorage.removeItem('tronnus_token');
     router.push('/login');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading, theme, toggleTheme }}>
+    <AuthContext.Provider value={{ user, login, loginWithOneId, logout, isLoading, theme, toggleTheme }}>
       {children}
     </AuthContext.Provider>
   );
