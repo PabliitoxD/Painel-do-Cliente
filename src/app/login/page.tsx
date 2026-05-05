@@ -104,7 +104,7 @@ function LoginContent() {
             // Substitua esta URL pelo endpoint de autorização correto do OneID 
             // e passe a URL atual como redirect_uri se necessário
             const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
-            window.location.href = `https://app.oneid.com.br/oauth?client_id=SEU_CLIENT_ID&redirect_uri=${encodeURIComponent(currentUrl)}`;
+            window.location.href = `https://app.oneid.com.br/oauth/authorize?client_id=SEU_CLIENT_ID&redirect_uri=${encodeURIComponent(currentUrl)}`;
           }}
           disabled={isLoading}
         >
