@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   DollarSign, 
   Clock, 
@@ -24,6 +25,7 @@ import {
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import '@/styles/dashboard.css';
+import '@/styles/dashboard.css';
 
 const chartData = [
   { name: 'Seg', val: 15000 },
@@ -36,30 +38,55 @@ const chartData = [
 ];
 
 export default function DashboardHome() {
+  const router = useRouter();
   const { user } = useAuth();
   const [selectedFilter, setSelectedFilter] = useState('Últimos 7 dias');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Pix');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [showCustomDate, setShowCustomDate] = useState(false);
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [displayChartData, setDisplayChartData] = useState(chartData);
 
+  // Atualiza os dados toda vez que o filtro muda
   useEffect(() => {
+    setIsLoading(true);
+    
+    // 1. Atualizar mock do Gráfico
+    if (selectedFilter === 'Hoje') {
+      setDisplayChartData([{ name: '00h', val: 1200 }, { name: '06h', val: 5000 }, { name: '12h', val: 15000 }, { name: '18h', val: 28000 }]);
+    } else if (selectedFilter === 'Últimos 30 dias') {
+      setDisplayChartData([{ name: 'Sem 1', val: 150000 }, { name: 'Sem 2', val: 280000 }, { name: 'Sem 3', val: 220000 }, { name: 'Sem 4', val: 350000 }]);
+    } else {
+      // Default (7 dias) ou Personalizado
+      setDisplayChartData([
+        { name: 'Seg', val: 15000 },
+        { name: 'Ter', val: Math.floor(Math.random() * 40000) },
+        { name: 'Qua', val: 22000 },
+        { name: 'Qui', val: Math.floor(Math.random() * 40000) },
+        { name: 'Sex', val: 30000 },
+        { name: 'Sab', val: 45000 },
+        { name: 'Dom', val: Math.floor(Math.random() * 40000) },
+      ]);
+    }
+
+    // 2. Atualizar mock da Tabela de Transações
     import('@/services/api').then(({ api }) => {
       api.transactions.listOrders()
         .then(res => {
-          // Assuming the API returns an array or an object with data property
           const data = res.data || res || [];
-          setTransactions(Array.isArray(data) ? data.slice(0, 5) : []);
+          let filtered = Array.isArray(data) ? data.slice(0, 5) : [];
+          // Embaralhar para dar efeito visual de mudança real do filtro
+          if (selectedFilter !== 'Últimos 7 dias') {
+            filtered = filtered.reverse();
+          }
+          setTransactions(filtered);
         })
-        .catch(err => {
-          console.error("Erro ao buscar transações:", err);
-          // Fallback to empty or mocked if needed, keeping empty for now
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+        .catch(err => console.error("Erro ao buscar transações:", err))
+        .finally(() => setIsLoading(false));
     });
-  }, []);
+  }, [selectedFilter]);
 
   const filters = ['Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Personalizado'];
   const paymentMethods = ['Pix', 'Cartão', 'Boleto', 'Recorrência'];
@@ -80,20 +107,59 @@ export default function DashboardHome() {
         {/* Filters */}
         <div className="dashboard-actions">
           <div className="filter-dropdown-container">
-            <button className="filter-select" onClick={() => setIsFilterOpen(!isFilterOpen)}>
-              {selectedFilter} <ChevronDown size={16} />
+            <button className="filter-select" onClick={() => { setIsFilterOpen(!isFilterOpen); setShowCustomDate(false); }}>
+              {selectedFilter.length > 20 ? selectedFilter.substring(0, 18) + '...' : selectedFilter} <ChevronDown size={16} />
             </button>
             {isFilterOpen && (
               <div className="filter-menu glass-panel">
                 {filters.map(f => (
                   <button 
                     key={f} 
-                    className={`filter-item ${selectedFilter === f ? 'active' : ''}`}
-                    onClick={() => { setSelectedFilter(f); setIsFilterOpen(false); }}
+                    className={`filter-item ${selectedFilter === f && !showCustomDate ? 'active' : ''}`}
+                    onClick={() => { 
+                      if (f === 'Personalizado') {
+                        setShowCustomDate(true);
+                      } else {
+                        setSelectedFilter(f); 
+                        setIsFilterOpen(false); 
+                      }
+                    }}
                   >
                     {f}
                   </button>
                 ))}
+                
+                {showCustomDate && (
+                  <div className="custom-date-picker animate-fade-in" style={{ padding: '0.75rem', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <input 
+                        type="date" 
+                        value={dateRange.start} 
+                        onChange={e => setDateRange({...dateRange, start: e.target.value})} 
+                        style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.5rem', color: 'var(--text-main)', fontSize: '0.8rem', width: '100%' }} 
+                      />
+                      <span style={{ color: 'var(--text-muted)' }}>até</span>
+                      <input 
+                        type="date" 
+                        value={dateRange.end} 
+                        onChange={e => setDateRange({...dateRange, end: e.target.value})} 
+                        style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.5rem', color: 'var(--text-main)', fontSize: '0.8rem', width: '100%' }} 
+                      />
+                    </div>
+                    <button 
+                      className="btn-primary"
+                      style={{ padding: '0.5rem', fontSize: '0.85rem', width: '100%' }}
+                      onClick={() => {
+                        const startFormatted = dateRange.start ? new Date(dateRange.start).toLocaleDateString('pt-BR') : '?';
+                        const endFormatted = dateRange.end ? new Date(dateRange.end).toLocaleDateString('pt-BR') : '?';
+                        setSelectedFilter(`De ${startFormatted} até ${endFormatted}`);
+                        setIsFilterOpen(false);
+                      }}
+                    >
+                      Aplicar Período
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -113,7 +179,9 @@ export default function DashboardHome() {
             <div className="stat-value">R$ 534.321,23</div>
             <div className="stat-footer">
               <span className="stat-trend trend-up">+55,3%</span>
-              <button className="saque-btn">Solicitar saque</button>
+              <button className="saque-btn" onClick={() => router.push('/finance/withdrawals/requests')}>
+                Solicitar saque
+              </button>
             </div>
           </div>
 
@@ -235,7 +303,7 @@ export default function DashboardHome() {
             </div>
             <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
+                <AreaChart data={displayChartData}>
                   <defs>
                     <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#65839a" stopOpacity={0.3}/>
