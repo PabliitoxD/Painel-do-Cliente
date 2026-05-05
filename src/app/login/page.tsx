@@ -101,10 +101,8 @@ function LoginContent() {
           type="button" 
           className="btn-secondary oneid-btn" 
           onClick={() => {
-            // Substitua esta URL pelo endpoint de autorização correto do OneID 
-            // e passe a URL atual como redirect_uri se necessário
-            const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
-            window.location.href = `https://app.oneid.com.br/oauth/authorize?client_id=SEU_CLIENT_ID&redirect_uri=${encodeURIComponent(currentUrl)}`;
+            // Redireciona para o endpoint oficial do OneID no ambiente de sandbox
+            window.location.href = `https://app.sandbox.oneid.com.br/auth_provider?id=MSg2ktAPs9JnR5MJAHcQ&company_token=85081a949e63b592cc511566374365b2`;
           }}
           disabled={isLoading}
         >
