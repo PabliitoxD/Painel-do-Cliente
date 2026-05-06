@@ -17,6 +17,7 @@ const PENDING_REQUESTS = [
 
 export default function WithdrawalRequestsPage() {
   const [availableBalance, setAvailableBalance] = useState<number>(8432.10);
+  const [totalBalance, setTotalBalance] = useState<number>(24500.00);
   const [isLoading, setIsLoading] = useState(true);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
@@ -25,6 +26,7 @@ export default function WithdrawalRequestsPage() {
     api.receivableSchedules.getSummary().then(res => {
       if (res && (res.released !== undefined || res.available !== undefined)) {
         setAvailableBalance(res.released || res.available || 0);
+        setTotalBalance(res.total || res.amount || 0);
       }
     }).catch(err => {
       console.error("Erro ao carregar saldo:", err);
@@ -62,11 +64,11 @@ export default function WithdrawalRequestsPage() {
           </div>
         </div>
 
-        <div className="stats-grid" style={{ gridTemplateColumns: '1fr 2fr', gap: '2rem', marginBottom: '2rem' }}>
+        <div className="stats-grid" style={{ gridTemplateColumns: '1fr 1fr 1.5fr', gap: '1.5rem', marginBottom: '2rem' }}>
           <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--surface) 0%, #1a2932 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <span className="stat-title">Disponível para Saque</span>
-              <div className="stat-value" style={{ fontSize: '2.5rem' }}>
+              <div className="stat-value" style={{ fontSize: '2.2rem' }}>
                 {isLoading ? '...' : availableBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </div>
             </div>
@@ -76,7 +78,7 @@ export default function WithdrawalRequestsPage() {
               </div>
               <button 
                 className="btn-primary" 
-                style={{ padding: '0.6rem 1.2rem', fontSize: '0.9rem' }}
+                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                 onClick={handleWithdraw}
                 disabled={isWithdrawing || isLoading || availableBalance < 50}
               >
@@ -85,14 +87,24 @@ export default function WithdrawalRequestsPage() {
             </div>
           </div>
           
+          <div className="stat-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <span className="stat-title">Saldo Total (Recebíveis)</span>
+              <div className="stat-value" style={{ fontSize: '2.2rem' }}>
+                {isLoading ? '...' : totalBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </div>
+            </div>
+            <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '1.5rem' }}>Inclui valores pendentes de liberação</p>
+          </div>
+
           <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', background: 'rgba(255, 177, 86, 0.05)', borderColor: 'rgba(255, 177, 86, 0.2)' }}>
-            <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(255, 177, 86, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--warning)' }}>
-              <AlertCircle size={24} />
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255, 177, 86, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--warning)', flexShrink: 0 }}>
+              <AlertCircle size={20} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1rem', marginBottom: '0.25rem' }}>Informação Importante</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', maxWidth: '500px' }}>
-                Os saques via PIX são processados em até 2 horas. Para TED, o prazo é de até 1 dia útil, respeitando o horário bancário.
+              <h3 style={{ fontSize: '0.95rem', marginBottom: '0.25rem' }}>Informação Importante</h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', maxWidth: '400px', lineHeight: 1.5 }}>
+                Os saques são processados exclusivamente via PIX para a chave cadastrada na sua conta (Configurações &gt; Minha Conta). O prazo médio de compensação é de até 2 horas.
               </p>
             </div>
           </div>
@@ -104,7 +116,6 @@ export default function WithdrawalRequestsPage() {
             <thead>
               <tr>
                 <th>Data da Solicitação</th>
-                <th>Instituição Destino</th>
                 <th>Valor Solicitado</th>
                 <th>Status</th>
                 <th>Previsão</th>
@@ -120,7 +131,6 @@ export default function WithdrawalRequestsPage() {
                       {item.date}
                     </div>
                   </td>
-                  <td>{item.bank}</td>
                   <td style={{ fontWeight: 600 }}>
                     {item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </td>

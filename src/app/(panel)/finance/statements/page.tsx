@@ -35,6 +35,8 @@ export default function StatementsPage() {
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [isTimeMenuOpen, setIsTimeMenuOpen] = useState(false);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [showCustomDate, setShowCustomDate] = useState(false);
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
   
   const [statementsData, setStatementsData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,6 +91,10 @@ export default function StatementsPage() {
         matchesTime = itemDate >= thirtyDaysAgo;
       } else if (timeRange === 'Esse mês') {
         matchesTime = itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+      } else if (timeRange.startsWith('De ')) {
+        const s = dateRange.start ? new Date(`${dateRange.start}T00:00:00`) : new Date(0);
+        const e = dateRange.end ? new Date(`${dateRange.end}T23:59:59`) : new Date(8640000000000000);
+        matchesTime = itemDate >= s && itemDate <= e;
       }
 
       return matchesSearch && matchesStatus && matchesTime;
@@ -108,6 +114,31 @@ export default function StatementsPage() {
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
 
+  const exportToCSV = () => {
+    if (filteredData.length === 0) return;
+    const headers = ['Tipo', 'Data', 'Descrição', 'Valor', 'Status'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredData.map(item => {
+        const dateStr = new Date(item.date || item.created_at).toLocaleDateString('pt-BR');
+        const desc = (item.description || item.token || 'Transação').replace(/,/g, ' ');
+        const val = item.value || item.amount || 0;
+        const status = item.status || 'aprovado';
+        const type = item.type || 'Venda';
+        return `${type},${dateStr},${desc},${val},${status}`;
+      })
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `extrato_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <DashboardLayout>
       <div className="statements-page animate-fade-in">
@@ -116,7 +147,7 @@ export default function StatementsPage() {
             <h1>Extratos</h1>
             <p className="text-muted">Acompanhe sua movimentação financeira detalhada</p>
           </div>
-          <button className="btn-primary">
+          <button className="btn-primary" onClick={exportToCSV}>
             <Download size={18} /> Exportar CSV
           </button>
         </div>
@@ -172,17 +203,56 @@ export default function StatementsPage() {
               <Calendar size={18} /> {timeRange} <ChevronDown size={14} />
             </button>
             {isTimeMenuOpen && (
-              <div className="filter-menu glass-panel animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 100, width: '200px', padding: '0.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <div className="filter-menu glass-panel animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 100, width: '250px', padding: '0.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
                 {timeOptions.map(opt => (
                   <button 
                     key={opt}
-                    onClick={() => { setTimeRange(opt); setIsTimeMenuOpen(false); }}
-                    className={`filter-item ${timeRange === opt ? 'active' : ''}`}
+                    onClick={() => { 
+                      if (opt === 'Personalizado') {
+                        setShowCustomDate(true);
+                      } else {
+                        setTimeRange(opt); 
+                        setIsTimeMenuOpen(false); 
+                        setShowCustomDate(false);
+                      }
+                    }}
+                    className={`filter-item ${timeRange === opt && !showCustomDate ? 'active' : ''}`}
                     style={{ width: '100%', textAlign: 'left', padding: '0.6rem 1rem', borderRadius: '8px', fontSize: '0.9rem' }}
                   >
                     {opt}
                   </button>
                 ))}
+                
+                {showCustomDate && (
+                  <div className="custom-date-picker animate-fade-in" style={{ padding: '0.75rem', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <input 
+                        type="date" 
+                        value={dateRange.start} 
+                        onChange={e => setDateRange({...dateRange, start: e.target.value})} 
+                        style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.5rem', color: 'var(--text-main)', fontSize: '0.8rem', width: '100%' }} 
+                      />
+                      <input 
+                        type="date" 
+                        value={dateRange.end} 
+                        onChange={e => setDateRange({...dateRange, end: e.target.value})} 
+                        style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.5rem', color: 'var(--text-main)', fontSize: '0.8rem', width: '100%' }} 
+                      />
+                    </div>
+                    <button 
+                      className="btn-primary"
+                      style={{ padding: '0.5rem', fontSize: '0.85rem', width: '100%' }}
+                      onClick={() => {
+                        const startFormatted = dateRange.start ? new Date(dateRange.start).toLocaleDateString('pt-BR') : '?';
+                        const endFormatted = dateRange.end ? new Date(dateRange.end).toLocaleDateString('pt-BR') : '?';
+                        setTimeRange(`De ${startFormatted} até ${endFormatted}`);
+                        setIsTimeMenuOpen(false);
+                      }}
+                    >
+                      Aplicar Período
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -232,7 +302,6 @@ export default function StatementsPage() {
                 <th>Descrição</th>
                 <th>Valor</th>
                 <th>Status</th>
-                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -271,30 +340,6 @@ export default function StatementsPage() {
                     <span className={`status-pill ${item.status?.toLowerCase() || 'aprovado'}`}>
                       {(item.status || 'aprovado').charAt(0).toUpperCase() + (item.status || 'aprovado').slice(1).toLowerCase()}
                     </span>
-                  </td>
-                  <td>
-                    {(item.type || 'Venda') === 'Venda' ? (
-                      <button 
-                        className="btn-ghost" 
-                        style={{ 
-                          padding: '0.4rem', 
-                          borderRadius: '8px',
-                          opacity: metrics.balance <= 0 ? 0.5 : 1, 
-                          cursor: metrics.balance <= 0 ? 'not-allowed' : 'pointer' 
-                        }}
-                        title={metrics.balance <= 0 ? "Saldo insuficiente para estorno" : "Solicitar Estorno/Reembolso"}
-                        disabled={metrics.balance <= 0}
-                        onClick={() => {
-                          if (metrics.balance > 0) {
-                            alert(`Estorno solicitado para ${item.description || item.token}`);
-                          }
-                        }}
-                      >
-                        <ArrowRightLeft size={16} />
-                      </button>
-                    ) : (
-                      <span className="text-muted" style={{ fontSize: '0.8rem' }}>-</span>
-                    )}
                   </td>
                 </tr>
               )) : (

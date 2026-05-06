@@ -10,7 +10,8 @@ import {
   Clock,
   TrendingUp,
   AlertTriangle,
-  ChevronRight
+  ChevronRight,
+  X
 } from 'lucide-react';
 
 /**
@@ -33,6 +34,7 @@ export default function ReceivablesPage() {
   ]);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isSimulationOpen, setIsSimulationOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -74,7 +76,11 @@ export default function ReceivablesPage() {
             <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.25rem' }}>Recebíveis</h1>
             <p className="text-muted" style={{ fontSize: '0.95rem' }}>Gestão de valores futuros e liquidez</p>
           </div>
-          <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.7rem 1.2rem', borderRadius: '12px' }}>
+          <button 
+            className="btn-ghost" 
+            onClick={() => setIsSimulationOpen(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.7rem 1.2rem', borderRadius: '12px' }}
+          >
             <Calendar size={18} /> Antecipar Valores
           </button>
         </div>
@@ -181,7 +187,10 @@ export default function ReceivablesPage() {
             <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: '2rem' }}>
               Você possui <strong style={{ color: 'var(--text-main)' }}>{formatCurrency(summary.waiting)}</strong> aguardando liberação. Se precisar de fluxo de caixa imediato, você pode antecipar até 80% desse valor com taxas reduzidas.
             </p>
-            <button className="btn-simulation" style={{ 
+            <button 
+              className="btn-simulation" 
+              onClick={() => setIsSimulationOpen(true)}
+              style={{ 
               width: '100%', 
               display: 'flex', 
               justifyContent: 'space-between', 
@@ -200,6 +209,47 @@ export default function ReceivablesPage() {
           </div>
         </div>
       </div>
+
+      {isSimulationOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="glass-panel animate-fade-in" style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '16px', maxWidth: '450px', width: '100%', position: 'relative', border: '1px solid var(--border)' }}>
+            <button 
+              onClick={() => setIsSimulationOpen(false)} 
+              style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+            >
+              <X size={20} />
+            </button>
+            <h2 style={{ marginBottom: '1.5rem', fontSize: '1.4rem' }}>Simulação de Antecipação</h2>
+            
+            <p className="text-muted" style={{ marginBottom: '1.5rem', fontSize: '0.9rem', lineHeight: 1.5 }}>
+              Com base no seu plano atual, você pode antecipar os valores que estão aguardando liberação.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem', background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+                <span className="text-muted">Aguardando Liberação</span>
+                <strong>{formatCurrency(summary.waiting)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+                <span className="text-muted">Disponível para antecipação (80%)</span>
+                <strong style={{ color: 'var(--text-main)' }}>{formatCurrency(summary.waiting * 0.8)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+                <span className="text-muted">Taxa do Plano (Ex: 5%)</span>
+                <strong style={{ color: 'var(--danger)' }}>- {formatCurrency(summary.waiting * 0.8 * 0.05)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.5rem' }}>
+                <span style={{ fontWeight: 600 }}>Total Líquido a Receber</span>
+                <strong style={{ color: 'var(--success)', fontSize: '1.3rem' }}>{formatCurrency(summary.waiting * 0.8 * 0.95)}</strong>
+              </div>
+            </div>
+            
+            <button className="btn-primary" style={{ width: '100%', padding: '1rem', fontWeight: 600 }} onClick={() => { alert('Solicitação de antecipação enviada para análise!'); setIsSimulationOpen(false); }}>
+              Confirmar Antecipação
+            </button>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .receivable-card {
