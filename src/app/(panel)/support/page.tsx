@@ -42,16 +42,6 @@ export default function SupportPage() {
           </p>
 
           <div className="contact-options">
-            <a href="https://chat.whatsapp.com/" target="_blank" rel="noopener noreferrer" className="contact-method">
-              <div className="contact-icon-wrapper whatsapp-icon">
-                <MessageCircle size={24} />
-              </div>
-              <div className="contact-details">
-                <h3>Grupo do WhatsApp</h3>
-                <p>Suporte rápido para parceiros.</p>
-              </div>
-            </a>
-
             <a href="https://wa.me/5511916095527" target="_blank" rel="noopener noreferrer" className="contact-method">
               <div className="contact-icon-wrapper phone-icon">
                 <PhoneCall size={24} />
