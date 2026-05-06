@@ -2,23 +2,13 @@
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useState } from 'react';
-import { Building2, User, Mail, Copy, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Building2, User, Mail, ShieldAlert } from 'lucide-react';
 
 export default function AccountSettingsPage() {
-  const [businessType, setBusinessType] = useState('PJ');
-  const [copied, setCopied] = useState(false);
-
   // States for profile update
   const [accountName, setAccountName] = useState('Administrador');
   const [accountEmail, setAccountEmail] = useState('admin@tronnus.com');
-
-  const accountCode = "TRN-9X2V-5A7M";
-
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(accountCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const [pixKey, setPixKey] = useState('');
 
   return (
     <DashboardLayout>
@@ -38,116 +28,86 @@ export default function AccountSettingsPage() {
               <h2>Dados Cadastrais</h2>
             </div>
             
-            {/* Banner de Informações da Conta */}
-            <div className="account-info-banner">
-              <div className="info-item">
-                <span className="label">Cadastro em:</span>
-                <span className="value">10/04/2026</span>
-              </div>
-              <div className="info-item">
-                <span className="label">Ativação em:</span>
-                <span className="value status-active">12/04/2026</span>
-              </div>
-              <div className="info-item code-item">
-                <span className="label">Código da Conta:</span>
-                <div className="code-box" onClick={handleCopyCode} title="Copiar código">
-                  <span className="value">{accountCode}</span>
-                  {copied ? <CheckCircle2 size={16} className="text-success" /> : <Copy size={16} className="copy-icon" />}
+            <div className="info-list-container animate-fade-in">
+              {/* Section 1 */}
+              <div className="info-section">
+                <div className="info-row">
+                  <span className="info-label">Cadastro em</span>
+                  <span className="info-value">12/02/2026 às 12:37</span>
                 </div>
-              </div>
-            </div>
-
-            <div className="form-section">
-              <h3 className="section-title">Tipo de Negócio</h3>
-              <div className="radio-group">
-                <label className={`radio-card ${businessType === 'PJ' ? 'active' : ''}`}>
-                  <input 
-                    type="radio" 
-                    name="businessType" 
-                    value="PJ" 
-                    checked={businessType === 'PJ'} 
-                    onChange={(e) => setBusinessType(e.target.value)} 
-                    style={{ display: 'none' }}
-                  />
-                  <div className="radio-content">
-                    <span className="radio-circle"></span>
-                    <span>Pessoa Jurídica</span>
-                  </div>
-                </label>
-                <label className={`radio-card ${businessType === 'PF' ? 'active' : ''}`}>
-                  <input 
-                    type="radio" 
-                    name="businessType" 
-                    value="PF" 
-                    checked={businessType === 'PF'} 
-                    onChange={(e) => setBusinessType(e.target.value)} 
-                    style={{ display: 'none' }}
-                  />
-                  <div className="radio-content">
-                    <span className="radio-circle"></span>
-                    <span>Pessoa Física</span>
-                  </div>
-                </label>
+                <div className="info-row">
+                  <span className="info-label">Ativação em</span>
+                  <span className="info-value">13/02/2026 às 16:51</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Código</span>
+                  <span className="info-value">47327859</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Tipo de negócio</span>
+                  <span className="info-value">Pessoa jurídica</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">CNPJ</span>
+                  <span className="info-value">18.571.771/0001-02</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Razão social</span>
+                  <span className="info-value">Rts Escola Internacional da Mecanica do Exercicio Ltda Epp</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Nome fantasia</span>
+                  <span className="info-value">Rts Brazil</span>
+                </div>
               </div>
 
-              {businessType === 'PJ' ? (
-                <div className="form-grid animate-fade-in">
-                  <div className="form-group">
-                    <label>CNPJ</label>
-                    <input type="text" className="form-input" placeholder="00.000.000/0000-00" defaultValue="12.345.678/0001-90" />
-                  </div>
-                  <div className="form-group">
-                    <label>Razão Social</label>
-                    <input type="text" className="form-input" placeholder="Nome da sua empresa LTDA" defaultValue="Tronnus Tecnologia LTDA" />
-                  </div>
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Nome Fantasia</label>
-                    <input type="text" className="form-input" placeholder="Nome Fantasia" defaultValue="Tronnus" />
-                  </div>
-                  
-                  <div className="form-divider" style={{ gridColumn: '1 / -1' }}>Dados do Responsável</div>
-                  
-                  <div className="form-group">
-                    <label>Nome do Responsável</label>
-                    <input type="text" className="form-input" placeholder="Nome completo" defaultValue="João da Silva" />
-                  </div>
-                  <div className="form-group">
-                    <label>CPF</label>
-                    <input type="text" className="form-input" placeholder="000.000.000-00" defaultValue="123.456.789-00" />
-                  </div>
-                  <div className="form-group">
-                    <label>Data de Nascimento</label>
-                    <input type="date" className="form-input" defaultValue="1985-06-15" />
-                  </div>
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Endereço Completo</label>
-                    <input type="text" className="form-input" placeholder="Rua, Número, Bairro, Cidade - UF" defaultValue="Av. Paulista, 1000, Bela Vista, São Paulo - SP" />
+              <div className="info-divider"></div>
+
+              {/* Section 2 */}
+              <div className="info-section">
+                <div className="info-row">
+                  <span className="info-label">Responsável</span>
+                  <span className="info-value">Mariane de Macedo Franceschi Malucelli</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">CPF</span>
+                  <span className="info-value">804.905.499-34</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Nascimento</span>
+                  <span className="info-value">14/11/1970</span>
+                </div>
+                <div className="info-row align-center">
+                  <span className="info-label">Chave PIX</span>
+                  <div className="info-value">
+                    <input 
+                      type="text" 
+                      className="form-input pix-input" 
+                      placeholder="Sua chave PIX" 
+                      value={pixKey}
+                      onChange={(e) => setPixKey(e.target.value)}
+                    />
                   </div>
                 </div>
-              ) : (
-                <div className="form-grid animate-fade-in">
-                  <div className="form-group">
-                    <label>Nome Completo</label>
-                    <input type="text" className="form-input" placeholder="Seu nome completo" />
-                  </div>
-                  <div className="form-group">
-                    <label>CPF</label>
-                    <input type="text" className="form-input" placeholder="000.000.000-00" />
-                  </div>
-                  <div className="form-group">
-                    <label>Data de Nascimento</label>
-                    <input type="date" className="form-input" />
-                  </div>
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Endereço Completo</label>
-                    <input type="text" className="form-input" placeholder="Rua, Número, Bairro, Cidade - UF" />
-                  </div>
+              </div>
+
+              <div className="info-divider"></div>
+
+              {/* Section 3 */}
+              <div className="info-section">
+                <div className="info-row">
+                  <span className="info-label">Endereço</span>
+                  <span className="info-value">
+                    Rua Petit Carneiro, 1027 32<br />
+                    Água Verde - Curitiba/PR<br />
+                    CEP 80240-050
+                  </span>
                 </div>
-              )}
+              </div>
             </div>
 
             <div className="panel-actions">
-              <button className="btn-primary">Salvar Dados Cadastrais</button>
+              <button className="btn-primary">Salvar Alterações</button>
             </div>
           </div>
 
@@ -261,137 +221,65 @@ export default function AccountSettingsPage() {
           font-weight: 600;
         }
 
-        /* Banner de Info */
-        .account-info-banner {
-          display: flex;
-          background: rgba(30, 41, 59, 0.4);
-          border: 1px solid var(--border);
-          border-radius: 12px;
-          padding: 1.25rem;
-          gap: 2rem;
-          margin-bottom: 2rem;
-          flex-wrap: wrap;
-        }
-
-        .info-item {
+        /* Info List (Dados Cadastrais) */
+        .info-list-container {
           display: flex;
           flex-direction: column;
-          gap: 0.25rem;
         }
 
-        .info-item .label {
-          font-size: 0.8rem;
-          color: var(--text-muted);
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .info-item .value {
-          font-weight: 600;
-          font-size: 1.05rem;
-          color: var(--text-main);
-        }
-
-        .status-active {
-          color: var(--success) !important;
-        }
-
-        .code-box {
+        .info-section {
           display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+          padding: 1.5rem 0;
+        }
+
+        .info-section:first-child {
+          padding-top: 0;
+        }
+
+        .info-section:last-child {
+          padding-bottom: 0;
+        }
+
+        .info-divider {
+          height: 1px;
+          background: var(--border);
+          width: 100%;
+        }
+
+        .info-row {
+          display: flex;
+          align-items: flex-start;
+        }
+
+        .info-row.align-center {
           align-items: center;
-          gap: 0.75rem;
-          background: rgba(0, 0, 0, 0.2);
-          padding: 0.25rem 0.75rem;
-          border-radius: 6px;
-          border: 1px dashed var(--border);
-          cursor: pointer;
-          transition: all 0.2s;
         }
 
-        .code-box:hover {
-          background: rgba(0, 0, 0, 0.4);
-          border-color: var(--primary);
-        }
-
-        .code-box .copy-icon {
+        .info-label {
+          width: 250px;
           color: var(--text-muted);
+          font-size: 0.95rem;
+          flex-shrink: 0;
         }
 
-        .code-box:hover .copy-icon {
-          color: var(--primary);
+        .info-value {
+          color: var(--text-main);
+          font-size: 0.95rem;
+          font-weight: 500;
+          flex-grow: 1;
+          line-height: 1.5;
+        }
+
+        .pix-input {
+          max-width: 300px;
+          padding: 0.6rem 0.8rem;
         }
 
         /* Forms */
         .form-section {
           margin-bottom: 2rem;
-        }
-
-        .section-title {
-          font-size: 1rem;
-          font-weight: 600;
-          margin-bottom: 1rem;
-          color: var(--text-main);
-        }
-
-        .radio-group {
-          display: flex;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
-        }
-
-        .radio-card {
-          flex: 1;
-          background: rgba(30, 41, 59, 0.3);
-          border: 1px solid var(--border);
-          border-radius: 10px;
-          padding: 1rem;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .radio-card:hover {
-          background: rgba(30, 41, 59, 0.5);
-        }
-
-        .radio-card.active {
-          background: rgba(59, 130, 246, 0.1);
-          border-color: var(--primary);
-        }
-
-        .radio-content {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          font-weight: 500;
-        }
-
-        .radio-circle {
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          border: 2px solid var(--text-muted);
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .radio-card.active .radio-circle {
-          border-color: var(--primary);
-        }
-
-        .radio-card.active .radio-circle::after {
-          content: '';
-          width: 8px;
-          height: 8px;
-          background: var(--primary);
-          border-radius: 50%;
-        }
-
-        .form-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1.25rem;
         }
 
         .form-group {
@@ -522,17 +410,18 @@ export default function AccountSettingsPage() {
         }
 
         @media (max-width: 768px) {
-          .form-grid {
-            grid-template-columns: 1fr;
-          }
-          
-          .radio-group {
+          .info-row {
             flex-direction: column;
+            gap: 0.25rem;
           }
 
-          .account-info-banner {
-            flex-direction: column;
-            gap: 1rem;
+          .info-label {
+            width: 100%;
+            font-size: 0.85rem;
+          }
+
+          .pix-input {
+            max-width: 100%;
           }
         }
       `}</style>

@@ -27,16 +27,6 @@ import { useAuth } from '@/context/AuthContext';
 import '@/styles/dashboard.css';
 import '@/styles/dashboard.css';
 
-const chartData = [
-  { name: 'Seg', val: 15000 },
-  { name: 'Ter', val: 28000 },
-  { name: 'Qua', val: 22000 },
-  { name: 'Qui', val: 35000 },
-  { name: 'Sex', val: 30000 },
-  { name: 'Sab', val: 45000 },
-  { name: 'Dom', val: 38000 },
-];
-
 export default function DashboardHome() {
   const router = useRouter();
   const { user } = useAuth();
@@ -48,7 +38,7 @@ export default function DashboardHome() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [allOrders, setAllOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [displayChartData, setDisplayChartData] = useState(chartData);
+  const [displayChartData, setDisplayChartData] = useState<any[]>([]);
 
   const [stats, setStats] = useState({
     faturamento: 0,
@@ -106,27 +96,68 @@ export default function DashboardHome() {
     });
   }, [allOrders, selectedPaymentMethod]);
 
+  // Atualiza os dados do gráfico baseado nas transações carregadas
+  useEffect(() => {
+    if (!allOrders || allOrders.length === 0) {
+      setDisplayChartData([{ name: 'Sem dados', val: 0 }]);
+      return;
+    }
+
+    const validOrders = allOrders.filter((t: any) => {
+      const status = t.status?.toLowerCase() || '';
+      return ['approved', 'paid', 'aprovada', 'pago'].includes(status);
+    });
+
+    if (validOrders.length === 0) {
+      setDisplayChartData([{ name: 'Sem dados', val: 0 }]);
+      return;
+    }
+
+    if (selectedFilter === 'Hoje') {
+      const hours = [0, 0, 0, 0];
+      validOrders.forEach((t: any) => {
+        const date = new Date(t.created_at);
+        const hour = date.getHours();
+        const amount = parseFloat(t.amount || t.value || 0);
+        if (hour < 6) hours[0] += amount;
+        else if (hour < 12) hours[1] += amount;
+        else if (hour < 18) hours[2] += amount;
+        else hours[3] += amount;
+      });
+      setDisplayChartData([
+        { name: '00-06h', val: hours[0] },
+        { name: '06-12h', val: hours[1] },
+        { name: '12-18h', val: hours[2] },
+        { name: '18-24h', val: hours[3] }
+      ]);
+    } else {
+      const dataMap: Record<string, number> = {};
+      validOrders.forEach((t: any) => {
+        const date = new Date(t.created_at);
+        const dateStr = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+        const amount = parseFloat(t.amount || t.value || 0);
+        dataMap[dateStr] = (dataMap[dateStr] || 0) + amount;
+      });
+
+      const sortedDates = Object.keys(dataMap).sort((a, b) => {
+        const [dayA, monthA] = a.split('/').map(Number);
+        const [dayB, monthB] = b.split('/').map(Number);
+        if (monthA !== monthB) return monthA - monthB;
+        return dayA - dayB;
+      });
+
+      let finalData = sortedDates.map(date => ({
+        name: date,
+        val: dataMap[date]
+      }));
+
+      setDisplayChartData(finalData);
+    }
+  }, [allOrders, selectedFilter]);
+
   // Atualiza os dados toda vez que o filtro muda
   useEffect(() => {
     setIsLoading(true);
-    
-    // 1. Atualizar mock do Gráfico
-    if (selectedFilter === 'Hoje') {
-      setDisplayChartData([{ name: '00h', val: 1200 }, { name: '06h', val: 5000 }, { name: '12h', val: 15000 }, { name: '18h', val: 28000 }]);
-    } else if (selectedFilter === 'Últimos 30 dias') {
-      setDisplayChartData([{ name: 'Sem 1', val: 150000 }, { name: 'Sem 2', val: 280000 }, { name: 'Sem 3', val: 220000 }, { name: 'Sem 4', val: 350000 }]);
-    } else {
-      // Default (7 dias) ou Personalizado
-      setDisplayChartData([
-        { name: 'Seg', val: 15000 },
-        { name: 'Ter', val: Math.floor(Math.random() * 40000) },
-        { name: 'Qua', val: 22000 },
-        { name: 'Qui', val: Math.floor(Math.random() * 40000) },
-        { name: 'Sex', val: 30000 },
-        { name: 'Sab', val: 45000 },
-        { name: 'Dom', val: Math.floor(Math.random() * 40000) },
-      ]);
-    }
 
     // Calcular datas para a API
     const today = new Date();
@@ -384,7 +415,7 @@ export default function DashboardHome() {
 
           <div className="chart-card">
             <div className="card-header">
-              <h2>Média semanal</h2>
+              <h2>Evolução do Faturamento</h2>
               <button className="btn-ghost">Ver gráfico completo</button>
             </div>
             <div style={{ width: '100%', height: 300 }}>
@@ -408,7 +439,7 @@ export default function DashboardHome() {
                     axisLine={false} 
                     tickLine={false} 
                     tick={{ fill: '#8a949e', fontSize: 11, fontWeight: 500 }} 
-                    tickFormatter={(val) => `$${val/1000}k`}
+                    tickFormatter={(val) => val >= 1000 ? `R$ ${(val/1000).toFixed(1)}k` : `R$ ${val}`}
                   />
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#111a1f', border: '1px solid #1b2932', borderRadius: '10px' }}

@@ -12,10 +12,6 @@ export default function PlanSettingsPage() {
             <h1>Meu Plano</h1>
             <p className="text-muted">Condições acordadas: Taxa MDR e outros custos</p>
           </div>
-          <div className="plan-badge">
-            <span className="badge-icon"><Zap size={16} /></span>
-            <span>Plano Pagar.me PRO</span>
-          </div>
         </div>
 
         {/* Módulo de Taxas de Cartão de Crédito */}
