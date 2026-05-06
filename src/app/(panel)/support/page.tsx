@@ -42,6 +42,16 @@ export default function SupportPage() {
           </p>
 
           <div className="contact-options">
+            <div className="contact-method" style={{ cursor: 'default' }}>
+              <div className="contact-icon-wrapper whatsapp-icon">
+                <MessageCircle size={24} />
+              </div>
+              <div className="contact-details">
+                <h3>Grupo do WhatsApp</h3>
+                <p>Direcione-se ao seu grupo de WhatsApp exclusivo para suporte rápido.</p>
+              </div>
+            </div>
+
             <a href="https://wa.me/5511916095527" target="_blank" rel="noopener noreferrer" className="contact-method">
               <div className="contact-icon-wrapper phone-icon">
                 <PhoneCall size={24} />
