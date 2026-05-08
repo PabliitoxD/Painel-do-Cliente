@@ -11,16 +11,16 @@ import {
 // Mock data for initial table
 const MOCK_CHARGES = [
   { 
-    id: 1, code: 'COB-1092', customer: 'João Silva', email: 'joao@email.com', dueDate: '15/06/2026', value: 150.00, status: 'Pendente',
+    id: 1, code: 'COB-1092', chargeName: 'Consultoria Premium', dueDate: '15/06/2026', value: 150.00, status: 'Pendente',
     metrics: { pendingPayments: 2, completedPayments: 0, linkAccesses: 15, abandonments: 3, conversionRate: { pix: 0, creditCard: 0 } },
     leads: [{ id: 1, name: 'Carlos', email: 'carlos@teste.com', phone: '(11) 99999-9999' }],
-    checkoutUrl: 'https://checkout.tronnus.com/c/COB-1092'
+    checkoutUrl: typeof window !== 'undefined' ? `${window.location.origin}/checkout/COB-1092` : '/checkout/COB-1092'
   },
   { 
-    id: 2, code: 'COB-1093', customer: 'Maria Souza', email: 'maria@email.com', dueDate: '10/06/2026', value: 350.50, status: 'Pago',
+    id: 2, code: 'COB-1093', chargeName: 'Setup de Sistema', dueDate: '10/06/2026', value: 350.50, status: 'Pago',
     metrics: { pendingPayments: 0, completedPayments: 1, linkAccesses: 5, abandonments: 0, conversionRate: { pix: 100, creditCard: 0 } },
     leads: [],
-    checkoutUrl: 'https://checkout.tronnus.com/c/COB-1093'
+    checkoutUrl: typeof window !== 'undefined' ? `${window.location.origin}/checkout/COB-1093` : '/checkout/COB-1093'
   },
 ];
 
@@ -36,9 +36,9 @@ export default function ChargesPage() {
     { id: Date.now(), name: '', description: '', unitPrice: 0, quantity: 1 }
   ]);
 
-  const [customerInfo, setCustomerInfo] = useState({ name: '', email: '' });
   const [chargeInfo, setChargeInfo] = useState({ 
     code: `COB-${Math.floor(1000 + Math.random() * 9000)}`, 
+    name: '',
     dueDate: '', 
     description: '' 
   });
@@ -46,9 +46,9 @@ export default function ChargesPage() {
   const handleOpenModal = () => {
     // Reset form on open
     setCartItems([{ id: Date.now(), name: '', description: '', unitPrice: 0, quantity: 1 }]);
-    setCustomerInfo({ name: '', email: '' });
     setChargeInfo({
       code: `COB-${Math.floor(1000 + Math.random() * 9000)}`,
+      name: '',
       dueDate: '',
       description: ''
     });
@@ -115,7 +115,6 @@ export default function ChargesPage() {
     try {
       // Simulate API payload
       const payload = {
-        customer: customerInfo,
         charge: chargeInfo,
         cart: cartItems,
         totalValue: totalCheckoutValue
@@ -128,14 +127,13 @@ export default function ChargesPage() {
         const newCharge = {
           id: Date.now(),
           code: chargeInfo.code,
-          customer: customerInfo.name || 'Cliente Sem Nome',
-          email: customerInfo.email,
+          chargeName: chargeInfo.name || 'Cobrança Sem Nome',
           dueDate: chargeInfo.dueDate || 'N/A',
           value: totalCheckoutValue,
           status: 'Pendente',
           metrics: { pendingPayments: 0, completedPayments: 0, linkAccesses: 0, abandonments: 0, conversionRate: { pix: 0, creditCard: 0 } },
           leads: [],
-          checkoutUrl: `https://checkout.tronnus.com/c/${chargeInfo.code}`
+          checkoutUrl: typeof window !== 'undefined' ? `${window.location.origin}/checkout/${chargeInfo.code}` : `/checkout/${chargeInfo.code}`
         };
         
         setCharges([newCharge, ...charges]);
@@ -177,7 +175,7 @@ export default function ChargesPage() {
             <Search size={18} className="text-muted" />
             <input 
               type="text" 
-              placeholder="Buscar por código, cliente ou e-mail..." 
+              placeholder="Buscar por código ou nome da cobrança..." 
               style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', color: 'var(--text-main)', fontSize: '0.95rem' }}
             />
           </div>
@@ -188,7 +186,7 @@ export default function ChargesPage() {
             <thead>
               <tr>
                 <th>Código</th>
-                <th>Cliente</th>
+                <th>Nome da Cobrança</th>
                 <th>Vencimento</th>
                 <th>Valor Total</th>
                 <th>Status</th>
@@ -213,12 +211,7 @@ export default function ChargesPage() {
                 charges.map(charge => (
                   <tr key={charge.id}>
                     <td style={{ fontWeight: 600, color: 'var(--primary)' }}>{charge.code}</td>
-                    <td>
-                      <div>
-                        <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{charge.customer}</div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>{charge.email}</div>
-                      </div>
-                    </td>
+                    <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>{charge.chargeName}</td>
                     <td style={{ color: 'var(--text-dim)' }}>{charge.dueDate}</td>
                     <td style={{ fontWeight: 600 }}>{formatCurrency(charge.value)}</td>
                     <td>
@@ -273,40 +266,24 @@ export default function ChargesPage() {
                   </div>
                 </div>
 
-                <div className="form-sections-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                  {/* Customer Info */}
-                  <div className="form-section">
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
-                      <User size={18} className="text-primary" /> Informações do Cliente
-                    </h3>
-                    <div className="form-group">
-                      <label>Nome Completo</label>
-                      <input 
-                        type="text" 
-                        className="form-control" 
-                        placeholder="Ex: João da Silva" 
-                        value={customerInfo.name}
-                        onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>E-mail</label>
-                      <input 
-                        type="email" 
-                        className="form-control" 
-                        placeholder="joao@exemplo.com" 
-                        value={customerInfo.email}
-                        onChange={e => setCustomerInfo({...customerInfo, email: e.target.value})}
-                      />
-                    </div>
-                  </div>
-
+                <div className="form-sections-grid" style={{ marginBottom: '2rem' }}>
                   {/* Charge Info */}
                   <div className="form-section">
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
                       <FileText size={18} className="text-primary" /> Detalhes da Cobrança
                     </h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '1rem' }}>
+                      <div className="form-group">
+                        <label>Nome da Cobrança</label>
+                        <input 
+                          type="text" 
+                          className="form-control" 
+                          placeholder="Ex: Consultoria de Marketing" 
+                          value={chargeInfo.name}
+                          onChange={e => setChargeInfo({...chargeInfo, name: e.target.value})}
+                        />
+                      </div>
                       <div className="form-group">
                         <label>Código (Gerado)</label>
                         <input 
@@ -327,11 +304,12 @@ export default function ChargesPage() {
                         />
                       </div>
                     </div>
+                    
                     <div className="form-group">
                       <label>Descrição</label>
                       <textarea 
                         className="form-control" 
-                        placeholder="Descreva o motivo desta cobrança..." 
+                        placeholder="Descreva o motivo desta cobrança (opcional)..." 
                         rows={2}
                         value={chargeInfo.description}
                         onChange={e => setChargeInfo({...chargeInfo, description: e.target.value})}
@@ -447,7 +425,7 @@ export default function ChargesPage() {
                   <h2 style={{ fontSize: '1.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                     Detalhes da Cobrança
                   </h2>
-                  <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>{selectedCharge.code} • {selectedCharge.customer}</p>
+                  <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>{selectedCharge.code} • {selectedCharge.chargeName}</p>
                 </div>
                 <button className="btn-ghost" onClick={handleCloseDetails} style={{ padding: '0.4rem', borderRadius: '8px' }}><X size={20} /></button>
               </div>
