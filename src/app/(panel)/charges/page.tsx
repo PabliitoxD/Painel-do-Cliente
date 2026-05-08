@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { 
   Search, Plus, X, Receipt, Trash2, ShoppingCart, User, Tag, 
   DollarSign, FileText, BarChart3, Users, Link as LinkIcon, 
-  CreditCard, Smartphone, CheckCircle, Clock, AlertTriangle 
+  CreditCard, Smartphone, CheckCircle, Clock, AlertTriangle, RefreshCcw
 } from 'lucide-react';
 
 // Mock data for initial table
@@ -40,7 +40,13 @@ export default function ChargesPage() {
     code: `COB-${Math.floor(1000 + Math.random() * 9000)}`, 
     name: '',
     dueDate: '', 
-    description: '' 
+    description: '',
+    billingType: 'unica',
+    frequency: 'mensal',
+    hasLimit: false,
+    limitCount: 12,
+    hasTrial: false,
+    trialDays: 7
   });
 
   const handleOpenModal = () => {
@@ -50,7 +56,13 @@ export default function ChargesPage() {
       code: `COB-${Math.floor(1000 + Math.random() * 9000)}`,
       name: '',
       dueDate: '',
-      description: ''
+      description: '',
+      billingType: 'unica',
+      frequency: 'mensal',
+      hasLimit: false,
+      limitCount: 12,
+      hasTrial: false,
+      trialDays: 7
     });
     setIsModalOpen(true);
   };
@@ -315,6 +327,79 @@ export default function ChargesPage() {
                         onChange={e => setChargeInfo({...chargeInfo, description: e.target.value})}
                         style={{ resize: 'none' }}
                       />
+                    </div>
+
+                    {/* Recurrency Options */}
+                    <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
+                      <div className="form-group">
+                        <label>Tipo de Cobrança</label>
+                        <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 500, color: 'var(--text-main)' }}>
+                            <input type="radio" name="billingType" value="unica" checked={chargeInfo.billingType === 'unica'} onChange={() => setChargeInfo({...chargeInfo, billingType: 'unica'})} style={{ accentColor: 'var(--primary)' }} /> 
+                            Cobrança Única
+                          </label>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 500, color: 'var(--text-main)' }}>
+                            <input type="radio" name="billingType" value="recorrente" checked={chargeInfo.billingType === 'recorrente'} onChange={() => setChargeInfo({...chargeInfo, billingType: 'recorrente'})} style={{ accentColor: 'var(--primary)' }} /> 
+                            Assinatura Recorrente
+                          </label>
+                        </div>
+                      </div>
+
+                      {chargeInfo.billingType === 'recorrente' && (
+                        <div className="recurrency-settings animate-fade-in" style={{ background: 'var(--background)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                          <h4 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-main)' }}>
+                            <RefreshCcw size={16} className="text-primary" /> Configurações de Recorrência
+                          </h4>
+                          
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                              <label>Frequência</label>
+                              <select className="form-control" value={chargeInfo.frequency} onChange={e => setChargeInfo({...chargeInfo, frequency: e.target.value})}>
+                                <option value="semanal">Semanal</option>
+                                <option value="quinzenal">Quinzenal</option>
+                                <option value="mensal">Mensal</option>
+                                <option value="trimestral">Trimestral</option>
+                                <option value="semestral">Semestral</option>
+                                <option value="anual">Anual</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                            {/* Limite de Cobranças */}
+                            <div>
+                              <div className="form-group" style={{ marginBottom: '0.5rem' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-main)' }}>
+                                  <input type="checkbox" checked={chargeInfo.hasLimit} onChange={e => setChargeInfo({...chargeInfo, hasLimit: e.target.checked})} style={{ accentColor: 'var(--primary)' }} />
+                                  Definir limite de cobranças?
+                                </label>
+                              </div>
+                              {chargeInfo.hasLimit && (
+                                <div className="form-group animate-fade-in" style={{ marginBottom: 0 }}>
+                                  <label style={{ fontSize: '0.85rem' }}>Quantidade de cobranças</label>
+                                  <input type="number" min="1" className="form-control" value={chargeInfo.limitCount} onChange={e => setChargeInfo({...chargeInfo, limitCount: parseInt(e.target.value) || 1})} />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Período de Teste */}
+                            <div>
+                              <div className="form-group" style={{ marginBottom: '0.5rem' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-main)' }}>
+                                  <input type="checkbox" checked={chargeInfo.hasTrial} onChange={e => setChargeInfo({...chargeInfo, hasTrial: e.target.checked})} style={{ accentColor: 'var(--primary)' }} />
+                                  Oferecer período de teste (Trial)?
+                                </label>
+                              </div>
+                              {chargeInfo.hasTrial && (
+                                <div className="form-group animate-fade-in" style={{ marginBottom: 0 }}>
+                                  <label style={{ fontSize: '0.85rem' }}>Dias de teste grátis</label>
+                                  <input type="number" min="1" className="form-control" value={chargeInfo.trialDays} onChange={e => setChargeInfo({...chargeInfo, trialDays: parseInt(e.target.value) || 7})} />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
