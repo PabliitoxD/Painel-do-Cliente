@@ -43,8 +43,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const storedToken = localStorage.getItem('tronnus_token');
       const storedUser = localStorage.getItem('tronnus_user');
-      
-      if (storedToken) {
+      const isMockSession = localStorage.getItem('tronnus_mock_session') === 'true';
+
+      if (storedToken && !isMockSession) {
+        // Token real — valida com a API
         try {
           const res = await api.users.me();
           if (res && res.user) {
@@ -53,16 +55,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } else if (storedUser) {
             setUser(JSON.parse(storedUser));
           }
-        } catch (error) {
-          console.error("Falha ao validar token:", error);
-          if (storedUser) {
+        } catch (error: any) {
+          console.error('Falha ao validar token:', error);
+          // 401 já foi tratado pelo client.ts (limpeza + redirect)
+          // Para outros erros, usa o usuário em cache
+          if (storedUser && storedToken) {
             setUser(JSON.parse(storedUser));
           }
         }
       } else if (storedUser) {
+        // Sessão mock ou sem token mas com usuário em cache
         setUser(JSON.parse(storedUser));
       }
-      
+
       setIsLoading(false);
     };
 
@@ -99,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.push('/dashboard');
     } catch (err) {
       console.error('Login error:', err);
-      // Mantendo um fallback seguro por enquanto caso a API ainda não suporte loginEmail
+      // Fallback mock para joao@tronnus.com enquanto a API de autenticação por email não é habilitada
       if (email === 'joao@tronnus.com' && password === '123456') {
         const mockUser: User = {
           id: '1',
@@ -110,8 +115,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         setUser(mockUser);
         localStorage.setItem('tronnus_user', JSON.stringify(mockUser));
-        // Mock token para testar a requisição no dashboard
-        localStorage.setItem('tronnus_token', 'mock_token_123');
+        // Flag que indica sessão de teste — evita que initAuth chame api.users.me() com token falso
+        localStorage.setItem('tronnus_mock_session', 'true');
+        localStorage.removeItem('tronnus_token'); // Não salva token falso
         router.push('/dashboard');
       } else {
         throw new Error(err instanceof Error ? err.message : 'Credenciais inválidas');
@@ -153,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     localStorage.removeItem('tronnus_user');
     localStorage.removeItem('tronnus_token');
+    localStorage.removeItem('tronnus_mock_session');
     router.push('/login');
   };
 
