@@ -241,7 +241,7 @@ export default function ChargesPage() {
         {/* Create Charge Modal */}
         {isModalOpen && (
           <div className="modal-overlay">
-            <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ maxWidth: '800px', width: '95%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ maxWidth: '800px', width: '95%', maxHeight: '85vh', overflowY: 'auto', margin: 'auto' }}>
               <div className="modal-header" style={{ position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 10, paddingBottom: '1rem', borderBottom: '1px solid var(--border)', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Receipt size={24} className="text-primary" /> Nova Cobrança
@@ -441,7 +441,7 @@ export default function ChargesPage() {
         {/* Details Modal */}
         {detailsModalOpen && selectedCharge && (
           <div className="modal-overlay" onClick={handleCloseDetails}>
-            <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ maxWidth: '900px', width: '95%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ maxWidth: '900px', width: '95%', maxHeight: '85vh', overflowY: 'auto', margin: 'auto' }}>
               <div className="modal-header" style={{ position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 10, paddingBottom: '1rem', borderBottom: '1px solid var(--border)', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <h2 style={{ fontSize: '1.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
@@ -622,6 +622,7 @@ export default function ChargesPage() {
           width: 100%;
           box-shadow: var(--shadow-lg);
           border: 1px solid var(--border);
+          margin: auto;
         }
         .modal-content::-webkit-scrollbar {
           width: 8px;
