@@ -12,8 +12,7 @@ import Image from 'next/image';
 const MOCK_CHECKOUT_DATA: Record<string, any> = {
   'COB-1092': {
     code: 'COB-1092',
-    customerEmail: 'joao@email.com',
-    customerName: 'João Silva',
+    chargeName: 'Consultoria Premium',
     items: [
       { id: 1, name: 'Consultoria Premium', description: 'Plano anual de acompanhamento', unitPrice: 150.00, quantity: 1 }
     ],
@@ -23,8 +22,7 @@ const MOCK_CHECKOUT_DATA: Record<string, any> = {
   },
   'COB-1093': {
     code: 'COB-1093',
-    customerEmail: 'maria@email.com',
-    customerName: 'Maria Souza',
+    chargeName: 'Setup de Sistema',
     items: [
       { id: 1, name: 'Setup de Sistema', description: 'Instalação e configuração', unitPrice: 300.00, quantity: 1 },
       { id: 2, name: 'Treinamento de Equipe', description: '2 horas de capacitação', unitPrice: 50.50, quantity: 1 }
@@ -54,14 +52,24 @@ export default function CheckoutPage() {
     // Simulate API fetch
     setIsLoading(true);
     setTimeout(() => {
-      const data = MOCK_CHECKOUT_DATA[code];
+      let data = MOCK_CHECKOUT_DATA[code];
+      
+      // If code is not found in mock, generate a dynamic one for testing
+      if (!data && code) {
+        data = {
+          code: code,
+          chargeName: 'Cobrança Avulsa',
+          items: [
+            { id: 1, name: 'Produto / Serviço Adicionado', description: 'Item incluído na cobrança', unitPrice: 100.00, quantity: 1 }
+          ],
+          totalValue: 100.00,
+          dueDate: 'N/A',
+          status: 'Pendente'
+        };
+      }
+
       if (data) {
         setChargeData(data);
-        setPersonalData(prev => ({
-          ...prev,
-          name: data.customerName || '',
-          email: data.customerEmail || ''
-        }));
       }
       setIsLoading(false);
     }, 1000);
@@ -150,10 +158,13 @@ export default function CheckoutPage() {
             <img src="https://tronnus.com/wp-content/uploads/2026/01/tronnus-png-001.png" alt="TRONNUS" style={{ height: '40px', filter: 'brightness(0) invert(1)' }} />
           </div>
 
-          <div className="order-summary">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'white', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="order-summary">
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'white', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <ShoppingBag size={20} /> Resumo do Pedido
             </h3>
+            <p style={{ color: 'var(--primary)', fontWeight: 500, fontSize: '0.95rem', marginBottom: '1.5rem' }}>
+              {chargeData.chargeName}
+            </p>
             
             <div className="items-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
               {chargeData.items.map((item: any) => (
