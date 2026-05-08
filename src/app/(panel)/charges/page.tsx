@@ -247,7 +247,7 @@ export default function ChargesPage() {
         {isModalOpen && (
           <div className="modal-overlay">
             <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ maxWidth: '800px', width: '95%', maxHeight: '85vh', overflowY: 'auto', margin: 'auto' }}>
-              <div className="modal-header" style={{ position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 10, paddingBottom: '1rem', borderBottom: '1px solid var(--border)', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="modal-header" style={{ paddingBottom: '1rem', borderBottom: '1px solid var(--border)', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Receipt size={24} className="text-primary" /> Nova Cobrança
                 </h2>
@@ -486,7 +486,7 @@ export default function ChargesPage() {
 
               </div>
 
-              <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)', position: 'sticky', bottom: 0, background: 'var(--surface)', zIndex: 10 }}>
+              <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
                 <button className="btn-ghost" onClick={handleCloseModal} style={{ padding: '0.8rem 1.5rem' }} disabled={isSaving}>Voltar</button>
                 <button className="btn-primary" onClick={handleSaveCharge} style={{ padding: '0.8rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: isSaving ? 0.7 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }} disabled={isSaving}>
                   {isSaving ? (
@@ -505,7 +505,7 @@ export default function ChargesPage() {
         {detailsModalOpen && selectedCharge && (
           <div className="modal-overlay" onClick={handleCloseDetails}>
             <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ maxWidth: '900px', width: '95%', maxHeight: '85vh', overflowY: 'auto', margin: 'auto' }}>
-              <div className="modal-header" style={{ position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 10, paddingBottom: '1rem', borderBottom: '1px solid var(--border)', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="modal-header" style={{ paddingBottom: '1rem', borderBottom: '1px solid var(--border)', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <h2 style={{ fontSize: '1.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                     Detalhes da Cobrança
@@ -638,11 +638,7 @@ export default function ChargesPage() {
                 alignItems: 'center', 
                 marginTop: '1rem', 
                 paddingTop: '1.5rem', 
-                borderTop: '1px solid var(--border)', 
-                position: 'sticky', 
-                bottom: 0, 
-                background: 'var(--surface)', 
-                zIndex: 10 
+                borderTop: '1px solid var(--border)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, marginRight: '2rem' }}>
                   <div style={{ background: 'var(--background)', padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
