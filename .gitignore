@@ -30,12 +30,67 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# ─── Sensitive: Environment & Secrets ────────────────────────────────────────
+# All .env variants — NEVER commit secrets or API keys
+.env
+.env.*
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+.env.staging
 
-# vercel
+# Secret / key files
+*.key
+*.pem
+*.p12
+*.pfx
+*.cert
+*.crt
+secrets/
+credentials/
+
+# ─── Sensitive: Auth / Token files ───────────────────────────────────────────
+auth.json
+service-account*.json
+firebase-adminsdk*.json
+google-credentials*.json
+*.token
+*.secret
+
+# ─── Sensitive: Config with credentials ──────────────────────────────────────
+config/local.ts
+config/local.js
+config/secrets.*
+src/config/local.*
+
+# ─── Vercel / CI / Deploy ────────────────────────────────────────────────────
 .vercel
+.vercel-output/
 
-# typescript
+# ─── TypeScript build info ───────────────────────────────────────────────────
 *.tsbuildinfo
 next-env.d.ts
+
+# ─── OS files ────────────────────────────────────────────────────────────────
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.Spotlight-V100
+.Trashes
+
+# ─── Editor / IDE ────────────────────────────────────────────────────────────
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.suo
+*.user
+*.swp
+*.swo
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+logs/
+*.log
