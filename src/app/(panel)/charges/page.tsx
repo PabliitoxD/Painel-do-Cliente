@@ -122,7 +122,7 @@ export default function ChargesPage() {
           {(['avulsa','recorrente'] as TabType[]).map(t => (
             <button key={t} onClick={() => setTab(t)} className={tab === t ? 'btn-primary' : 'btn-ghost'}
               style={{ padding: '0.6rem 1.5rem', borderRadius: '10px', fontWeight: 600, fontSize: '0.95rem', border: '1px solid var(--border)', cursor: 'pointer' }}>
-              {t === 'avulsa' ? '⚡ Avulsa' : '🔄 Recorrente'}
+              {t === 'avulsa' ? 'Avulsa' : 'Recorrente'}
             </button>
           ))}
         </div>
@@ -192,7 +192,7 @@ export default function ChargesPage() {
               <div className="form-group">
                 <label>Tipo de Cobrança</label>
                 <div style={{ display:'flex', gap:'1.5rem' }}>
-                  {[['unica','⚡ Única'],['recorrente','🔄 Recorrente']].map(([v,l]) => (
+                  {[['unica','Única'],['recorrente','Recorrente']].map(([v,l]) => (
                     <label key={v} style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer', fontWeight:500 }}>
                       <input type="radio" name="btype" value={v} checked={chargeInfo.billingType === v} onChange={() => setChargeInfo({...chargeInfo, billingType: v as any})} style={{ accentColor:'var(--primary)' }}/>
                       {l}

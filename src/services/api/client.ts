@@ -5,7 +5,7 @@ export async function fetchApi<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('tronnus_token') : null;
-  
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
@@ -17,15 +17,25 @@ export async function fetchApi<T>(
     headers,
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => null);
-    throw new Error(errorData?.message || `API error: ${response.status}`);
+  // Sessão expirada — limpa token e redireciona para login
+  if (response.status === 401) {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('tronnus_token');
+      window.location.href = '/login?session=expired';
+    }
+    throw new Error('Sessão expirada. Faça login novamente.');
   }
 
-  // Handle empty responses
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.message || errorData?.error || `Erro na API: ${response.status}`);
+  }
+
+  // Resposta sem conteúdo
   if (response.status === 204) {
     return {} as T;
   }
 
   return response.json();
 }
+
