@@ -217,7 +217,7 @@ export default function CheckoutPage() {
               <p style={{ color: 'var(--primary)', fontWeight: 500, fontSize: '0.95rem', margin: 0 }}>{chargeData.chargeName}</p>
               {chargeData.isRecurring && chargeData.periodicity && (
                 <span style={{ background: 'rgba(34,197,94,0.2)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '20px', padding: '0.15rem 0.65rem', fontSize: '0.78rem', fontWeight: 600 }}>
-                  🔄 {periodicityLabel[chargeData.periodicity] ?? 'Recorrente'}
+                  {periodicityLabel[chargeData.periodicity] ?? 'Recorrente'}
                 </span>
               )}
             </div>
