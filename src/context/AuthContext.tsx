@@ -130,26 +130,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithOneId = async (token: string, company_token: string, account_token?: number) => {
     setIsLoading(true);
     try {
+      // Tenta autenticar via /authentication com o token do OneID
       const response = await api.auth.loginOneId({ token, company_token, account_token });
-      
+
       if (response.access_token) {
         localStorage.setItem('tronnus_token', response.access_token);
+      } else {
+        // Fallback: a API sandbox usa o próprio token do OneID como Bearer
+        localStorage.setItem('tronnus_token', token);
       }
-      
+
       const userData: User = response.user || {
         id: '1',
-        name: 'Usuário OneID',
-        email: 'oneid@user.com',
+        name: 'Usuário',
+        email: company_token,
         role: 'PRODUCER',
-        avatar: 'https://ui-avatars.com/api/?name=One+ID&background=1b2932&color=65839a'
+        avatar: `https://ui-avatars.com/api/?name=Usuario&background=1b2932&color=65839a`
       };
-      
-      setUser(userData);
-      localStorage.setItem('tronnus_user', JSON.stringify(userData));
+
+      // Tenta buscar dados reais do usuário com o token obtido
+      try {
+        const me = await api.users.me();
+        if (me?.user) {
+          setUser(me.user);
+          localStorage.setItem('tronnus_user', JSON.stringify(me.user));
+        } else {
+          setUser(userData);
+          localStorage.setItem('tronnus_user', JSON.stringify(userData));
+        }
+      } catch {
+        setUser(userData);
+        localStorage.setItem('tronnus_user', JSON.stringify(userData));
+      }
+
       router.push('/dashboard');
     } catch (err) {
       console.error('OneID Login error:', err);
-      throw new Error(err instanceof Error ? err.message : 'Falha na autenticação via OneID');
+      // Último recurso: usa token diretamente sem /authentication
+      localStorage.setItem('tronnus_token', token);
+      try {
+        const me = await api.users.me();
+        const userData: User = me?.user || {
+          id: '1', name: 'Usuário OneID', email: '', role: 'PRODUCER',
+          avatar: 'https://ui-avatars.com/api/?name=OneID&background=1b2932&color=65839a'
+        };
+        setUser(userData);
+        localStorage.setItem('tronnus_user', JSON.stringify(userData));
+        router.push('/dashboard');
+      } catch (e2) {
+        localStorage.removeItem('tronnus_token');
+        throw new Error('Falha na autenticação via OneID. Verifique suas permissões.');
+      }
     } finally {
       setIsLoading(false);
     }

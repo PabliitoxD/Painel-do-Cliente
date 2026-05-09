@@ -63,8 +63,8 @@ function LoginContent() {
 
   const handleOneIdClick = () => {
     setError('');
-    // URL de callback aponta para esta página para capturar os params
-    const callbackUrl = `${window.location.origin}/login`;
+    // redirect_uri aponta para a raiz — onde o Superfin faz o callback
+    const callbackUrl = `${window.location.origin}/`;
     const params = new URLSearchParams({
       id: ONEID_ID,
       company_token: ONEID_COMPANY_TOKEN,
