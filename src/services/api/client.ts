@@ -21,12 +21,16 @@ export async function fetchApi<T>(
   if (response.status === 401) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('tronnus_token');
-      window.location.href = '/login?session=expired';
+      // Só redireciona se não estiver já na página de login
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login?session=expired';
+      }
     }
     throw new Error('Sessão expirada. Faça login novamente.');
   }
 
   if (!response.ok) {
+    // Tenta parsear o corpo do erro — pode estar vazio
     const errorData = await response.json().catch(() => null);
     throw new Error(errorData?.message || errorData?.error || `Erro na API: ${response.status}`);
   }
