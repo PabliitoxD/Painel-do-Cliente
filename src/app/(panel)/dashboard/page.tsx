@@ -299,7 +299,7 @@ export default function DashboardHome() {
             </div>
             <div className="stat-value">{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.faturamento)}</div>
             <div className="stat-footer">
-              <span className="stat-trend trend-up">+55,3%</span>
+              <span className="stat-trend trend-up">—</span>
               <button className="saque-btn" onClick={() => router.push('/finance/withdrawals/requests')}>
                 Solicitar saque
               </button>
@@ -312,7 +312,7 @@ export default function DashboardHome() {
               <div className="stat-icon-wrapper"><Clock size={24} /></div>
             </div>
             <div className="stat-value">{stats.quantidade}</div>
-            <span className="stat-trend trend-up">+2,1%</span>
+            <span className="stat-trend trend-up">—</span>
           </div>
 
           <div className="stat-card">
@@ -326,7 +326,7 @@ export default function DashboardHome() {
             </div>
             <div className="stat-value">{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.metodoSelecionado)}</div>
             <div className="stat-footer">
-              <span className="stat-trend trend-up">+4%</span>
+              <span className="stat-trend trend-up">—</span>
               <div className="payment-chips">
                 {paymentMethods.map(m => (
                   <span 
@@ -347,7 +347,7 @@ export default function DashboardHome() {
               <div className="stat-icon-wrapper"><RotateCcw size={24} /></div>
             </div>
             <div className="stat-value">{stats.estornos}</div>
-            <span className="stat-trend trend-down">-55,3%</span>
+            <span className="stat-trend trend-down">—</span>
           </div>
 
           <div className="stat-card">
@@ -356,7 +356,7 @@ export default function DashboardHome() {
               <div className="stat-icon-wrapper"><XCircle size={24} /></div>
             </div>
             <div className="stat-value">{stats.cancelamentos}</div>
-            <span className="stat-trend trend-up">+2,1%</span>
+            <span className="stat-trend trend-up">—</span>
           </div>
 
           <div className="stat-card">
@@ -365,7 +365,7 @@ export default function DashboardHome() {
               <div className="stat-icon-wrapper"><AlertCircle size={24} /></div>
             </div>
             <div className="stat-value">{stats.chargebacks}</div>
-            <span className="stat-trend trend-down">-2%</span>
+            <span className="stat-trend trend-down">—</span>
           </div>
         </div>
 

@@ -5,15 +5,19 @@ export async function fetchApi<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('tronnus_token') : null;
+  const sellerId = typeof window !== 'undefined' ? localStorage.getItem('tronnus_seller_token') : null;
   const sellerKey = typeof window !== 'undefined' ? localStorage.getItem('tronnus_seller_key') : null;
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
-    ...(token && { 'X-Seller-Token': token }),
+    ...(sellerId && { 'X-Seller-Token': sellerId }),
     ...(sellerKey && { 'X-Seller-Key': sellerKey }),
+    ...(sellerId && { 'seller-token': sellerId }),
+    ...(sellerKey && { 'seller-key': sellerKey }),
     ...options.headers,
   };
+
 
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
