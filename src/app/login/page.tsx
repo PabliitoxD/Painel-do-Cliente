@@ -211,7 +211,8 @@ function LoginContent() {
 
         <div className="login-footer">
           <span>Ainda não é um parceiro?</span>
-          <a href="#" className="signup-link">Comece agora</a>
+          <a href="/register" className="signup-link">Comece agora</a>
+
         </div>
       </div>
 
