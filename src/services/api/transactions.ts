@@ -1,60 +1,38 @@
 import { fetchApi } from './client';
-import { isMockSession, mockOrders } from './mockData';
 
 export interface OrderFilters {
   // Add expected filters
-  [key: string]: any;
+  status?: string;
+  payment_method?: string;
+  created_at_gt?: string;
+  created_at_lt?: string;
+  page?: number;
+  per_page?: number;
 }
 
 export const transactionsService = {
   /**
    * Consult a specific transaction by token
    */
-  getOrderByToken: async (token: string) => {
-    try {
-      return await fetchApi<any>(`/orders/${token}`);
-    } catch (error) {
-      if (isMockSession()) {
-        console.log('Using mock data for getOrderByToken due to API error');
-        const order = mockOrders.find(o => o.token === token);
-        return order || null;
-      }
-      throw error;
-    }
+  getOrderByToken: (token: string) => {
+    return fetchApi<any>(`/orders/${token}`);
   },
 
   /**
    * List transactions with optional filters
    */
-  listOrders: async (filters?: OrderFilters) => {
-    try {
-      return await fetchApi<any>(`/orders${filters ? `?${new URLSearchParams(filters).toString()}` : ''}`);
-    } catch (error) {
-      if (isMockSession()) {
-        console.log('Using mock data for listOrders due to API error');
-        return { data: mockOrders };
-      }
-      throw error;
-    }
+  listOrders: (filters?: OrderFilters) => {
+    const query = filters ? new URLSearchParams(filters as any).toString() : '';
+    return fetchApi<any>(`/orders${query ? `?${query}` : ''}`);
   },
 
   /**
    * Create a new transaction
    */
-  createOrder: async (payload: any) => {
-    try {
-      return await fetchApi<any>('/orders', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-    } catch (error) {
-      if (isMockSession()) {
-        console.log('Using mock data for createOrder due to API error');
-        return { ...payload, id: Math.random().toString(36).substr(2, 9), token: 'mock_' + Date.now() };
-      }
-      throw error;
-    }
+  createOrder: (payload: any) => {
+    return fetchApi<any>('/orders', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
 };
-
-

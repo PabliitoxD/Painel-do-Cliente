@@ -117,8 +117,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('tronnus_user', JSON.stringify(mockUser));
         // Flag que indica sessão de teste — evita que initAuth chame api.users.me() com token falso
         localStorage.setItem('tronnus_mock_session', 'true');
-        localStorage.removeItem('tronnus_token'); // Não salva token falso
+        localStorage.setItem('tronnus_token', '85081a949e63b592cc511566374365b2'); // Token de teste (OneID Company Token)
         router.push('/dashboard');
+
       } else {
         throw new Error(err instanceof Error ? err.message : 'Credenciais inválidas');
       }
