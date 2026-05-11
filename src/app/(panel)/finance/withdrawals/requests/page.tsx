@@ -49,10 +49,17 @@ export default function WithdrawalRequestsPage() {
   useEffect(() => {
     loadData();
   }, []);
-
   const handleWithdraw = async () => {
     if (availableBalance < 50) {
       alert("Valor mínimo para saque é R$ 50,00");
+      return;
+    }
+
+    const isBiometryDone = false; // Simulado: Buscar do contexto/API no futuro
+    
+    if (!isBiometryDone) {
+      alert("Para realizar saques, você precisa validar sua biometria facial.");
+      window.location.href = '/settings/account/biometry';
       return;
     }
     
@@ -67,6 +74,7 @@ export default function WithdrawalRequestsPage() {
       setIsWithdrawing(false);
     }
   };
+
 
   return (
     <DashboardLayout>
