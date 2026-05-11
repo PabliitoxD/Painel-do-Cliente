@@ -15,6 +15,7 @@ import {
   X,
   Eye
 } from 'lucide-react';
+import { translateStatus, translateMethod, getStatusPillClass, formatCurrency as fmtBrl } from '@/utils/formatters';
 
 interface SalesListProps {
   title: string;
@@ -91,9 +92,8 @@ export function SalesList({ title, description, statuses }: SalesListProps) {
     });
   }, [ordersData, searchQuery, timeRange, dateRange]);
 
-  const formatCurrency = (val: number) => {
-    return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
+  const formatCurrency = (val: number) => fmtBrl(val);
+
 
   const exportToCSV = () => {
     if (filteredData.length === 0) return;
@@ -254,15 +254,15 @@ export function SalesList({ title, description, statuses }: SalesListProps) {
                       <td className="text-muted">{new Date(item.created_at || item.date || Date.now()).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                       <td className="valor-text">{formatCurrency(item.amount || item.value || 0)}</td>
                       <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', textTransform: 'capitalize' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
                           {methodLow.includes('credit') || methodLow.includes('cart') ? <CreditCard size={14} /> : 
                            methodLow.includes('pix') ? <Wallet size={14} /> : <Banknote size={14} />}
-                          {item.payment_method || item.method || 'PIX'}
+                          {translateMethod(item.payment_method || item.method)}
                         </div>
                       </td>
                       <td>
-                        <span className={`status-pill ${(item.status || '').toLowerCase()}`}>
-                          {item.status}
+                        <span className={`status-pill ${getStatusPillClass(item.status)}`}>
+                          {translateStatus(item.status)}
                         </span>
                       </td>
                       <td>
@@ -371,16 +371,15 @@ export function SalesList({ title, description, statuses }: SalesListProps) {
                 <div style={{ color: 'var(--text-main)' }}>Pagar.me / PIX</div>
 
                 <div className="text-muted">Meio de pagamento</div>
-                <div style={{ color: 'var(--text-main)', textTransform: 'uppercase' }}>{selectedOrder.payment_method || selectedOrder.method || 'PIX'}</div>
+                <div style={{ color: 'var(--text-main)' }}>{translateMethod(selectedOrder.payment_method || selectedOrder.method)}</div>
 
                 <div className="text-muted">Condição de pagamento</div>
                 <div style={{ color: 'var(--text-main)' }}>{formatCurrency(selectedOrder.amount || selectedOrder.value || 0)} à vista</div>
               </div>
 
               <div style={{ 
-                background: ['approved', 'paid', 'completed', 'aprovada'].includes((selectedOrder.status || '').toLowerCase()) ? 'var(--success)' : 
-                            ['canceled', 'failed', 'cancelada'].includes((selectedOrder.status || '').toLowerCase()) ? 'var(--danger)' : 
-                            ['refunded', 'estornado'].includes((selectedOrder.status || '').toLowerCase()) ? 'var(--warning)' : 'var(--surface-hover)', 
+                background: getStatusPillClass(selectedOrder.status) === 'aprovada' ? 'var(--success)' : 
+                            getStatusPillClass(selectedOrder.status) === 'estornada' ? 'var(--danger)' : 'var(--surface-hover)', 
                 color: 'white', 
                 padding: '1.2rem 1.5rem', 
                 borderRadius: '8px',
@@ -391,7 +390,7 @@ export function SalesList({ title, description, statuses }: SalesListProps) {
                 alignItems: 'center',
                 boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
               }}>
-                Pagamento {(selectedOrder.status || '').toUpperCase()} em {new Date(selectedOrder.updated_at || selectedOrder.created_at || selectedOrder.date || Date.now()).toLocaleString('pt-BR')}
+                Pagamento {translateStatus(selectedOrder.status).toUpperCase()} em {new Date(selectedOrder.updated_at || selectedOrder.created_at || selectedOrder.date || Date.now()).toLocaleString('pt-BR')}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: '1rem', fontSize: '0.95rem', borderBottom: '1px solid var(--border)', paddingBottom: '2rem', marginBottom: '2rem' }}>

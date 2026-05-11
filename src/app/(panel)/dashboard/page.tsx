@@ -24,6 +24,7 @@ import {
 } from 'recharts';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
+import { translateStatus, translateMethod, getStatusPillClass, formatCurrency } from '@/utils/formatters';
 import '@/styles/dashboard.css';
 import '@/styles/dashboard.css';
 
@@ -60,11 +61,11 @@ export default function DashboardHome() {
     
     allOrders.forEach((t: any) => {
       const amount = parseFloat(t.amount || t.value || 0);
-      const status = t.status?.toLowerCase() || '';
-      const method = t.payment_method?.toLowerCase() || t.method?.toLowerCase() || '';
+      const status = (t.status || '').toLowerCase();
+      const method = (t.payment_method || t.method || '').toLowerCase();
 
       // Faturamento e Quantidade (consideramos vendas concluídas/aprovadas)
-      if (status === 'approved' || status === 'paid' || status === 'aprovada' || status === 'pago') {
+      if (['approved', 'paid', 'aprovada', 'pago', 'completed', 'active'].includes(status)) {
         faturamento += amount;
         quantidade += 1;
       }
@@ -73,18 +74,20 @@ export default function DashboardHome() {
       const selectedMethodMap: Record<string, string[]> = {
         'Pix': ['pix'],
         'Cartão': ['credit_card', 'cartão', 'cartao', 'creditcard', 'credit'],
-        'Boleto': ['boleto', 'bank_slip'],
+        'Boleto': ['boleto', 'bank_slip', 'slip'],
         'Recorrência': ['recurrence', 'recorrência', 'recorrencia', 'subscription']
       };
       
-      if (selectedMethodMap[selectedPaymentMethod]?.includes(method)) {
+      if (selectedMethodMap[selectedPaymentMethod]?.includes(method) || 
+         (selectedPaymentMethod === 'Cartão' && (method.includes('credit') || method.includes('cart')))) {
         metodoSelecionado += amount;
       }
       
-      if (status === 'refunded' || status === 'estornado') estornos++;
-      if (status === 'canceled' || status === 'cancelado') cancelamentos++;
+      if (['refunded', 'estornado', 'reembolsado'].includes(status)) estornos++;
+      if (['canceled', 'cancelado', 'cancelled', 'failed'].includes(status)) cancelamentos++;
       if (status === 'chargeback') chargebacks++;
     });
+
     
     setStats({
       faturamento,
@@ -104,9 +107,10 @@ export default function DashboardHome() {
     }
 
     const validOrders = allOrders.filter((t: any) => {
-      const status = t.status?.toLowerCase() || '';
-      return ['approved', 'paid', 'aprovada', 'pago'].includes(status);
+      const status = (t.status || '').toLowerCase();
+      return ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active'].includes(status);
     });
+
 
     if (validOrders.length === 0) {
       setDisplayChartData([{ name: 'Sem dados', val: 0 }]);
@@ -398,12 +402,12 @@ export default function DashboardHome() {
                     <td>{t.client || t.customer_name || 'N/A'}</td>
                     <td>{t.date || new Date(t.created_at).toLocaleString() || 'N/A'}</td>
                     <td>
-                      <div className="valor-text">{t.value || `R$ ${(t.amount || 0).toFixed(2)}`}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>{t.method || t.payment_method || 'N/A'}</div>
+                      <div className="valor-text">{t.value || formatCurrency(t.amount || 0)}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>{translateMethod(t.method || t.payment_method)}</div>
                     </td>
                     <td>
-                      <span className={`status-pill ${t.status?.toLowerCase() || 'aprovada'}`}>
-                        {(t.status || 'Aprovada').charAt(0).toUpperCase() + (t.status || 'aprovada').slice(1).toLowerCase()}
+                      <span className={`status-pill ${getStatusPillClass(t.status)}`}>
+                        {translateStatus(t.status)}
                       </span>
                     </td>
                     <td><MoreHorizontal size={16} className="text-muted" /></td>
