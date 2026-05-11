@@ -2,8 +2,9 @@
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useState, useEffect } from 'react';
-import { Building2, User, Mail, ShieldAlert, RefreshCcw } from 'lucide-react';
+import { Building2, User, Mail, ShieldAlert, RefreshCcw, ArrowRight, Scan } from 'lucide-react';
 import { api } from '@/services/api';
+import Link from 'next/link';
 
 export default function AccountSettingsPage() {
   const [userData, setUserData] = useState<any>(null);
@@ -40,6 +41,8 @@ export default function AccountSettingsPage() {
 
   const name = userData?.name || 'Produtor';
   const email = userData?.email || '—';
+  const isProfileComplete = userData?.document !== undefined && userData?.document !== null && userData?.document !== '';
+  const isBiometryDone = false; // Simulado
 
   return (
     <DashboardLayout>
@@ -57,9 +60,16 @@ export default function AccountSettingsPage() {
         <div className="settings-grid">
           {/* PAINEL 1: DADOS CADASTRAIS */}
           <div className="settings-panel card glass-panel">
-            <div className="panel-header">
-              <Building2 size={20} className="panel-icon text-primary" />
-              <h2>Dados Cadastrais</h2>
+            <div className="panel-header" style={{ justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <Building2 size={20} className="panel-icon text-primary" />
+                <h2>Dados Cadastrais</h2>
+              </div>
+              {!isProfileComplete && (
+                <Link href="/settings/account/validation" className="badge-warning" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', padding: '0.4rem 0.8rem', borderRadius: '20px', background: 'rgba(255, 177, 86, 0.1)', color: 'var(--warning)', border: '1px solid rgba(255, 177, 86, 0.2)' }}>
+                  Completar Cadastro <ArrowRight size={14} />
+                </Link>
+              )}
             </div>
             
             <div className="info-list-container animate-fade-in">
@@ -141,6 +151,18 @@ export default function AccountSettingsPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="biometry-section" style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px dashed var(--border)' }}>
+               {!isBiometryDone ? (
+                 <Link href="/settings/account/biometry" className="btn-ghost" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', border: '1px solid var(--border)', borderRadius: '12px', textDecoration: 'none', color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: 600 }}>
+                   <Scan size={20} className="text-primary" /> Fazer Biometria
+                 </Link>
+               ) : (
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--success)', fontSize: '0.9rem', fontWeight: 600, justifyContent: 'center' }}>
+                   <ShieldAlert size={20} /> Biometria Validada
+                 </div>
+               )}
             </div>
           </div>
         </div>
