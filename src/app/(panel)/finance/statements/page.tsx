@@ -15,19 +15,7 @@ import {
   X
 } from 'lucide-react';
 
-/**
- * Dados fictícios expandidos para demonstração.
- */
-const INITIAL_DATA = [
-  { id: 1, type: 'Venda', date: '2026-04-24T14:32:00', description: 'Venda #YXFQVFTFFX', value: 97.00, status: 'aprovado' },
-  { id: 2, type: 'Saque', date: '2026-04-23T10:15:00', description: 'Saque realizado - Bradesco', value: -1500.00, status: 'processado' },
-  { id: 3, type: 'Estorno', date: '2026-04-22T16:45:00', description: 'Estorno cliente Maria Rosa', value: -55.90, status: 'estornado' },
-  { id: 4, type: 'Chargeback', date: '2026-04-21T09:20:00', description: 'Contestação de venda #45G53571E', value: -497.00, status: 'bloqueado' },
-  { id: 5, type: 'Venda', date: '2026-04-21T08:12:00', description: 'Venda #45G53571E', value: 497.00, status: 'aprovado' },
-  { id: 6, type: 'Venda', date: '2026-04-20T11:00:00', description: 'Venda #ABC123XYZ', value: 150.00, status: 'aprovado' },
-  { id: 7, type: 'Venda', date: '2026-03-15T15:00:00', description: 'Venda Mês Passado', value: 200.00, status: 'aprovado' },
-  { id: 8, type: 'Venda', date: '2026-04-27T10:00:00', description: 'Venda de Hoje', value: 350.00, status: 'aprovado' },
-];
+
 
 export default function StatementsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,9 +43,9 @@ export default function StatementsPage() {
         })
         .catch(err => {
           console.error("Erro ao buscar extratos:", err);
-          // Fallback visual temporário caso falhe
-          setStatementsData(INITIAL_DATA);
+          setStatementsData([]);
         })
+
         .finally(() => {
           setIsLoading(false);
         });

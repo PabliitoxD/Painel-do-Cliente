@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { api } from '@/services/api';
 import { 
   RefreshCcw, 
   Search, 
@@ -13,121 +14,124 @@ import {
   User,
   CheckCircle2,
   XCircle,
-  Clock
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
-
-/**
- * Dados fictícios para as assinaturas recorrentes.
- */
-const RECURRING_DATA = [
-  { 
-    id: 'SUB-98721', 
-    product: 'Mentoria Premium Anual', 
-    client: 'Carlos Eduardo Oliveira', 
-    createdAt: '2026-01-10', 
-    frequency: 'Anual', 
-    nextBilling: '2027-01-10', 
-    value: 2400.00, 
-    status: 'ativa' 
-  },
-  { 
-    id: 'SUB-45210', 
-    product: 'Curso Online de Design', 
-    client: 'Ana Paula Souza', 
-    createdAt: '2026-03-15', 
-    frequency: 'Mensal', 
-    nextBilling: '2026-04-15', 
-    value: 97.00, 
-    status: 'atrasada' 
-  },
-  { 
-    id: 'SUB-33102', 
-    product: 'Plataforma SaaS B2B', 
-    client: 'Tech Solutions LTDA', 
-    createdAt: '2025-12-20', 
-    frequency: 'Trimestral', 
-    nextBilling: '2026-03-20', 
-    value: 499.90, 
-    status: 'cancelada' 
-  },
-  { 
-    id: 'SUB-11200', 
-    product: 'Clube de Assinatura Fitness', 
-    client: 'Mariana Lima', 
-    createdAt: '2026-04-01', 
-    frequency: 'Mensal', 
-    nextBilling: '2026-05-01', 
-    value: 129.00, 
-    status: 'ativa' 
-  },
-  { 
-    id: 'SUB-88765', 
-    product: 'Hospedagem de Sites Pro', 
-    client: 'Bruno Ferreira', 
-    createdAt: '2026-02-15', 
-    frequency: 'Semestral', 
-    nextBilling: '2026-08-15', 
-    value: 590.00, 
-    status: 'ativa' 
-  },
-];
+import { translateStatus, formatCurrency } from '@/utils/formatters';
 
 export default function RecurringPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [stats, setStats] = useState({
+    active: 0,
+    mrr: 0,
+    overdue: 0
+  });
+
+  const loadSubscriptions = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await api.subscriptions.list({ per_page: 100 });
+      const data = res.subscriptions || [];
+      setSubscriptions(data);
+
+      // Calcular estatísticas básicas
+      let active = 0;
+      let mrr = 0;
+      let overdue = 0;
+
+      data.forEach((sub: any) => {
+        const status = (sub.status || '').toLowerCase();
+        const price = parseFloat(sub.price || sub.plan?.price || 0);
+        
+        if (status === 'active' || status === 'ativa') {
+          active++;
+          mrr += price;
+        }
+        if (status === 'overdue' || status === 'atrasada' || status === 'waiting_payment') {
+          overdue++;
+        }
+      });
+
+      setStats({ active, mrr, overdue });
+    } catch (err: any) {
+      console.error("Erro ao buscar assinaturas:", err);
+      setError(err.message || "Erro ao carregar assinaturas.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSubscriptions();
+  }, []);
 
   // Filtragem dos dados
   const filteredData = useMemo(() => {
-    return RECURRING_DATA.filter(item => {
-      const matchesSearch = item.product.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           item.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           item.id.toLowerCase().includes(searchQuery.toLowerCase());
+    return subscriptions.filter(item => {
+      const label = (item.customer?.name || item.plan?.name || item.token || '').toLowerCase();
+      const matchesSearch = label.includes(searchQuery.toLowerCase());
       
-      const matchesStatus = statusFilter === 'Todos' || item.status === statusFilter;
+      const status = (item.status || '').toLowerCase();
+      const matchesStatus = statusFilter === 'Todos' || 
+                           (statusFilter === 'ativa' && (status === 'active' || status === 'ativa')) ||
+                           (statusFilter === 'atrasada' && (status === 'overdue' || status === 'atrasada' || status === 'waiting_payment')) ||
+                           (statusFilter === 'cancelada' && (status === 'cancelled' || status === 'cancelada'));
       
       return matchesSearch && matchesStatus;
     });
-  }, [searchQuery, statusFilter]);
+  }, [subscriptions, searchQuery, statusFilter]);
 
-  const formatCurrency = (val: number) => {
-    return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
-
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '—';
     return new Date(dateStr).toLocaleDateString('pt-BR');
   };
 
   const getStatusStyle = (status: string) => {
-    switch(status) {
-      case 'ativa': return { bg: 'rgba(49, 120, 44, 0.1)', color: 'var(--success)', label: 'Ativa' };
-      case 'atrasada': return { bg: 'rgba(255, 177, 86, 0.1)', color: 'var(--warning)', label: 'Atrasada' };
-      case 'cancelada': return { bg: 'rgba(203, 86, 86, 0.1)', color: 'var(--danger)', label: 'Cancelada' };
-      default: return { bg: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-dim)', label: status };
-    }
+    const s = status.toLowerCase();
+    if (s === 'active' || s === 'ativa') return { bg: 'rgba(49, 120, 44, 0.1)', color: 'var(--success)', label: 'Ativa' };
+    if (s === 'overdue' || s === 'atrasada' || s === 'waiting_payment') return { bg: 'rgba(255, 177, 86, 0.1)', color: 'var(--warning)', label: 'Atrasada' };
+    if (s === 'cancelled' || s === 'cancelada') return { bg: 'rgba(203, 86, 86, 0.1)', color: 'var(--danger)', label: 'Cancelada' };
+    return { bg: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-dim)', label: translateStatus(status) };
   };
 
   return (
     <DashboardLayout>
       <div className="recurring-page animate-fade-in">
-        {/* Cabeçalho */}
         <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
           <div>
             <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.25rem' }}>Recorrências</h1>
             <p className="text-muted" style={{ fontSize: '0.95rem' }}>Gerencie suas assinaturas e planos recorrentes</p>
           </div>
-          <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Download size={18} /> Exportar Recorrências
-          </button>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button className="btn-ghost" onClick={loadSubscriptions} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem' }}>
+              <RefreshCcw size={18} className={isLoading ? 'animate-spin' : ''} /> Atualizar
+            </button>
+            <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Download size={18} /> Exportar
+            </button>
+          </div>
         </div>
 
-        {/* Métricas Rápidas */}
+        {error && (
+          <div className="card" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '1rem', marginBottom: '2rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <AlertTriangle size={20} />
+            {error}
+          </div>
+        )}
+
         <div className="stats-grid grid-3" style={{ marginBottom: '2rem' }}>
           <div className="stat-card">
             <div className="stat-top">
               <span className="stat-title">Assinaturas Ativas</span>
               <CheckCircle2 size={20} style={{ color: 'var(--success)' }} />
             </div>
-            <div className="stat-value">3</div>
+            <div className="stat-value">{stats.active}</div>
             <p className="text-muted" style={{ fontSize: '0.8rem' }}>Total de clientes recorrentes</p>
           </div>
           <div className="stat-card">
@@ -135,7 +139,7 @@ export default function RecurringPage() {
               <span className="stat-title">MRR Estimado</span>
               <RefreshCcw size={20} style={{ color: 'var(--primary)' }} />
             </div>
-            <div className="stat-value">R$ 1.545,00</div>
+            <div className="stat-value">{formatCurrency(stats.mrr)}</div>
             <p className="text-muted" style={{ fontSize: '0.8rem' }}>Faturamento mensal recorrente</p>
           </div>
           <div className="stat-card">
@@ -143,18 +147,17 @@ export default function RecurringPage() {
               <span className="stat-title">Inadimplência</span>
               <Clock size={20} style={{ color: 'var(--warning)' }} />
             </div>
-            <div className="stat-value">1</div>
+            <div className="stat-value">{stats.overdue}</div>
             <p className="text-muted" style={{ fontSize: '0.8rem' }}>Assinaturas aguardando pagamento</p>
           </div>
         </div>
 
-        {/* Filtros */}
         <div className="table-filters card glass-panel" style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', padding: '1rem' }}>
           <div className="search-box" style={{ flex: 1, background: 'var(--background)', borderRadius: '12px', padding: '0 1rem' }}>
             <Search size={18} />
             <input 
               type="text" 
-              placeholder="Buscar por produto, cliente ou ID..." 
+              placeholder="Buscar por cliente ou ID..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ background: 'none', border: 'none', color: 'white', width: '100%', padding: '0.8rem 0.5rem', outline: 'none' }} 
@@ -174,7 +177,6 @@ export default function RecurringPage() {
           </select>
         </div>
 
-        {/* Tabela de Recorrências */}
         <div className="table-card">
           <table className="transactions-table">
             <thead>
@@ -190,20 +192,36 @@ export default function RecurringPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredData.map((item) => {
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-dim)' }}>
+                    <div style={{ width: '30px', height: '30px', border: '3px solid var(--border)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }} />
+                    Carregando assinaturas...
+                  </td>
+                </tr>
+              ) : filteredData.length === 0 ? (
+                <tr>
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-dim)' }}>
+                    Nenhuma assinatura encontrada.
+                  </td>
+                </tr>
+              ) : filteredData.map((item) => {
                 const statusInfo = getStatusStyle(item.status);
+                const periodicity = item.plan?.periodicity || 1;
+                const freqLabel = periodicity === 1 ? 'Mensal' : periodicity === 3 ? 'Trimestral' : periodicity === 6 ? 'Semestral' : periodicity === 12 ? 'Anual' : 'Personalizada';
+
                 return (
-                  <tr key={item.id}>
-                    <td className="id-text" style={{ fontWeight: 600 }}>#{item.id}</td>
+                  <tr key={item.token}>
+                    <td className="id-text" style={{ fontWeight: 600 }}>#{item.token.slice(0, 8)}</td>
                     <td>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                        <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{item.product}</span>
+                        <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{item.plan?.name || 'Assinatura'}</span>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <User size={12} /> {item.client}
+                          <User size={12} /> {item.customer?.name || 'Cliente'}
                         </span>
                       </div>
                     </td>
-                    <td className="text-muted">{formatDate(item.createdAt)}</td>
+                    <td className="text-muted">{formatDate(item.created_at)}</td>
                     <td>
                       <span style={{ 
                         padding: '0.3rem 0.6rem', 
@@ -213,16 +231,16 @@ export default function RecurringPage() {
                         color: 'var(--primary)',
                         fontWeight: 600
                       }}>
-                        {item.frequency}
+                        {freqLabel}
                       </span>
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Calendar size={14} className="text-dim" />
-                        <span style={{ fontWeight: 500 }}>{formatDate(item.nextBilling)}</span>
+                        <span style={{ fontWeight: 500 }}>{formatDate(item.next_billing_date)}</span>
                       </div>
                     </td>
-                    <td style={{ fontWeight: 700, fontSize: '1rem' }}>{formatCurrency(item.value)}</td>
+                    <td style={{ fontWeight: 700, fontSize: '1rem' }}>{formatCurrency(parseFloat(item.price || item.plan?.price || 0))}</td>
                     <td>
                       <span className="status-pill" style={{ 
                         background: statusInfo.bg, 
@@ -245,6 +263,8 @@ export default function RecurringPage() {
         </div>
       </div>
       <style jsx>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
         @media (max-width: 768px) {
           .table-filters {
             flex-direction: column;
