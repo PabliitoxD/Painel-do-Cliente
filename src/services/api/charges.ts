@@ -1,4 +1,5 @@
 import { fetchApi } from './client';
+import { isMockSession, mockCharges, mockSubscriptions } from './mockData';
 
 // ─── Shared ───────────────────────────────────────────────────────────────────
 
@@ -216,14 +217,50 @@ function buildQs(params?: Record<string, any>): string {
 
 // ── One-time charges ──────────────────────────────────────────────────────────
 export const chargesService = {
-  list: (params?: ChargesListParams): Promise<ChargesListResponse> =>
-    fetchApi<ChargesListResponse>(`/charges${buildQs(params)}`),
+  list: async (params?: ChargesListParams): Promise<ChargesListResponse> => {
+    try {
+      return await fetchApi<ChargesListResponse>(`/charges${buildQs(params)}`);
+    } catch (error) {
+      if (isMockSession()) {
+        return {
+          charges: mockCharges as any,
+          meta: { current_page: 1, per_page: 50, total_count: mockCharges.length }
+        };
+      }
+      throw error;
+    }
+  },
 
-  get: (token: string): Promise<ChargeDetailResponse> =>
-    fetchApi<ChargeDetailResponse>(`/charges/${token}`),
+  get: async (token: string): Promise<ChargeDetailResponse> => {
+    try {
+      return await fetchApi<ChargeDetailResponse>(`/charges/${token}`);
+    } catch (error) {
+      if (isMockSession()) {
+        const charge = mockCharges.find(c => c.token === token);
+        return { charge: charge as any };
+      }
+      throw error;
+    }
+  },
 
-  create: (payload: CreateChargePayload): Promise<ChargeDetailResponse> =>
-    fetchApi<ChargeDetailResponse>('/charges', { method: 'POST', body: JSON.stringify(payload) }),
+  create: async (payload: CreateChargePayload): Promise<ChargeDetailResponse> => {
+    try {
+      return await fetchApi<ChargeDetailResponse>('/charges', { method: 'POST', body: JSON.stringify(payload) });
+    } catch (error) {
+      if (isMockSession()) {
+        const newCharge = {
+          token: 'mock_' + Date.now(),
+          code: 'MOCK' + Math.floor(Math.random() * 1000),
+          description: payload.charge.description,
+          price: payload.charge.products.reduce((a, b) => a + parseFloat(b.price) * parseInt(b.quantity), 0),
+          status: 'NOT_PAID',
+          expiration_date: payload.charge.expiration_date || '—',
+        };
+        return { charge: newCharge as any };
+      }
+      throw error;
+    }
+  },
 
   processPayment: (payload: ProcessPaymentPayload): Promise<any> =>
     fetchApi<any>('/payments', { method: 'POST', body: JSON.stringify(payload) }),
@@ -231,14 +268,51 @@ export const chargesService = {
 
 // ── Plans ─────────────────────────────────────────────────────────────────────
 export const plansService = {
-  list: (params?: { page?: number; per_page?: number }): Promise<PlansListResponse> =>
-    fetchApi<PlansListResponse>(`/subscription/plans${buildQs(params)}`),
+  list: async (params?: { page?: number; per_page?: number }): Promise<PlansListResponse> => {
+    try {
+      return await fetchApi<PlansListResponse>(`/subscription/plans${buildQs(params)}`);
+    } catch (error) {
+      if (isMockSession()) {
+        return {
+          plans: [],
+          meta: { current_page: 1, per_page: 50, total_count: 0 }
+        };
+      }
+      throw error;
+    }
+  },
 
-  get: (token: string): Promise<PlanDetailResponse> =>
-    fetchApi<PlanDetailResponse>(`/subscription/plans/${token}`),
+  get: async (token: string): Promise<PlanDetailResponse> => {
+    try {
+      return await fetchApi<PlanDetailResponse>(`/subscription/plans/${token}`);
+    } catch (error) {
+      if (isMockSession()) {
+        throw new Error('Plano não encontrado (MOCK)');
+      }
+      throw error;
+    }
+  },
 
-  create: (payload: CreatePlanPayload): Promise<PlanDetailResponse> =>
-    fetchApi<PlanDetailResponse>('/subscription/plans', { method: 'POST', body: JSON.stringify(payload) }),
+  create: async (payload: CreatePlanPayload): Promise<PlanDetailResponse> => {
+    try {
+      return await fetchApi<PlanDetailResponse>('/subscription/plans', { method: 'POST', body: JSON.stringify(payload) });
+    } catch (error) {
+      if (isMockSession()) {
+        return {
+          plan: {
+            id: 'mock_plan',
+            token: 'mock_plan_' + Date.now(),
+            name: payload.name,
+            price: parseFloat(payload.price),
+            periodicity: payload.periodicity,
+            public: true,
+            status: 'active'
+          } as any
+        };
+      }
+      throw error;
+    }
+  },
 
   update: (token: string, payload: Partial<CreatePlanPayload>): Promise<PlanDetailResponse> =>
     fetchApi<PlanDetailResponse>(`/subscription/plans/${token}`, { method: 'PUT', body: JSON.stringify(payload) }),
@@ -246,38 +320,114 @@ export const plansService = {
 
 // ── Subscriptions ─────────────────────────────────────────────────────────────
 export const subscriptionsService = {
-  list: (params?: { page?: number; per_page?: number }): Promise<SubscriptionsListResponse> =>
-    fetchApi<SubscriptionsListResponse>(`/subscription/subscriptions${buildQs(params)}`),
+  list: async (params?: { page?: number; per_page?: number }): Promise<SubscriptionsListResponse> => {
+    try {
+      return await fetchApi<SubscriptionsListResponse>(`/subscription/subscriptions${buildQs(params)}`);
+    } catch (error) {
+      if (isMockSession()) {
+        return {
+          subscriptions: mockSubscriptions as any,
+          meta: { current_page: 1, per_page: 50, total_count: mockSubscriptions.length }
+        };
+      }
+      throw error;
+    }
+  },
 
-  get: (token: string): Promise<SubscriptionDetailResponse> =>
-    fetchApi<SubscriptionDetailResponse>(`/subscription/subscriptions/${token}`),
+  get: async (token: string): Promise<SubscriptionDetailResponse> => {
+    try {
+      return await fetchApi<SubscriptionDetailResponse>(`/subscription/subscriptions/${token}`);
+    } catch (error) {
+      if (isMockSession()) {
+        const sub = mockSubscriptions.find(s => s.token === token);
+        return { subscription: sub as any };
+      }
+      throw error;
+    }
+  },
 
-  create: (payload: CreateSubscriptionPayload): Promise<SubscriptionDetailResponse> =>
-    fetchApi<SubscriptionDetailResponse>('/subscription/subscriptions', { method: 'POST', body: JSON.stringify(payload) }),
+  create: async (payload: CreateSubscriptionPayload): Promise<SubscriptionDetailResponse> => {
+    try {
+      return await fetchApi<SubscriptionDetailResponse>('/subscription/subscriptions', { method: 'POST', body: JSON.stringify(payload) });
+    } catch (error) {
+      if (isMockSession()) {
+        return {
+          subscription: {
+            id: 'mock_sub',
+            token: 'mock_sub_' + Date.now(),
+            status: 'active',
+            customer: payload.subscription.customer,
+            created_at: new Date().toISOString()
+          } as any
+        };
+      }
+      throw error;
+    }
+  },
 
-  cancel: (token: string): Promise<any> =>
-    fetchApi<any>(`/subscription/subscriptions/cancel/${token}`, { method: 'PUT' }),
+  cancel: async (token: string): Promise<any> => {
+    try {
+      return await fetchApi<any>(`/subscription/subscriptions/cancel/${token}`, { method: 'PUT' });
+    } catch (error) {
+      if (isMockSession()) return { success: true };
+      throw error;
+    }
+  },
 
   /** POST /payments/full — first-time subscription payment with card */
-  processFirstPayment: (payload: ProcessSubscriptionPaymentPayload): Promise<any> =>
-    fetchApi<any>('/payments/full', { method: 'POST', body: JSON.stringify(payload) }),
+  processFirstPayment: async (payload: ProcessSubscriptionPaymentPayload): Promise<any> => {
+    try {
+      return await fetchApi<any>('/payments/full', { method: 'POST', body: JSON.stringify(payload) });
+    } catch (error) {
+      if (isMockSession()) return { success: true, token: 'mock_pay_token' };
+      throw error;
+    }
+  },
 };
 
 // ── Invoices ──────────────────────────────────────────────────────────────────
 export const invoicesService = {
-  list: (params?: { page?: number; per_page?: number; status?: string }): Promise<InvoicesListResponse> =>
-    fetchApi<InvoicesListResponse>(`/subscription/invoices${buildQs(params)}`),
+  list: async (params?: { page?: number; per_page?: number; status?: string }): Promise<InvoicesListResponse> => {
+    try {
+      return await fetchApi<InvoicesListResponse>(`/subscription/invoices${buildQs(params)}`);
+    } catch (error) {
+      if (isMockSession()) {
+        return {
+          invoices: [],
+          meta: { current_page: 1, per_page: 50, total_count: 0 }
+        };
+      }
+      throw error;
+    }
+  },
 
-  get: (token: string): Promise<{ invoice: ApiInvoice }> =>
-    fetchApi<{ invoice: ApiInvoice }>(`/subscription/invoices/${token}`),
+  get: async (token: string): Promise<{ invoice: ApiInvoice }> => {
+    try {
+      return await fetchApi<{ invoice: ApiInvoice }>(`/subscription/invoices/${token}`);
+    } catch (error) {
+      if (isMockSession()) {
+        return {
+          invoice: { id: 'mock_inv', token, status: 'paid', price: 100 } as any
+        };
+      }
+      throw error;
+    }
+  },
 
   /** POST /payments/pay — pay an existing invoice */
-  pay: (invoiceToken: string, customer: SubscriptionCustomer, payment: any): Promise<any> =>
-    fetchApi<any>('/payments/pay', {
-      method: 'POST',
-      body: JSON.stringify({ order_type: 'invoice', token: invoiceToken, customer, payment }),
-    }),
+  pay: async (invoiceToken: string, customer: SubscriptionCustomer, payment: any): Promise<any> => {
+    try {
+      return await fetchApi<any>('/payments/pay', {
+        method: 'POST',
+        body: JSON.stringify({ order_type: 'invoice', token: invoiceToken, customer, payment }),
+      });
+    } catch (error) {
+      if (isMockSession()) return { success: true };
+      throw error;
+    }
+  },
 };
+
 
 // ─── Helper: periodicity number → human label ─────────────────────────────────
 export const periodicityLabel: Record<number, string> = {
