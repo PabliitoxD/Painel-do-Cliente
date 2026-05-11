@@ -117,9 +117,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('tronnus_user', JSON.stringify(mockUser));
         // Flag que indica sessão de teste — evita que initAuth chame api.users.me() com token falso
         localStorage.setItem('tronnus_mock_session', 'true');
-        localStorage.setItem('tronnus_token', '06cd53f4e769aad4217b59d973d95d45'); // seller_token
-        localStorage.setItem('tronnus_seller_key', '84b69f2d40531d81315b6b04dca6d57e'); // seller_key
+        localStorage.setItem('tronnus_token', '84b69f2d40531d81315b6b04dca6d57e'); // seller_key (usada como Bearer)
+        localStorage.setItem('tronnus_seller_token', '06cd53f4e769aad4217b59d973d95d45'); // ID da conta
+        localStorage.setItem('tronnus_seller_key', '84b69f2d40531d81315b6b04dca6d57e'); // Chave principal
         router.push('/dashboard');
+
 
 
       } else {

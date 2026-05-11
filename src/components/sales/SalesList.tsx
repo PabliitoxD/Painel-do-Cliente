@@ -316,19 +316,19 @@ export function SalesList({ title, description, statuses }: SalesListProps) {
                 <div style={{ fontWeight: 500 }}>{selectedOrder.client || selectedOrder.customer?.name || 'Cliente não informado'}</div>
                 
                 <div className="text-muted">Gênero</div>
-                <div style={{ color: 'var(--text-main)' }}>Não informado</div>
+                <div style={{ color: 'var(--text-main)' }}>—</div>
 
                 <div className="text-muted">Tipo</div>
-                <div style={{ color: 'var(--text-main)' }}>Pessoa física</div>
+                <div style={{ color: 'var(--text-main)' }}>—</div>
 
                 <div className="text-muted">CPF</div>
-                <div style={{ color: 'var(--primary)' }}>{selectedOrder.customer?.document || '000.000.000-00'}</div>
+                <div style={{ color: 'var(--primary)' }}>{selectedOrder.customer?.document || '—'}</div>
 
                 <div className="text-muted">E-mail</div>
-                <div style={{ color: 'var(--primary)' }}>{selectedOrder.customer?.email || 'email@não.informado'}</div>
+                <div style={{ color: 'var(--primary)' }}>{selectedOrder.customer?.email || '—'}</div>
                 
                 <div className="text-muted">Telefone</div>
-                <div style={{ color: 'var(--primary)' }}>{selectedOrder.customer?.phone || '+55 (00) 00000-0000'}</div>
+                <div style={{ color: 'var(--primary)' }}>{selectedOrder.customer?.phone || '—'}</div>
               </div>
 
               <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden', marginBottom: '2.5rem' }}>
@@ -368,7 +368,7 @@ export function SalesList({ title, description, statuses }: SalesListProps) {
                 <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{formatCurrency(selectedOrder.amount || selectedOrder.value || 0)}</div>
 
                 <div className="text-muted">Adquirente</div>
-                <div style={{ color: 'var(--text-main)' }}>Pagar.me / PIX</div>
+                <div style={{ color: 'var(--text-main)' }}>Superfin</div>
 
                 <div className="text-muted">Meio de pagamento</div>
                 <div style={{ color: 'var(--text-main)' }}>{translateMethod(selectedOrder.payment_method || selectedOrder.method)}</div>
