@@ -117,8 +117,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('tronnus_user', JSON.stringify(mockUser));
         // Flag que indica sessão de teste — evita que initAuth chame api.users.me() com token falso
         localStorage.setItem('tronnus_mock_session', 'true');
-        localStorage.setItem('tronnus_token', '85081a949e63b592cc511566374365b2'); // Token de teste (OneID Company Token)
+        localStorage.setItem('tronnus_token', '06cd53f4e769aad4217b59d973d95d45'); // seller_token
+        localStorage.setItem('tronnus_seller_key', '84b69f2d40531d81315b6b04dca6d57e'); // seller_key
         router.push('/dashboard');
+
 
       } else {
         throw new Error(err instanceof Error ? err.message : 'Credenciais inválidas');
