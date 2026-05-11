@@ -8,31 +8,46 @@ import {
   ArrowUpCircle, 
   Info,
   AlertCircle,
-  Clock
+  Clock,
+  RefreshCcw
 } from 'lucide-react';
-
-const PENDING_REQUESTS = [
-  { id: 1, date: '24/04/2026 15:10', bank: 'Nubank', amount: 450.00, status: 'pendente' },
-];
+import { translateStatus, formatCurrency } from '@/utils/formatters';
 
 export default function WithdrawalRequestsPage() {
-  const [availableBalance, setAvailableBalance] = useState<number>(8432.10);
-  const [totalBalance, setTotalBalance] = useState<number>(24500.00);
+  const [availableBalance, setAvailableBalance] = useState<number>(0);
+  const [totalBalance, setTotalBalance] = useState<number>(0);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
-  useEffect(() => {
-    // Busca o saldo disponível real na API
-    api.receivableSchedules.getSummary().then(res => {
-      if (res && (res.released !== undefined || res.available !== undefined)) {
-        setAvailableBalance(res.released || res.available || 0);
-        setTotalBalance(res.total || res.amount || 0);
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [summary, history] = await Promise.all([
+        api.receivableSchedules.getSummary(),
+        api.withdrawals.list()
+      ]);
+
+      if (summary) {
+        setAvailableBalance(summary.released || summary.available || 0);
+        setTotalBalance(summary.total || summary.amount || 0);
       }
-    }).catch(err => {
-      console.error("Erro ao carregar saldo:", err);
-    }).finally(() => {
+
+      const historyData = Array.isArray(history) ? history : history.data || history.withdrawals || [];
+      const pending = historyData.filter((w: any) => 
+        ['pending', 'pendente', 'waiting', 'aguardando'].includes((w.status || '').toLowerCase())
+      );
+      setPendingRequests(pending);
+
+    } catch (err) {
+      console.error("Erro ao carregar dados de saque:", err);
+    } finally {
       setIsLoading(false);
-    });
+    }
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   const handleWithdraw = async () => {
@@ -45,10 +60,9 @@ export default function WithdrawalRequestsPage() {
     try {
       await api.withdrawals.createWithdraw({ amount: availableBalance });
       alert("Saque solicitado com sucesso!");
-      // Atualiza o saldo após o saque (zerando ou recarregando da api)
-      setAvailableBalance(0);
-    } catch (err) {
-      alert("Erro ao solicitar saque. Tente novamente.");
+      loadData();
+    } catch (err: any) {
+      alert(err.message || "Erro ao solicitar saque. Tente novamente.");
     } finally {
       setIsWithdrawing(false);
     }
@@ -57,19 +71,22 @@ export default function WithdrawalRequestsPage() {
   return (
     <DashboardLayout>
       <div className="requests-page animate-fade-in">
-        <div className="page-header">
+        <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <div>
-            <h1>Solicitações de Saque</h1>
-            <p className="text-muted">Gerencie seus pedidos de resgate em aberto</p>
+            <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.25rem' }}>Solicitações de Saque</h1>
+            <p className="text-muted" style={{ fontSize: '0.9rem' }}>Gerencie seus pedidos de resgate em aberto</p>
           </div>
+          <button className="btn-ghost" onClick={loadData}>
+            <RefreshCcw size={18} className={isLoading ? 'animate-spin' : ''} /> Atualizar
+          </button>
         </div>
 
-        <div className="stats-grid" style={{ gridTemplateColumns: '1fr 1fr 1.5fr', gap: '1.5rem', marginBottom: '2rem' }}>
+        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr', gap: '1.5rem', marginBottom: '2rem' }}>
           <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--surface) 0%, #1a2932 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <span className="stat-title">Disponível para Saque</span>
               <div className="stat-value" style={{ fontSize: '2.2rem' }}>
-                {isLoading ? '...' : availableBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                {isLoading ? '...' : formatCurrency(availableBalance)}
               </div>
             </div>
             <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -91,7 +108,7 @@ export default function WithdrawalRequestsPage() {
             <div>
               <span className="stat-title">Saldo Total (Recebíveis)</span>
               <div className="stat-value" style={{ fontSize: '2.2rem' }}>
-                {isLoading ? '...' : totalBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                {isLoading ? '...' : formatCurrency(totalBalance)}
               </div>
             </div>
             <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '1.5rem' }}>Inclui valores pendentes de liberação</p>
@@ -104,7 +121,7 @@ export default function WithdrawalRequestsPage() {
             <div>
               <h3 style={{ fontSize: '0.95rem', marginBottom: '0.25rem' }}>Informação Importante</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', maxWidth: '400px', lineHeight: 1.5 }}>
-                Os saques são processados exclusivamente via PIX para a chave cadastrada na sua conta (Configurações &gt; Minha Conta). O prazo médio de compensação é de até 2 horas.
+                Os saques são processados exclusivamente via PIX para a chave cadastrada na sua conta. O prazo médio de compensação é de até 2 horas.
               </p>
             </div>
           </div>
@@ -123,68 +140,46 @@ export default function WithdrawalRequestsPage() {
               </tr>
             </thead>
             <tbody>
-              {PENDING_REQUESTS.map((item) => (
-                <tr key={item.id}>
+              {isLoading ? (
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>Carregando...</td></tr>
+              ) : pendingRequests.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                    Nenhuma solicitação pendente no momento.
+                  </td>
+                </tr>
+              ) : pendingRequests.map((item, i) => (
+                <tr key={item.id || i}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <Clock size={16} className="text-muted" />
-                      {item.date}
+                      {new Date(item.created_at || item.date).toLocaleString('pt-BR')}
                     </div>
                   </td>
                   <td style={{ fontWeight: 600 }}>
-                    {item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {formatCurrency(parseFloat(item.amount || 0))}
                   </td>
                   <td>
                     <span className="status-pill aguardando">
-                      {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                      {translateStatus(item.status)}
                     </span>
                   </td>
-                  <td className="text-muted">Hoje até 17:30</td>
+                  <td className="text-muted">Processando...</td>
                   <td>
                     <button className="btn-ghost" style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>Cancelar</button>
                   </td>
                 </tr>
               ))}
-              {PENDING_REQUESTS.length === 0 && (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                    Nenhuma solicitação pendente no momento.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
       </div>
 
       <style jsx>{`
-        .page-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
-        }
-        .page-header h1 {
-          font-size: 1.8rem;
-          margin-bottom: 0.25rem;
-        }
-        .text-muted {
-          color: var(--text-muted);
-          font-size: 0.9rem;
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
         @media (max-width: 768px) {
-          .stats-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          .page-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 1rem;
-          }
-          .page-header button {
-            width: 100%;
-          }
+          .stats-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </DashboardLayout>

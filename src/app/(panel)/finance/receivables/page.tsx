@@ -20,18 +20,14 @@ import {
  */
 export default function ReceivablesPage() {
   const [summary, setSummary] = useState({
-    total: 45230.00,
-    released: 18500.00,
-    waiting: 24730.00,
-    blocked: 2000.00
+    total: 0,
+    released: 0,
+    waiting: 0,
+    blocked: 0
   });
 
-  const [schedules, setSchedules] = useState([
-    { date: 'Amanhã, 25 Abr', amount: 1250.00, count: 12, status: 'CONFIRMADO' },
-    { date: 'Segunda, 27 Abr', amount: 3420.50, count: 24, status: 'CONFIRMADO' },
-    { date: 'Terça, 28 Abr', amount: 980.00, count: 8, status: 'PENDENTE' },
-    { date: 'Quarta, 29 Abr', amount: 2100.00, count: 15, status: 'PENDENTE' },
-  ]);
+  const [schedules, setSchedules] = useState<any[]>([]);
+
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSimulationOpen, setIsSimulationOpen] = useState(false);

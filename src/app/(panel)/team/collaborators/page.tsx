@@ -4,18 +4,9 @@ import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Search, Plus, Edit2, Trash2, Users2, Mail, Shield, X } from 'lucide-react';
 
-// Mock data
-const MOCK_PROFILES = [
-  { id: 1, name: 'Administrador' },
-  { id: 2, name: 'Suporte' },
-  { id: 3, name: 'Financeiro' },
-];
-
-const MOCK_COLLABORATORS = [
-  { id: 1, name: 'João Silva', email: 'joao.silva@exemplo.com', profileId: 1, profileName: 'Administrador', status: 'Ativo', lastLogin: 'Hoje, 14:30' },
-  { id: 2, name: 'Maria Souza', email: 'maria.souza@exemplo.com', profileId: 2, profileName: 'Suporte', status: 'Ativo', lastLogin: 'Ontem, 09:15' },
-  { id: 3, name: 'Carlos Santos', email: 'carlos.santos@exemplo.com', profileId: 3, profileName: 'Financeiro', status: 'Inativo', lastLogin: '25/04/2026' },
-];
+// Mock data (Empty until real API is provided)
+const MOCK_PROFILES: any[] = [];
+const MOCK_COLLABORATORS: any[] = [];
 
 export default function CollaboratorsPage() {
   const [collaborators, setCollaborators] = useState(MOCK_COLLABORATORS);
@@ -70,7 +61,13 @@ export default function CollaboratorsPage() {
               </tr>
             </thead>
             <tbody>
-              {collaborators.map(collab => (
+              {collaborators.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-dim)' }}>
+                    Nenhum colaborador encontrado.
+                  </td>
+                </tr>
+              ) : collaborators.map(collab => (
                 <tr key={collab.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -149,11 +146,6 @@ export default function CollaboratorsPage() {
                       <option key={profile.id} value={profile.id}>{profile.name}</option>
                     ))}
                   </select>
-                  {MOCK_PROFILES.length === 0 && (
-                    <span style={{ fontSize: '0.8rem', color: 'var(--danger)', display: 'block', marginTop: '0.25rem' }}>
-                      É necessário cadastrar um Perfil primeiro.
-                    </span>
-                  )}
                 </div>
 
                 {!editingCollab && (
