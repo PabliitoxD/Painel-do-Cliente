@@ -14,4 +14,12 @@ export const withdrawalsService = {
       body: JSON.stringify(payload),
     });
   },
+  
+  /**
+   * List all withdrawal requests
+   */
+  list: () => {
+    return fetchApi<any>('/withdrawals');
+  },
 };
+
