@@ -3,16 +3,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Search, Plus, X, Receipt, Trash2, ShoppingCart, DollarSign, FileText, Link as LinkIcon, RefreshCcw, Tag, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { chargesService, plansService, subscriptionsService, ApiCharge, ApiSubscription, CreateChargePayload, CreatePlanPayload, frequencyToPeriodicity, periodicityLabel } from '@/services/api/charges';
-
-function mapStatus(s: string) {
-  return ({ PAID: 'Pago', NOT_PAID: 'Pendente', EXPIRED: 'Expirado', CANCELLED: 'Cancelado', active: 'Ativa', cancelled: 'Cancelada', suspended: 'Suspensa' } as any)[s] ?? s;
-}
-function pillClass(s: string) {
-  if (['PAID','active'].includes(s)) return 'aprovada';
-  if (['EXPIRED','CANCELLED','cancelled','suspended'].includes(s)) return 'estornada';
-  return 'pendente';
-}
-const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+import { translateStatus, getStatusPillClass, formatCurrency } from '@/utils/formatters';
 
 type TabType = 'avulsa' | 'recorrente';
 
@@ -162,8 +153,8 @@ export default function ChargesPage() {
                   <td style={{ fontWeight:600, color:'var(--primary)' }}>{r.code || r.token.slice(0,8)}</td>
                   <td style={{ fontWeight:600, color:'var(--text-main)' }}>{r.label}</td>
                   <td style={{ color:'var(--text-dim)' }}>{r.extra || '—'}</td>
-                  <td style={{ fontWeight:600 }}>{fmt(r.value)}</td>
-                  <td><span className={`status-pill ${pillClass(r.status)}`}>{mapStatus(r.status)}</span></td>
+                  <td style={{ fontWeight:600 }}>{formatCurrency(r.value)}</td>
+                  <td><span className={`status-pill ${getStatusPillClass(r.status)}`}>{translateStatus(r.status)}</span></td>
                   <td style={{ textAlign:'right' }}>
                     <button className="btn-ghost" onClick={() => setSelected(r)} style={{ padding:'0.4rem 0.8rem', borderRadius:'8px', fontSize:'0.85rem' }}>Ver Detalhes</button>
                   </td>
@@ -185,7 +176,7 @@ export default function ChargesPage() {
               {/* Total banner */}
               <div style={{ background:'linear-gradient(135deg, var(--primary) 0%, #3a5368 100%)', borderRadius:'14px', padding:'1.25rem 1.5rem', marginBottom:'1.5rem', display:'flex', justifyContent:'space-between', alignItems:'center', color:'white' }}>
                 <div><p style={{ opacity:0.85, marginBottom:'0.1rem' }}>Valor Total</p><p style={{ fontSize:'0.8rem', opacity:0.7 }}>Soma dos produtos</p></div>
-                <span style={{ fontSize:'2rem', fontWeight:700 }}>{fmt(totalValue)}</span>
+                <span style={{ fontSize:'2rem', fontWeight:700 }}>{formatCurrency(totalValue)}</span>
               </div>
 
               {/* Billing type toggle */}
@@ -276,8 +267,8 @@ export default function ChargesPage() {
 
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'1rem', marginBottom:'1.5rem' }}>
                 {[
-                  { label:'Valor', value: fmt(selected.value), icon:<DollarSign size={16}/> },
-                  { label:'Status', value: mapStatus(selected.status), icon:<CheckCircle size={16}/> },
+                  { label:'Valor', value: formatCurrency(selected.value), icon:<DollarSign size={16}/> },
+                  { label:'Status', value: translateStatus(selected.status), icon:<CheckCircle size={16}/> },
                   { label: selected.type==='avulsa' ? 'Vencimento' : 'Próx. Cobrança', value: selected.extra||'—', icon:<Clock size={16}/> },
                 ].map((item,i) => (
                   <div key={i} style={{ background:'var(--background)', padding:'1rem', borderRadius:'12px', border:'1px solid var(--border)' }}>
