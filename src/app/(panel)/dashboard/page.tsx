@@ -48,8 +48,6 @@ export default function DashboardHome() {
     estornos: 0,
     cancelamentos: 0,
     chargebacks: 0,
-    saldoDisponivel: 0,
-    totalSaques: 0,
   });
 
   // Calcula os totais sempre que as transações da API ou o método de pagamento mudam
@@ -91,15 +89,14 @@ export default function DashboardHome() {
     });
 
     
-    setStats(prev => ({
-      ...prev,
+    setStats({
       faturamento,
       quantidade,
       metodoSelecionado,
       estornos,
       cancelamentos,
       chargebacks
-    }));
+    });
   }, [allOrders, selectedPaymentMethod]);
 
   // Atualiza os dados do gráfico baseado nas transações carregadas
@@ -193,43 +190,19 @@ export default function DashboardHome() {
       }
     }
 
-    // 2. Chamar APIs em paralelo
+    // 2. Chamar a API passando as datas como parâmetros
     import('@/services/api').then(({ api }) => {
-      Promise.all([
-        // Vendas
-        api.transactions.listOrders({ created_at_gt, created_at_lt }).catch(() => ({ data: [] })),
-        // Saldo
-        api.receivableSchedules.getSummary().catch(() => ({ available: 0 })),
-        // Saques
-        api.withdrawals.list().catch(() => [])
-      ])
-        .then(([ordersRes, summaryRes, withdrawalsRes]) => {
-          // Trata Vendas
-          const data = ordersRes.data || ordersRes.orders || ordersRes || [];
+      api.transactions.listOrders({
+        created_at_gt,
+        created_at_lt,
+      })
+        .then(res => {
+          const data = res.data || res.orders || res || [];
           const allOrdersFetched = Array.isArray(data) ? data : [];
           setAllOrders(allOrdersFetched);
           setTransactions(allOrdersFetched.slice(0, 5));
-
-          // Trata Saldo
-          const saldo = summaryRes.available || summaryRes.released || summaryRes.amount || 0;
-
-          // Trata Saques (Soma os saques concluídos/pagos)
-          const saquesArr = Array.isArray(withdrawalsRes) ? withdrawalsRes : (withdrawalsRes.data || []);
-          const totalSaques = saquesArr.reduce((acc: number, curr: any) => {
-            const status = (curr.status || '').toLowerCase();
-            if (['paid', 'completed', 'pago', 'concluido'].includes(status)) {
-              return acc + parseFloat(curr.amount || 0);
-            }
-            return acc;
-          }, 0);
-
-          setStats(prev => ({
-            ...prev,
-            saldoDisponivel: saldo,
-            totalSaques: totalSaques
-          }));
         })
-        .catch(err => console.error("Erro ao carregar dados do Dashboard:", err))
+        .catch(err => console.error("Erro ao buscar transações:", err))
         .finally(() => setIsLoading(false));
     });
   }, [selectedFilter, dateRange.start, dateRange.end]);
@@ -319,26 +292,15 @@ export default function DashboardHome() {
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-top">
-              <span className="stat-title">Saldo disponível</span>
-              <div className="stat-icon-wrapper" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e' }}><DollarSign size={24} /></div>
-            </div>
-            <div className="stat-value" style={{ color: '#22c55e' }}>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.saldoDisponivel)}</div>
-            <div className="stat-footer">
-              <span className="stat-trend trend-up">Disponível para saque</span>
-              <button className="saque-btn" onClick={() => router.push('/finance/withdrawals/requests')}>
-                Solicitar saque
-              </button>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-top">
-              <span className="stat-title">Faturamento (Período)</span>
-              <div className="stat-icon-wrapper"><TrendingUp size={24} /></div>
+              <span className="stat-title">Faturamento total</span>
+              <div className="stat-icon-wrapper"><DollarSign size={24} /></div>
             </div>
             <div className="stat-value">{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.faturamento)}</div>
             <div className="stat-footer">
-              <span className="stat-trend trend-up">Total em vendas aprovadas</span>
+              <span className="stat-trend trend-up">—</span>
+              <button className="saque-btn" onClick={() => router.push('/finance/withdrawals/requests')}>
+                Solicitar saque
+              </button>
             </div>
           </div>
 
@@ -397,11 +359,11 @@ export default function DashboardHome() {
 
           <div className="stat-card">
             <div className="stat-top">
-              <span className="stat-title">Saques realizados</span>
-              <div className="stat-icon-wrapper" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}><RotateCcw size={24} /></div>
+              <span className="stat-title">Chargeback</span>
+              <div className="stat-icon-wrapper"><AlertCircle size={24} /></div>
             </div>
-            <div className="stat-value">{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalSaques)}</div>
-            <span className="stat-trend trend-down">Total pago na conta</span>
+            <div className="stat-value">{stats.chargebacks}</div>
+            <span className="stat-trend trend-down">—</span>
           </div>
         </div>
 
@@ -420,23 +382,22 @@ export default function DashboardHome() {
                   <th>Data</th>
                   <th>Valor</th>
                   <th>Status</th>
-                  <th>Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Carregando transações...</td>
+                    <td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>Carregando transações...</td>
                   </tr>
                 ) : transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Nenhuma transação recente encontrada.</td>
+                    <td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>Nenhuma transação recente encontrada.</td>
                   </tr>
                 ) : transactions.map((t, i) => (
                   <tr key={i}>
                     <td className="id-text">{t.id || t.token || 'N/A'}</td>
                     <td>{t.client || t.customer_name || 'N/A'}</td>
-                    <td>{t.date || new Date(t.created_at).toLocaleString() || 'N/A'}</td>
+                    <td>{t.date || (t.created_at ? new Date(t.created_at).toLocaleString() : 'N/A')}</td>
                     <td>
                       <div className="valor-text">{t.value || formatCurrency(t.amount || 0)}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>{translateMethod(t.method || t.payment_method)}</div>
@@ -446,7 +407,6 @@ export default function DashboardHome() {
                         {translateStatus(t.status)}
                       </span>
                     </td>
-                    <td><MoreHorizontal size={16} className="text-muted" /></td>
                   </tr>
                 ))}
               </tbody>
