@@ -14,6 +14,7 @@ import {
   ChevronDown,
   X
 } from 'lucide-react';
+import { translateStatus, formatCurrency, getStatusPillClass } from '@/utils/formatters';
 
 
 
@@ -325,8 +326,8 @@ export default function StatementsPage() {
                     {formatCurrency(item.value || item.amount || 0)}
                   </td>
                   <td>
-                    <span className={`status-pill ${item.status?.toLowerCase() || 'aprovado'}`}>
-                      {(item.status || 'aprovado').charAt(0).toUpperCase() + (item.status || 'aprovado').slice(1).toLowerCase()}
+                    <span className={`status-pill ${getStatusPillClass(item.status)}`}>
+                      {translateStatus(item.status)}
                     </span>
                   </td>
                 </tr>

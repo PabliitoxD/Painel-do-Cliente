@@ -379,7 +379,7 @@ export function SalesList({ title, description, statuses }: SalesListProps) {
 
               <div style={{ 
                 background: getStatusPillClass(selectedOrder.status) === 'aprovada' ? 'var(--success)' : 
-                            getStatusPillClass(selectedOrder.status) === 'estornada' ? 'var(--danger)' : 'var(--surface-hover)', 
+                            getStatusPillClass(selectedOrder.status) === 'recusada' ? 'var(--danger)' : 'var(--surface-hover)', 
                 color: 'white', 
                 padding: '1.2rem 1.5rem', 
                 borderRadius: '8px',

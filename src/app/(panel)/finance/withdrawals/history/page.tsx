@@ -14,7 +14,7 @@ import {
   X,
   AlertTriangle
 } from 'lucide-react';
-import { translateStatus, formatCurrency } from '@/utils/formatters';
+import { translateStatus, formatCurrency, getStatusPillClass } from '@/utils/formatters';
 
 export default function WithdrawalHistoryPage() {
   const [history, setHistory] = useState<any[]>([]);
@@ -96,7 +96,6 @@ export default function WithdrawalHistoryPage() {
                 const amount = parseFloat(item.amount || 0);
                 const fee = parseFloat(item.taxFee || item.fee || 0);
                 const net = amount - fee;
-                const status = (item.status || '').toLowerCase();
                 
                 return (
                   <tr key={item.id || i}>
@@ -110,8 +109,8 @@ export default function WithdrawalHistoryPage() {
                     <td style={{ color: 'var(--danger)' }}>- {formatCurrency(fee)}</td>
                     <td style={{ fontWeight: 600, color: 'var(--success)' }}>{formatCurrency(net)}</td>
                     <td>
-                      <span className={`status-pill ${status === 'processed' || status === 'paid' || status === 'processado' ? 'aprovada' : status === 'pending' || status === 'pendente' ? 'aguardando' : 'recusada'}`}>
-                        {translateStatus(status)}
+                      <span className={`status-pill ${getStatusPillClass(item.status)}`}>
+                        {translateStatus(item.status)}
                       </span>
                     </td>
                     <td>

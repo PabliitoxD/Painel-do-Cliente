@@ -11,7 +11,7 @@ import {
   Clock,
   RefreshCcw
 } from 'lucide-react';
-import { translateStatus, formatCurrency } from '@/utils/formatters';
+import { translateStatus, formatCurrency, getStatusPillClass } from '@/utils/formatters';
 
 export default function WithdrawalRequestsPage() {
   const [availableBalance, setAvailableBalance] = useState<number>(0);
@@ -33,9 +33,10 @@ export default function WithdrawalRequestsPage() {
         setTotalBalance(summary.total || summary.amount || 0);
       }
 
-      const historyData = Array.isArray(history) ? history : history.data || history.withdrawals || [];
+      const historyData = Array.isArray(history) ? history : (history.data || history.withdrawals || []);
+      // Mostra saques pendentes ou solicitados na tela de solicitações
       const pending = historyData.filter((w: any) => 
-        ['pending', 'pendente', 'waiting', 'aguardando'].includes((w.status || '').toLowerCase())
+        ['pending', 'pendente', 'waiting', 'aguardando', 'requested', 'solicitado'].includes((w.status || '').toLowerCase())
       );
       setPendingRequests(pending);
 
@@ -168,7 +169,7 @@ export default function WithdrawalRequestsPage() {
                     {formatCurrency(parseFloat(item.amount || 0))}
                   </td>
                   <td>
-                    <span className="status-pill aguardando">
+                    <span className={`status-pill ${getStatusPillClass(item.status)}`}>
                       {translateStatus(item.status)}
                     </span>
                   </td>
