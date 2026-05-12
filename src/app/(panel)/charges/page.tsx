@@ -68,11 +68,22 @@ export default function ChargesPage() {
     setIsSaving(true);
     try {
       if (chargeInfo.billingType === 'unica') {
+        // Formata data de YYYY-MM-DD para DD/MM/YYYY de forma segura (sem timezone shift)
+        let formattedDate = undefined;
+        if (chargeInfo.dueDate) {
+          const [year, month, day] = chargeInfo.dueDate.split('-');
+          formattedDate = `${day}/${month}/${year}`;
+        }
+
         const payload: CreateChargePayload = {
           charge: {
             description: chargeInfo.name,
-            expiration_date: chargeInfo.dueDate ? new Date(chargeInfo.dueDate).toLocaleDateString('pt-BR') : undefined,
-            products: cartItems.map(i => ({ name: i.name, price: i.unitPrice.toFixed(2), quantity: String(i.quantity) })),
+            expiration_date: formattedDate,
+            products: cartItems.map(i => ({ 
+              name: i.name, 
+              price: i.unitPrice.toFixed(2), 
+              quantity: String(i.quantity) 
+            })),
           },
         };
         await chargesService.create(payload);
