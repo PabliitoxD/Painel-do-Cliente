@@ -49,29 +49,29 @@ export default function RegisterPage() {
   ];
 
   return (
-    <div className="login-container" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
+    <div className="login-container" style={{ minHeight: '100vh', padding: '3rem 1rem' }}>
       <div className="login-bg-shapes">
         <div className="shape shape-1"></div>
         <div className="shape shape-2"></div>
       </div>
 
-      <div className="login-card glass-panel animate-fade-in" style={{ maxWidth: step === 2 || step === 3 ? '750px' : '600px', width: '100%', position: 'relative', border: '1px solid rgba(255,255,255,0.1)', padding: '2.5rem' }}>
+      <div className="login-card glass-panel animate-fade-in register-main-card">
         
-        {/* Botão Voltar Branco com Destaque */}
+        {/* Botão Voltar Discreto */}
         <button 
           onClick={() => step === 1 ? router.push('/login') : setStep(step - 1)} 
-          className="btn-back-white"
+          className="btn-back-subtle"
         >
-          <ArrowLeft size={18} /> {step === 1 ? 'Voltar ao Login' : 'Voltar'}
+          <ArrowLeft size={16} /> {step === 1 ? 'Voltar ao Login' : 'Voltar'}
         </button>
 
-        <div className="login-header" style={{ marginTop: '3.5rem' }}>
-          <img src="https://tronnus.com/wp-content/uploads/2026/01/tronnus-png-001.png" alt="Tronnus" className="login-logo" style={{ marginBottom: '1.5rem', height: '40px' }} />
-          <h1 className="gradient-text" style={{ fontSize: '2.2rem', marginBottom: '0.5rem', fontWeight: 800 }}>Crie a sua conta Tronnus</h1>
+        <div className="login-header" style={{ marginTop: '3rem' }}>
+          <img src="https://tronnus.com/wp-content/uploads/2026/01/tronnus-png-001.png" alt="Tronnus" className="login-logo" style={{ marginBottom: '1.2rem', height: '45px' }} />
+          <h1 className="gradient-text" style={{ fontSize: '2.4rem', marginBottom: '0.5rem', fontWeight: 800 }}>Crie a sua conta Tronnus</h1>
           <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem' }}>Leva menos de 2 minutos.</p>
         </div>
 
-        {/* Stepper Premium com Flechas */}
+        {/* Stepper com 1 2 3 4 */}
         <div className="steps-tracker-premium">
           {steps.map((s, idx) => (
             <div key={s.id} className="step-wrapper">
@@ -82,7 +82,7 @@ export default function RegisterPage() {
                 <span className="step-label">{s.label}</span>
               </div>
               {idx < steps.length - 1 && (
-                <ChevronRight size={18} className="step-arrow" style={{ color: step > s.id ? 'var(--primary)' : 'rgba(255,255,255,0.1)' }} />
+                <ChevronRight size={18} className="step-arrow" />
               )}
             </div>
           ))}
@@ -92,84 +92,82 @@ export default function RegisterPage() {
           {/* STEP 1: DADOS BÁSICOS */}
           {step === 1 && (
             <div className="animate-fade-in">
-              {/* Seleção PF/PJ Premium */}
-              <div className="selection-cards">
+              {/* Seleção PF/PJ mais comprida */}
+              <div className="selection-cards-grid">
                 <div 
-                  className={`selection-card ${accountType === 'PF' ? 'active' : ''}`}
+                  className={`selection-card-premium ${accountType === 'PF' ? 'active' : ''}`}
                   onClick={() => setAccountType('PF')}
                 >
-                  <div className="card-icon"><User size={26} /></div>
-                  <div className="card-info">
+                  <div className="card-icon-box"><User size={28} /></div>
+                  <div className="card-content">
                     <h3>Pessoa Física</h3>
-                    <p>Cadastro com CPF</p>
+                    <p>Vender como autônomo (CPF)</p>
                   </div>
-                  <div className="card-check">
-                    <div className="inner-check"></div>
-                  </div>
+                  <div className="card-status-indicator"></div>
                 </div>
                 <div 
-                  className={`selection-card ${accountType === 'PJ' ? 'active' : ''}`}
+                  className={`selection-card-premium ${accountType === 'PJ' ? 'active' : ''}`}
                   onClick={() => setAccountType('PJ')}
                 >
-                  <div className="card-icon"><Building2 size={26} /></div>
-                  <div className="card-info">
+                  <div className="card-icon-box"><Building2 size={28} /></div>
+                  <div className="card-content">
                     <h3>Pessoa Jurídica</h3>
-                    <p>Cadastro com CNPJ</p>
+                    <p>Vender como empresa (CNPJ)</p>
                   </div>
-                  <div className="card-check">
-                    <div className="inner-check"></div>
-                  </div>
+                  <div className="card-status-indicator"></div>
                 </div>
               </div>
 
-              {/* Destaque nos Dados Iniciais */}
-              <div className="form-section-highlight">
-                <div className="section-title">
-                  <User size={18} />
+              {/* Destaque nos Dados Iniciais com Alinhamento Corrigido */}
+              <div className="form-section-highlight-premium">
+                <div className="section-header-pill">
+                  <User size={16} />
                   <span>Informações do Responsável</span>
                 </div>
                 
-                <div className="form-group">
+                <div className="form-group-full">
                   <label>Nome do responsável*</label>
-                  <div className="input-with-icon-login premium">
-                    <User size={18} className="input-icon" />
-                    <input type="text" placeholder="Nome completo" value={formData.respName} onChange={e => setFormData({...formData, respName: e.target.value})} required />
+                  <div className="input-group-premium">
+                    <User size={18} className="field-icon" />
+                    <input type="text" placeholder="Digite seu nome completo" value={formData.respName} onChange={e => setFormData({...formData, respName: e.target.value})} required />
                   </div>
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
+                <div className="form-grid-2">
+                  <div className="form-group-full">
                     <label>CPF do responsável*</label>
-                    <input className="form-control premium" type="text" placeholder="000.000.000-00" value={formData.respCpf} onChange={e => setFormData({...formData, respCpf: e.target.value})} required />
+                    <div className="input-group-premium no-icon">
+                      <input type="text" placeholder="000.000.000-00" value={formData.respCpf} onChange={e => setFormData({...formData, respCpf: e.target.value})} required />
+                    </div>
                   </div>
-                  <div className="form-group">
+                  <div className="form-group-full">
                     <label>E-mail*</label>
-                    <div className="input-with-icon-login premium">
-                      <Mail size={18} className="input-icon" />
+                    <div className="input-group-premium">
+                      <Mail size={18} className="field-icon" />
                       <input type="email" placeholder="seu@email.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
                     </div>
                   </div>
                 </div>
 
-                <div className="form-row phone-row">
-                  <div className="form-group">
+                <div className="form-grid-2">
+                  <div className="form-group-full">
                     <label>Tipo de telefone*</label>
-                    <select className="form-control premium" value={formData.phoneType} onChange={e => setFormData({...formData, phoneType: e.target.value})}>
+                    <select className="select-premium" value={formData.phoneType} onChange={e => setFormData({...formData, phoneType: e.target.value})}>
                       <option value="celular">Celular / WhatsApp</option>
                       <option value="fixo">Telefone fixo</option>
                     </select>
                   </div>
-                  <div className="form-group">
+                  <div className="form-group-full">
                     <label>Número de telefone*</label>
-                    <div className="input-with-icon-login premium">
-                      <Phone size={18} className="input-icon" />
+                    <div className="input-group-premium">
+                      <Phone size={18} className="field-icon" />
                       <input type="text" placeholder="(00) 90000-0000" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} required />
                     </div>
                   </div>
                 </div>
               </div>
 
-              <button type="submit" className="btn-primary login-submit" style={{ marginTop: '2rem' }}>
+              <button type="submit" className="btn-primary-register">
                 Próximo Passo <ArrowRight size={20} />
               </button>
             </div>
@@ -177,279 +175,228 @@ export default function RegisterPage() {
 
           {/* STEP 2: SUA EMPRESA */}
           {step === 2 && (
-            <div className="animate-fade-in" style={{ display: 'grid', gap: '1.25rem' }}>
-              <div className="form-group">
+            <div className="animate-fade-in" style={{ display: 'grid', gap: '1.5rem' }}>
+              <div className="form-group-full">
                 <label>Descrição do modelo de negócio</label>
-                <textarea className="form-control premium" placeholder="Conte-nos brevemente o que sua empresa faz..." style={{ height: '70px', resize: 'none' }} value={formData.bizDescription} onChange={e => setFormData({...formData, bizDescription: e.target.value})} />
+                <textarea className="textarea-premium" placeholder="Breve descrição do que sua empresa faz..." value={formData.bizDescription} onChange={e => setFormData({...formData, bizDescription: e.target.value})} />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
+              <div className="form-grid-2">
+                <div className="form-group-full">
                   <label>Canal de vendas</label>
-                  <select className="form-control premium" value={formData.salesChannel} onChange={e => setFormData({...formData, salesChannel: e.target.value})}>
+                  <select className="select-premium" value={formData.salesChannel} onChange={e => setFormData({...formData, salesChannel: e.target.value})}>
                     <option value="site">Site</option>
                     <option value="social">Redes Sociais</option>
                   </select>
                 </div>
-                <div className="form-group">
+                <div className="form-group-full">
                   <label>URL do Site</label>
-                  <div className="input-with-icon-login premium">
-                    <Globe size={16} className="input-icon" />
-                    <input type="text" placeholder="www.exemplo.com.br" value={formData.siteUrl} onChange={e => setFormData({...formData, siteUrl: e.target.value})} />
+                  <div className="input-group-premium">
+                    <Globe size={18} className="field-icon" />
+                    <input type="text" placeholder="www.seusite.com.br" value={formData.siteUrl} onChange={e => setFormData({...formData, siteUrl: e.target.value})} />
                   </div>
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
+              <div className="form-grid-2">
+                <div className="form-group-full">
                   <label>CNPJ da empresa*</label>
-                  <input className="form-control premium" type="text" placeholder="00.000.000/0000-00" value={formData.cnpj} onChange={e => setFormData({...formData, cnpj: e.target.value})} required />
+                  <input className="input-control-premium" type="text" placeholder="00.000.000/0000-00" value={formData.cnpj} onChange={e => setFormData({...formData, cnpj: e.target.value})} required />
                 </div>
-                <div className="form-group">
+                <div className="form-group-full">
                   <label>Razão social*</label>
-                  <input className="form-control premium" type="text" placeholder="Razão Social completa" value={formData.razaoSocial} onChange={e => setFormData({...formData, razaoSocial: e.target.value})} required />
+                  <input className="input-control-premium" type="text" placeholder="Nome empresarial completo" value={formData.razaoSocial} onChange={e => setFormData({...formData, razaoSocial: e.target.value})} required />
                 </div>
               </div>
 
-              <div className="form-row three-col">
-                <div className="form-group">
-                  <label>Nome fantasia</label>
-                  <input className="form-control premium" type="text" placeholder="Nome comercial" value={formData.nomeFantasia} onChange={e => setFormData({...formData, nomeFantasia: e.target.value})} />
+              <div className="form-section-highlight-premium address-section">
+                <div className="section-header-pill"><span>Endereço Comercial</span></div>
+                <div className="form-grid-2" style={{ gridTemplateColumns: '0.8fr 2.2fr' }}>
+                  <div className="form-group-full"><label>CEP*</label><input className="input-control-premium" type="text" placeholder="00000-000" value={formData.cep} onChange={e => setFormData({...formData, cep: e.target.value})} required /></div>
+                  <div className="form-group-full"><label>Logradouro*</label><input className="input-control-premium" type="text" placeholder="Rua, Av, etc." value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} required /></div>
                 </div>
-                <div className="form-group">
-                  <label>Faturamento anual*</label>
-                  <select className="form-control premium" value={formData.annualRevenue} onChange={e => setFormData({...formData, annualRevenue: e.target.value})} required>
-                    <option value="">Selecionar...</option>
-                    <option value="1">Até R$ 100k</option>
-                    <option value="2">R$ 100k a R$ 500k</option>
-                    <option value="3">Acima de R$ 500k</option>
-                  </select>
+                <div className="form-grid-3">
+                  <div className="form-group-full"><label>Número</label><input className="input-control-premium" type="text" placeholder="00" value={formData.number} onChange={e => setFormData({...formData, number: e.target.value})} /></div>
+                  <div className="form-group-full"><label>Bairro*</label><input className="input-control-premium" type="text" placeholder="Bairro" value={formData.neighborhood} onChange={e => setFormData({...formData, neighborhood: e.target.value})} required /></div>
+                  <div className="form-group-full"><label>Cidade/UF*</label><input className="input-control-premium" type="text" placeholder="Cidade - UF" value={`${formData.city}${formData.state ? ' - ' + formData.state : ''}`} required /></div>
                 </div>
               </div>
 
-              <div className="form-section-highlight address-section">
-                <div className="section-title"><ArrowRight size={16} /> <span>Endereço</span></div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>CEP*</label>
-                    <input className="form-control premium" type="text" placeholder="00000-000" value={formData.cep} onChange={e => setFormData({...formData, cep: e.target.value})} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Logradouro*</label>
-                    <input className="form-control premium" type="text" placeholder="Rua, Av, etc." value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} required />
-                  </div>
-                </div>
-                <div className="form-row three-col">
-                  <div className="form-group">
-                    <label>Número</label>
-                    <input className="form-control premium" type="text" placeholder="00" value={formData.number} onChange={e => setFormData({...formData, number: e.target.value})} />
-                  </div>
-                  <div className="form-group">
-                    <label>Bairro*</label>
-                    <input className="form-control premium" type="text" placeholder="Bairro" value={formData.neighborhood} onChange={e => setFormData({...formData, neighborhood: e.target.value})} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Cidade/UF*</label>
-                    <input className="form-control premium" type="text" placeholder="Cidade - UF" value={`${formData.city}${formData.state ? ' - ' + formData.state : ''}`} onChange={e => {
-                      const [city, state] = e.target.value.split(' - ');
-                      setFormData({...formData, city: city || '', state: state || ''});
-                    }} required />
-                  </div>
-                </div>
-              </div>
-
-              <button type="submit" className="btn-primary login-submit">Continuar <ArrowRight size={20} /></button>
+              <button type="submit" className="btn-primary-register">Continuar <ArrowRight size={20} /></button>
             </div>
           )}
 
           {/* STEP 3: DADOS BANCÁRIOS */}
           {step === 3 && (
             <div className="animate-fade-in" style={{ display: 'grid', gap: '1.5rem' }}>
-              <div className="form-group">
-                <label>Instituição Financeira (Banco)*</label>
-                <select className="form-control premium" value={formData.bank} onChange={e => setFormData({...formData, bank: e.target.value})} required>
+              <div className="form-group-full">
+                <label>Banco*</label>
+                <select className="select-premium" value={formData.bank} onChange={e => setFormData({...formData, bank: e.target.value})} required>
                   <option value="">Selecione o banco</option>
                   <option value="001">Banco do Brasil</option>
-                  <option value="237">Bradesco</option>
-                  <option value="341">Itaú</option>
-                  <option value="033">Santander</option>
                   <option value="260">Nubank</option>
+                  <option value="341">Itaú</option>
                   <option value="077">Inter</option>
                 </select>
               </div>
 
-              <div className="form-row bank-row">
-                <div className="form-group">
-                  <label>Agência*</label>
-                  <input className="form-control premium" type="text" placeholder="0000" value={formData.agency} onChange={e => setFormData({...formData, agency: e.target.value})} required />
-                </div>
-                <div className="form-group">
-                  <label>Conta*</label>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input className="form-control premium" type="text" placeholder="00000" value={formData.account} onChange={e => setFormData({...formData, account: e.target.value})} required style={{ flex: 1 }} />
-                    <input className="form-control premium" type="text" placeholder="X" value={formData.accountDigit} onChange={e => setFormData({...formData, accountDigit: e.target.value})} required style={{ width: '50px', textAlign: 'center' }} />
-                  </div>
-                </div>
+              <div className="form-grid-2">
+                <div className="form-group-full"><label>Agência*</label><input className="input-control-premium" type="text" placeholder="0000" value={formData.agency} onChange={e => setFormData({...formData, agency: e.target.value})} required /></div>
+                <div className="form-group-full"><label>Conta* (com dígito)</label><input className="input-control-premium" type="text" placeholder="00000-0" value={formData.account} onChange={e => setFormData({...formData, account: e.target.value})} required /></div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Tipo de conta*</label>
-                  <select className="form-control premium" value={formData.bankAccountType} onChange={e => setFormData({...formData, bankAccountType: e.target.value})} required>
-                    <option value="">Selecionar...</option>
-                    <option value="corrente">Corrente</option>
-                    <option value="poupanca">Poupança</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Tipo de recebedor*</label>
-                  <select className="form-control premium" value={formData.receiverType} onChange={e => setFormData({...formData, receiverType: e.target.value})} required>
-                    <option value="proprio">Titular Próprio</option>
-                    <option value="terceiro">Terceiro</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group">
+              <div className="form-group-full">
                 <label>Titular da conta*</label>
-                <div className="input-with-icon-login premium">
-                  <User size={18} className="input-icon" />
+                <div className="input-group-premium">
+                  <User size={18} className="field-icon" />
                   <input type="text" placeholder="Nome completo do titular" value={formData.bankAccountName} onChange={e => setFormData({...formData, bankAccountName: e.target.value})} required />
                 </div>
               </div>
 
-              <button type="submit" className="btn-primary login-submit">Próximo Passo <ArrowRight size={20} /></button>
+              <button type="submit" className="btn-primary-register">Próximo Passo <ArrowRight size={20} /></button>
             </div>
           )}
 
           {/* STEP 4: DOCUMENTOS */}
           {step === 4 && (
-            <div className="animate-fade-in" style={{ display: 'grid', gap: '1.25rem' }}>
-              <p style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Finalize enviando seus documentos para validação.</p>
-              
-              <div className="docs-grid">
+            <div className="animate-fade-in" style={{ display: 'grid', gap: '1.5rem' }}>
+              <div className="docs-upload-grid">
                 {[
-                  { label: 'Contrato Social', sub: 'PDF/JPG' },
-                  { label: 'RG/CNH', sub: 'Frente e verso' },
-                  { label: 'Residência', sub: 'Últimos 3 meses' },
-                  { label: 'Extrato Bancário', sub: 'Comprovação' }
+                  'Contrato Social', 'RG do Responsável', 'Comprovante Residência', 'Extrato Bancário'
                 ].map((doc, idx) => (
-                  <div key={idx} className="doc-upload-card">
-                    <div className="doc-icon"><Upload size={20} /></div>
+                  <div key={idx} className="doc-card-premium">
+                    <Upload size={24} className="upload-icon-pulse" />
                     <div className="doc-info">
-                      <strong>{doc.label}</strong>
-                      <span>{doc.sub}</span>
+                      <strong>{doc}</strong>
+                      <span>PDF ou Imagem</span>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="form-section-highlight" style={{ marginTop: '1rem' }}>
-                <div className="form-group">
-                  <label>Defina sua senha de segurança*</label>
-                  <div className="input-with-icon-login premium">
-                    <Lock size={18} className="input-icon" />
+              <div className="form-section-highlight-premium">
+                <div className="form-group-full">
+                  <label>Crie uma senha de acesso*</label>
+                  <div className="input-group-premium">
+                    <Lock size={18} className="field-icon" />
                     <input type="password" placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required />
                   </div>
                 </div>
               </div>
 
-              <button type="submit" className="btn-primary login-submit" disabled={isLoading}>
-                {isLoading ? 'Finalizando...' : 'Concluir Cadastro'}
+              <button type="submit" className="btn-primary-register" disabled={isLoading}>
+                {isLoading ? 'Criando sua conta...' : 'Finalizar Cadastro'}
               </button>
             </div>
           )}
         </form>
 
         <div className="login-footer">
-          <span style={{ color: 'rgba(255,255,255,0.5)' }}>Já possui uma conta?</span>
+          <span style={{ color: 'rgba(255,255,255,0.4)' }}>Já possui uma conta?</span>
           <a href="/login" className="signup-link" style={{ fontWeight: 800 }}>Fazer Login</a>
         </div>
       </div>
 
       <style jsx>{`
-        /* Botão Voltar em Branco */
-        .btn-back-white {
-          position: absolute; top: 1.5rem; left: 1.5rem; padding: 0.6rem 1.2rem;
-          background: white; color: black; border-radius: 10px; border: none;
-          font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; gap: 0.6rem;
-          cursor: pointer; transition: all 0.3s; z-index: 100; box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+        .register-main-card {
+          max-width: 850px !important; width: 100%; padding: 3rem; 
+          position: relative; border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(13, 17, 23, 0.8);
         }
-        .btn-back-white:hover { transform: translateX(-5px); background: #f0f0f0; box-shadow: 0 6px 20px rgba(255,255,255,0.3); }
 
-        /* Stepper com Flechas */
-        .steps-tracker-premium { display: flex; justify-content: center; align-items: center; gap: 0.75rem; }
-        .step-wrapper { display: flex; align-items: center; gap: 0.75rem; }
-        .step-item { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; opacity: 0.3; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .step-item.active { opacity: 1; transform: translateY(-3px); }
-        .step-item.completed { opacity: 0.7; }
-        .step-circle { 
-          width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--border); 
-          display: flex; align-items: center; justify-content: center; 
-          font-weight: 800; color: white; background: rgba(255,255,255,0.03);
-          transition: all 0.3s;
+        /* Botão Voltar Discreto */
+        .btn-back-subtle {
+          position: absolute; top: 1.5rem; left: 1.5rem; padding: 0.6rem 1rem;
+          background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8);
+          border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+          font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;
+          cursor: pointer; transition: all 0.3s; z-index: 10;
         }
+        .btn-back-subtle:hover { background: rgba(255,255,255,0.1); color: white; transform: translateX(-3px); }
+
+        /* Stepper */
+        .steps-tracker-premium { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 3.5rem; }
+        .step-wrapper { display: flex; align-items: center; gap: 1rem; }
+        .step-item { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; opacity: 0.2; }
+        .step-item.active { opacity: 1; }
+        .step-item.completed { opacity: 0.6; }
+        .step-circle { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 800; background: rgba(0,0,0,0.2); }
         .step-item.active .step-circle { border-color: var(--primary); background: var(--primary); box-shadow: 0 0 20px var(--primary-glow); }
         .step-item.completed .step-circle { border-color: #10b981; background: #10b981; }
-        .step-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); }
-        .step-item.active .step-label { color: white; }
+        .step-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .step-arrow { color: rgba(255,255,255,0.05); }
 
-        /* Seleção PF/PJ Agradável */
-        .selection-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-        .selection-card {
-          padding: 1.5rem; border-radius: 20px; border: 2px solid var(--border);
-          background: rgba(255,255,255,0.01); cursor: pointer; transition: all 0.3s;
-          display: flex; align-items: center; gap: 1rem; position: relative;
+        /* PF/PJ Cards */
+        .selection-cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2.5rem; }
+        .selection-card-premium {
+          padding: 1.75rem; border-radius: 24px; border: 2px solid rgba(255,255,255,0.05);
+          background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.4s;
+          display: flex; align-items: center; gap: 1.25rem; position: relative; overflow: hidden;
         }
-        .selection-card:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.03); }
-        .selection-card.active { border-color: var(--primary); background: rgba(101,131,154,0.1); }
-        .card-icon { 
-          width: 50px; height: 50px; border-radius: 14px; background: rgba(255,255,255,0.05);
-          display: flex; align-items: center; justify-content: center; color: var(--text-dim);
-          transition: all 0.3s;
-        }
-        .selection-card.active .card-icon { background: var(--primary); color: white; box-shadow: 0 5px 15px var(--primary-glow); }
-        .card-info h3 { font-size: 1rem; font-weight: 800; color: white; margin-bottom: 0.2rem; }
-        .card-info p { font-size: 0.75rem; color: var(--text-dim); }
-        .card-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); margin-left: auto; display: flex; align-items: center; justify-content: center; }
-        .selection-card.active .card-check { border-color: var(--primary); }
-        .selection-card.active .inner-check { width: 12px; height: 12px; border-radius: 50%; background: var(--primary); }
+        .selection-card-premium:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); }
+        .selection-card-premium.active { border-color: var(--primary); background: rgba(101,131,154,0.1); }
+        .card-icon-box { width: 55px; height: 55px; border-radius: 16px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-dim); }
+        .selection-card-premium.active .card-icon-box { background: var(--primary); color: white; }
+        .card-content h3 { font-size: 1.1rem; font-weight: 800; color: white; margin-bottom: 0.25rem; }
+        .card-content p { font-size: 0.8rem; color: var(--text-dim); }
+        .card-status-indicator { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border); margin-left: auto; }
+        .selection-card-premium.active .card-status-indicator { border-color: var(--primary); background: var(--primary); box-shadow: inset 0 0 0 4px #0d1117; }
 
-        /* Campos e Destaques */
-        .form-section-highlight { 
-          background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); 
-          border-radius: 24px; padding: 1.75rem; margin-top: 1rem;
-          box-shadow: inset 0 0 40px rgba(0,0,0,0.2);
-        }
-        .section-title { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.5rem; color: var(--primary); font-weight: 800; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-        .form-row.three-col { grid-template-columns: 0.7fr 1.3fr 1fr; }
-        .form-group { margin-bottom: 1.25rem; }
-        .form-group label { font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.5); margin-bottom: 0.6rem; display: block; }
+        /* Form Sections */
+        .form-section-highlight-premium { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 28px; padding: 2rem; margin-bottom: 2rem; }
+        .section-header-pill { display: inline-flex; align-items: center; gap: 0.6rem; background: rgba(101,131,154,0.1); color: var(--primary); padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2rem; }
         
-        .input-with-icon-login.premium input { 
-          background: rgba(0,0,0,0.3) !important; border: 1px solid rgba(255,255,255,0.1) !important; 
-          padding: 0.9rem 1rem 0.9rem 3.5rem !important; border-radius: 14px; color: white; width: 100%;
-          transition: all 0.3s;
-        }
-        .input-with-icon-login.premium input:focus { border-color: var(--primary) !important; box-shadow: 0 0 0 4px rgba(101,131,154,0.1) !important; background: rgba(0,0,0,0.4) !important; }
-        .form-control.premium { 
-          background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); 
-          padding: 0.9rem 1.2rem; border-radius: 14px; color: white; width: 100%; font-size: 0.95rem;
-          transition: all 0.3s;
-        }
-        .form-control.premium:focus { outline: none; border-color: var(--primary); background: rgba(0,0,0,0.4); }
+        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 1.5rem; }
+        .form-group-full { margin-bottom: 1.5rem; }
+        .form-group-full label { font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.5); margin-bottom: 0.75rem; display: block; }
 
-        /* Docs Grid */
-        .docs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .doc-upload-card {
-          padding: 1.25rem; border-radius: 16px; border: 2px dashed var(--border);
-          background: rgba(255,255,255,0.01); display: flex; align-items: center; gap: 1rem; cursor: pointer; transition: all 0.3s;
+        /* Input Group com Ícone Correto */
+        .input-group-premium { position: relative; display: flex; align-items: center; }
+        .input-group-premium .field-icon { position: absolute; left: 1.25rem; color: var(--text-dim); pointer-events: none; }
+        .input-group-premium input { 
+          width: 100%; padding: 1rem 1rem 1rem 3.5rem; border-radius: 16px; 
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); 
+          color: white; font-size: 1rem; transition: all 0.3s;
         }
-        .doc-upload-card:hover { border-color: var(--primary); background: rgba(255,255,255,0.04); }
-        .doc-icon { color: var(--primary); }
-        .doc-info strong { display: block; font-size: 0.85rem; color: white; margin-bottom: 0.1rem; }
-        .doc-info span { font-size: 0.7rem; color: var(--text-dim); }
+        .input-group-premium.no-icon input { padding-left: 1.25rem; }
+        .input-group-premium input:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.06); box-shadow: 0 0 0 4px rgba(101,131,154,0.1); }
+        
+        .input-control-premium { 
+          width: 100%; padding: 1rem 1.25rem; border-radius: 16px; 
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); 
+          color: white; font-size: 1rem;
+        }
+        .select-premium { 
+          width: 100%; padding: 1rem 1.25rem; border-radius: 16px; 
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); 
+          color: white; font-size: 1rem; appearance: none;
+        }
+        .textarea-premium { 
+          width: 100%; padding: 1rem 1.25rem; border-radius: 16px; height: 100px; resize: none;
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); 
+          color: white; font-size: 1rem;
+        }
+
+        /* Botão Submit */
+        .btn-primary-register {
+          width: 100%; padding: 1.1rem; border-radius: 18px; border: none;
+          background: linear-gradient(135deg, var(--primary) 0%, #4a6a8a 100%);
+          color: white; font-weight: 800; font-size: 1.1rem; display: flex; align-items: center;
+          justify-content: center; gap: 1rem; cursor: pointer; transition: all 0.4s;
+          box-shadow: 0 10px 25px rgba(101,131,154,0.3);
+        }
+        .btn-primary-register:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(101,131,154,0.4); }
+
+        /* Docs */
+        .docs-upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .doc-card-premium {
+          padding: 1.5rem; border-radius: 20px; border: 2px dashed rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.02); display: flex; align-items: center; gap: 1rem;
+          cursor: pointer; transition: all 0.3s;
+        }
+        .doc-card-premium:hover { border-color: var(--primary); background: rgba(255,255,255,0.05); }
+        .upload-icon-pulse { color: var(--primary); }
       `}</style>
     </div>
   );
