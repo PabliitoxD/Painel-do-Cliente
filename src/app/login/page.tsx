@@ -188,4 +188,19 @@ function LoginContent() {
           ) : (
             <>
               <img src="https://app.oneid.com.br/favicon.png" alt="OneID" className="oneid-logo" />
-          
+              Entrar com OneID
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
+  );
+}
