@@ -31,9 +31,21 @@ export async function fetchApi<T>(
   }
 
   if (!response.ok) {
-    // Tenta parsear o corpo do erro — pode estar vazio
     const errorData = await response.json().catch(() => null);
-    throw new Error(errorData?.message || errorData?.error || `Erro na API: ${response.status}`);
+    let errorMsg = `Erro na API: ${response.status}`;
+    
+    if (errorData) {
+      if (typeof errorData.message === 'string') errorMsg = errorData.message;
+      else if (typeof errorData.error === 'string') errorMsg = errorData.error;
+      else if (errorData.errors) {
+        // Trata erros de validação (comum em 422)
+        const details = Object.entries(errorData.errors)
+          .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(', ') : val}`)
+          .join(' | ');
+        errorMsg = `Erro de validação: ${details}`;
+      }
+    }
+    throw new Error(errorMsg);
   }
 
   // Resposta sem conteúdo
