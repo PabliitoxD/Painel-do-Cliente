@@ -11,8 +11,9 @@ import {
   TrendingUp,
   AlertTriangle,
   ChevronRight,
-  X
+  X 
 } from 'lucide-react';
+import { translateStatus, getStatusPillClass } from '@/utils/formatters';
 
 /**
  * Página de Recebíveis.
@@ -157,10 +158,10 @@ export default function ReceivablesPage() {
                     <span style={{ 
                       fontSize: '0.7rem', 
                       letterSpacing: '0.5px',
-                      color: day.status === 'CONFIRMADO' ? 'var(--success)' : 'var(--warning)',
+                      color: getStatusPillClass(day.status) === 'aprovada' ? 'var(--success)' : 'var(--warning)',
                       fontWeight: 800
                     }}>
-                      {day.status}
+                      {translateStatus(day.status)}
                     </span>
                   </div>
                 </div>

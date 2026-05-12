@@ -22,18 +22,29 @@ export const translateStatus = (status: string) => {
     case 'cancelled':
       return 'Cancelado';
     case 'chargeback':
+    case 'in_chargeback':
       return 'Chargeback';
     case 'refunded':
     case 'estornado':
-      return 'Estornado';
     case 'reembolsado':
-      return 'Reembolsado';
+      return 'Estornado';
     case 'expired':
     case 'expirado':
       return 'Expirado';
     case 'suspended':
     case 'suspensa':
       return 'Suspensa';
+    case 'confirmed':
+    case 'concluido':
+    case 'concluído':
+      return 'Concluído';
+    case 'requested':
+    case 'solicitado':
+      return 'Solicitado';
+    case 'denied':
+    case 'negado':
+    case 'reprovado':
+      return 'Reprovado';
     default:
       return status || 'N/A';
   }
@@ -50,7 +61,12 @@ export const translateMethod = (method: string) => {
 
 export const getStatusPillClass = (status: string) => {
   const s = status?.toLowerCase();
-  if (['approved', 'paid', 'aprovada', 'pago', 'active'].includes(s)) return 'aprovada';
-  if (['canceled', 'cancelado', 'cancelled', 'refunded', 'estornado', 'reembolsado', 'expired', 'expirado', 'suspended'].includes(s)) return 'estornada';
-  return 'pendente';
+  // Verde: aprovada
+  if (['approved', 'paid', 'aprovada', 'pago', 'active', 'confirmed', 'concluido', 'concluído'].includes(s)) return 'aprovada';
+  
+  // Vermelho: recusada (para cancelados, estornados, negados e chargebacks)
+  if (['canceled', 'cancelado', 'cancelled', 'refunded', 'estornado', 'reembolsado', 'expired', 'expirado', 'suspended', 'denied', 'negado', 'reprovado', 'chargeback', 'in_chargeback'].includes(s)) return 'recusada';
+  
+  // Amarelo: aguardando (para pendentes e solicitações)
+  return 'aguardando';
 };
