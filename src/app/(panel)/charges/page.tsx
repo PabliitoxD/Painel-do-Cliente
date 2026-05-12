@@ -150,7 +150,7 @@ export default function ChargesPage() {
                 <tr><td colSpan={6} style={{ textAlign:'center', padding:'2rem', color:'var(--text-dim)' }}>Nenhum registro encontrado.</td></tr>
               ) : filtered.map(r => (
                 <tr key={r.token}>
-                  <td style={{ fontWeight:600, color:'var(--primary)' }}>{r.code || r.token.slice(0,8)}</td>
+                  <td style={{ fontWeight:600, color:'var(--primary)' }}>{r.code || (r.token ? r.token.slice(0,8) : '—')}</td>
                   <td style={{ fontWeight:600, color:'var(--text-main)' }}>{r.label}</td>
                   <td style={{ color:'var(--text-dim)' }}>{r.extra || '—'}</td>
                   <td style={{ fontWeight:600 }}>{formatCurrency(r.value)}</td>
@@ -260,7 +260,7 @@ export default function ChargesPage() {
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', paddingBottom:'1rem', borderBottom:'1px solid var(--border)', marginBottom:'1.5rem' }}>
                 <div>
                   <h2 style={{ fontSize:'1.4rem', fontWeight:700, marginBottom:'0.2rem' }}>Detalhes</h2>
-                  <p style={{ color:'var(--text-dim)', fontSize:'0.88rem' }}>{selected.code || selected.token.slice(0,12)} • {selected.type === 'avulsa' ? 'Cobrança Avulsa' : 'Assinatura'}</p>
+                  <p style={{ color:'var(--text-dim)', fontSize:'0.88rem' }}>{selected.code || (selected.token ? selected.token.slice(0,12) : '—')} • {selected.type === 'avulsa' ? 'Cobrança Avulsa' : 'Assinatura'}</p>
                 </div>
                 <button className="btn-ghost" onClick={() => setSelected(null)} style={{ padding:'0.4rem', borderRadius:'8px' }}><X size={20}/></button>
               </div>
