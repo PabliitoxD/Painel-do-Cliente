@@ -57,47 +57,41 @@ export default function RegisterPage() {
 
       <div className="login-card glass-panel animate-fade-in register-main-card">
         
-        {/* Botão Voltar Discreto */}
         <button 
           onClick={() => step === 1 ? router.push('/login') : setStep(step - 1)} 
           className="btn-back-subtle"
         >
-          <ArrowLeft size={16} /> {step === 1 ? 'Voltar ao Login' : 'Voltar'}
+          <ArrowLeft size={18} /> {step === 1 ? 'Voltar ao Login' : 'Voltar'}
         </button>
 
         <div className="login-header" style={{ marginTop: '3rem' }}>
           <img src="https://tronnus.com/wp-content/uploads/2026/01/tronnus-png-001.png" alt="Tronnus" className="login-logo" style={{ marginBottom: '1.2rem', height: '45px' }} />
-          <h1 className="gradient-text" style={{ fontSize: '2.4rem', marginBottom: '0.5rem', fontWeight: 800 }}>Crie a sua conta Tronnus</h1>
+          <h1 className="gradient-text" style={{ fontSize: '2.5rem', marginBottom: '0.5rem', fontWeight: 800 }}>Crie a sua conta Tronnus</h1>
           <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem' }}>Leva menos de 2 minutos.</p>
         </div>
 
-        {/* Stepper com 1 2 3 4 */}
+        {/* Stepper Maior e com Destaque */}
         <div className="steps-tracker-premium">
           {steps.map((s, idx) => (
             <div key={s.id} className="step-wrapper">
               <div className={`step-item ${step === s.id ? 'active' : step > s.id ? 'completed' : ''}`}>
                 <div className="step-circle">
-                  {step > s.id ? <CheckCircle2 size={16} /> : s.id}
+                  {step > s.id ? <CheckCircle2 size={24} /> : s.id}
                 </div>
                 <span className="step-label">{s.label}</span>
               </div>
               {idx < steps.length - 1 && (
-                <ChevronRight size={18} className="step-arrow" />
+                <ChevronRight size={22} className="step-arrow" />
               )}
             </div>
           ))}
         </div>
 
         <form className="login-form" onSubmit={handleNext}>
-          {/* STEP 1: DADOS BÁSICOS */}
           {step === 1 && (
             <div className="animate-fade-in">
-              {/* Seleção PF/PJ mais comprida */}
               <div className="selection-cards-grid">
-                <div 
-                  className={`selection-card-premium ${accountType === 'PF' ? 'active' : ''}`}
-                  onClick={() => setAccountType('PF')}
-                >
+                <div className={`selection-card-premium ${accountType === 'PF' ? 'active' : ''}`} onClick={() => setAccountType('PF')}>
                   <div className="card-icon-box"><User size={28} /></div>
                   <div className="card-content">
                     <h3>Pessoa Física</h3>
@@ -105,10 +99,7 @@ export default function RegisterPage() {
                   </div>
                   <div className="card-status-indicator"></div>
                 </div>
-                <div 
-                  className={`selection-card-premium ${accountType === 'PJ' ? 'active' : ''}`}
-                  onClick={() => setAccountType('PJ')}
-                >
+                <div className={`selection-card-premium ${accountType === 'PJ' ? 'active' : ''}`} onClick={() => setAccountType('PJ')}>
                   <div className="card-icon-box"><Building2 size={28} /></div>
                   <div className="card-content">
                     <h3>Pessoa Jurídica</h3>
@@ -118,7 +109,6 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Destaque nos Dados Iniciais com Alinhamento Corrigido */}
               <div className="form-section-highlight-premium">
                 <div className="section-header-pill">
                   <User size={16} />
@@ -128,7 +118,7 @@ export default function RegisterPage() {
                 <div className="form-group-full">
                   <label>Nome do responsável*</label>
                   <div className="input-group-premium">
-                    <User size={18} className="field-icon" />
+                    <User size={20} className="field-icon" />
                     <input type="text" placeholder="Digite seu nome completo" value={formData.respName} onChange={e => setFormData({...formData, respName: e.target.value})} required />
                   </div>
                 </div>
@@ -143,7 +133,7 @@ export default function RegisterPage() {
                   <div className="form-group-full">
                     <label>E-mail*</label>
                     <div className="input-group-premium">
-                      <Mail size={18} className="field-icon" />
+                      <Mail size={20} className="field-icon" />
                       <input type="email" placeholder="seu@email.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
                     </div>
                   </div>
@@ -152,15 +142,17 @@ export default function RegisterPage() {
                 <div className="form-grid-2">
                   <div className="form-group-full">
                     <label>Tipo de telefone*</label>
-                    <select className="select-premium" value={formData.phoneType} onChange={e => setFormData({...formData, phoneType: e.target.value})}>
-                      <option value="celular">Celular / WhatsApp</option>
-                      <option value="fixo">Telefone fixo</option>
-                    </select>
+                    <div className="select-wrapper-premium">
+                      <select className="select-premium" value={formData.phoneType} onChange={e => setFormData({...formData, phoneType: e.target.value})}>
+                        <option value="celular">Celular / WhatsApp</option>
+                        <option value="fixo">Telefone fixo</option>
+                      </select>
+                    </div>
                   </div>
                   <div className="form-group-full">
                     <label>Número de telefone*</label>
                     <div className="input-group-premium">
-                      <Phone size={18} className="field-icon" />
+                      <Phone size={20} className="field-icon" />
                       <input type="text" placeholder="(00) 90000-0000" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} required />
                     </div>
                   </div>
@@ -168,12 +160,11 @@ export default function RegisterPage() {
               </div>
 
               <button type="submit" className="btn-primary-register">
-                Próximo Passo <ArrowRight size={20} />
+                Próximo Passo <ArrowRight size={22} />
               </button>
             </div>
           )}
 
-          {/* STEP 2: SUA EMPRESA */}
           {step === 2 && (
             <div className="animate-fade-in" style={{ display: 'grid', gap: '1.5rem' }}>
               <div className="form-group-full">
@@ -192,7 +183,7 @@ export default function RegisterPage() {
                 <div className="form-group-full">
                   <label>URL do Site</label>
                   <div className="input-group-premium">
-                    <Globe size={18} className="field-icon" />
+                    <Globe size={20} className="field-icon" />
                     <input type="text" placeholder="www.seusite.com.br" value={formData.siteUrl} onChange={e => setFormData({...formData, siteUrl: e.target.value})} />
                   </div>
                 </div>
@@ -222,11 +213,10 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <button type="submit" className="btn-primary-register">Continuar <ArrowRight size={20} /></button>
+              <button type="submit" className="btn-primary-register">Continuar <ArrowRight size={22} /></button>
             </div>
           )}
 
-          {/* STEP 3: DADOS BANCÁRIOS */}
           {step === 3 && (
             <div className="animate-fade-in" style={{ display: 'grid', gap: '1.5rem' }}>
               <div className="form-group-full">
@@ -236,7 +226,6 @@ export default function RegisterPage() {
                   <option value="001">Banco do Brasil</option>
                   <option value="260">Nubank</option>
                   <option value="341">Itaú</option>
-                  <option value="077">Inter</option>
                 </select>
               </div>
 
@@ -248,16 +237,15 @@ export default function RegisterPage() {
               <div className="form-group-full">
                 <label>Titular da conta*</label>
                 <div className="input-group-premium">
-                  <User size={18} className="field-icon" />
+                  <User size={20} className="field-icon" />
                   <input type="text" placeholder="Nome completo do titular" value={formData.bankAccountName} onChange={e => setFormData({...formData, bankAccountName: e.target.value})} required />
                 </div>
               </div>
 
-              <button type="submit" className="btn-primary-register">Próximo Passo <ArrowRight size={20} /></button>
+              <button type="submit" className="btn-primary-register">Próximo Passo <ArrowRight size={22} /></button>
             </div>
           )}
 
-          {/* STEP 4: DOCUMENTOS */}
           {step === 4 && (
             <div className="animate-fade-in" style={{ display: 'grid', gap: '1.5rem' }}>
               <div className="docs-upload-grid">
@@ -278,7 +266,7 @@ export default function RegisterPage() {
                 <div className="form-group-full">
                   <label>Crie uma senha de acesso*</label>
                   <div className="input-group-premium">
-                    <Lock size={18} className="field-icon" />
+                    <Lock size={20} className="field-icon" />
                     <input type="password" placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required />
                   </div>
                 </div>
@@ -299,104 +287,103 @@ export default function RegisterPage() {
 
       <style jsx>{`
         .register-main-card {
-          max-width: 850px !important; width: 100%; padding: 3rem; 
+          max-width: 850px !important; width: 100%; padding: 3.5rem; 
           position: relative; border: 1px solid rgba(255,255,255,0.08);
-          background: rgba(13, 17, 23, 0.8);
+          background: rgba(13, 17, 23, 0.9);
+          box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
-        /* Botão Voltar Discreto */
         .btn-back-subtle {
           position: absolute; top: 1.5rem; left: 1.5rem; padding: 0.6rem 1rem;
           background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8);
           border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
           font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;
-          cursor: pointer; transition: all 0.3s; z-index: 10;
+          cursor: pointer; transition: all 0.3s;
         }
-        .btn-back-subtle:hover { background: rgba(255,255,255,0.1); color: white; transform: translateX(-3px); }
 
-        /* Stepper */
-        .steps-tracker-premium { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 3.5rem; }
-        .step-wrapper { display: flex; align-items: center; gap: 1rem; }
-        .step-item { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; opacity: 0.2; }
-        .step-item.active { opacity: 1; }
+        /* Stepper Maior */
+        .steps-tracker-premium { display: flex; justify-content: center; align-items: center; gap: 1.5rem; margin-bottom: 4rem; }
+        .step-wrapper { display: flex; align-items: center; gap: 1.5rem; }
+        .step-item { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; opacity: 0.2; }
+        .step-item.active { opacity: 1; transform: scale(1.1); }
         .step-item.completed { opacity: 0.6; }
-        .step-circle { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 800; background: rgba(0,0,0,0.2); }
-        .step-item.active .step-circle { border-color: var(--primary); background: var(--primary); box-shadow: 0 0 20px var(--primary-glow); }
+        .step-circle { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; background: rgba(0,0,0,0.3); }
+        .step-item.active .step-circle { border-color: var(--primary); background: var(--primary); box-shadow: 0 0 25px var(--primary-glow); }
         .step-item.completed .step-circle { border-color: #10b981; background: #10b981; }
-        .step-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-        .step-arrow { color: rgba(255,255,255,0.05); }
+        .step-label { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; }
 
         /* PF/PJ Cards */
-        .selection-cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2.5rem; }
+        .selection-cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 3rem; }
         .selection-card-premium {
           padding: 1.75rem; border-radius: 24px; border: 2px solid rgba(255,255,255,0.05);
           background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.4s;
-          display: flex; align-items: center; gap: 1.25rem; position: relative; overflow: hidden;
+          display: flex; align-items: center; gap: 1.5rem;
         }
-        .selection-card-premium:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); }
         .selection-card-premium.active { border-color: var(--primary); background: rgba(101,131,154,0.1); }
-        .card-icon-box { width: 55px; height: 55px; border-radius: 16px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-dim); }
+        .card-icon-box { width: 60px; height: 60px; border-radius: 16px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-dim); }
         .selection-card-premium.active .card-icon-box { background: var(--primary); color: white; }
-        .card-content h3 { font-size: 1.1rem; font-weight: 800; color: white; margin-bottom: 0.25rem; }
-        .card-content p { font-size: 0.8rem; color: var(--text-dim); }
-        .card-status-indicator { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border); margin-left: auto; }
-        .selection-card-premium.active .card-status-indicator { border-color: var(--primary); background: var(--primary); box-shadow: inset 0 0 0 4px #0d1117; }
+        .card-content h3 { font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 0.25rem; }
 
         /* Form Sections */
-        .form-section-highlight-premium { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 28px; padding: 2rem; margin-bottom: 2rem; }
-        .section-header-pill { display: inline-flex; align-items: center; gap: 0.6rem; background: rgba(101,131,154,0.1); color: var(--primary); padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2rem; }
+        .form-section-highlight-premium { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 28px; padding: 2.5rem; margin-bottom: 2rem; }
+        .section-header-pill { display: inline-flex; align-items: center; gap: 0.6rem; background: rgba(101,131,154,0.15); color: var(--primary); padding: 0.5rem 1.25rem; border-radius: 100px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 2.5rem; }
         
         .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 1.5rem; }
-        .form-group-full { margin-bottom: 1.5rem; }
-        .form-group-full label { font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.5); margin-bottom: 0.75rem; display: block; }
+        .form-group-full { margin-bottom: 1.75rem; }
+        .form-group-full label { font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.6); margin-bottom: 0.75rem; display: block; }
 
-        /* Input Group com Ícone Correto */
-        .input-group-premium { position: relative; display: flex; align-items: center; }
-        .input-group-premium .field-icon { position: absolute; left: 1.25rem; color: var(--text-dim); pointer-events: none; }
+        /* Input Group Corrigido */
+        .input-group-premium { 
+          position: relative; 
+          display: flex; 
+          align-items: center;
+          background: rgba(255,255,255,0.03); 
+          border: 1px solid rgba(255,255,255,0.1); 
+          border-radius: 16px;
+          transition: all 0.3s;
+        }
+        .input-group-premium:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(101,131,154,0.15); background: rgba(255,255,255,0.05); }
+        .input-group-premium .field-icon { margin-left: 1.25rem; color: var(--text-dim); flex-shrink: 0; }
         .input-group-premium input { 
-          width: 100%; padding: 1rem 1rem 1rem 3.5rem; border-radius: 16px; 
-          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); 
-          color: white; font-size: 1rem; transition: all 0.3s;
+          background: transparent !important; border: none !important; 
+          padding: 1.1rem 1.25rem !important; color: white; font-size: 1rem; width: 100%;
         }
-        .input-group-premium.no-icon input { padding-left: 1.25rem; }
-        .input-group-premium input:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.06); box-shadow: 0 0 0 4px rgba(101,131,154,0.1); }
-        
-        .input-control-premium { 
-          width: 100%; padding: 1rem 1.25rem; border-radius: 16px; 
-          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); 
-          color: white; font-size: 1rem;
-        }
+        .input-group-premium input:focus { outline: none !important; }
+        .input-group-premium input::placeholder { color: rgba(255,255,255,0.2); }
+        .input-group-premium.no-icon input { padding-left: 1.25rem !important; }
+
         .select-premium { 
-          width: 100%; padding: 1rem 1.25rem; border-radius: 16px; 
-          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); 
+          width: 100%; padding: 1.1rem 1.25rem; border-radius: 16px; 
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); 
           color: white; font-size: 1rem; appearance: none;
+          cursor: pointer;
+        }
+        /* Correção para o Dropdown Invisível */
+        .select-premium option {
+          background-color: #0d1117;
+          color: white;
+          padding: 10px;
+        }
+        .select-premium:focus { outline: none; border-color: var(--primary); }
+
+        .input-control-premium { 
+          width: 100%; padding: 1.1rem 1.25rem; border-radius: 16px; 
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); 
+          color: white; font-size: 1rem;
         }
         .textarea-premium { 
-          width: 100%; padding: 1rem 1.25rem; border-radius: 16px; height: 100px; resize: none;
-          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); 
+          width: 100%; padding: 1.1rem 1.25rem; border-radius: 16px; height: 110px; resize: none;
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); 
           color: white; font-size: 1rem;
         }
 
-        /* Botão Submit */
         .btn-primary-register {
-          width: 100%; padding: 1.1rem; border-radius: 18px; border: none;
+          width: 100%; padding: 1.25rem; border-radius: 18px; border: none;
           background: linear-gradient(135deg, var(--primary) 0%, #4a6a8a 100%);
-          color: white; font-weight: 800; font-size: 1.1rem; display: flex; align-items: center;
+          color: white; font-weight: 800; font-size: 1.2rem; display: flex; align-items: center;
           justify-content: center; gap: 1rem; cursor: pointer; transition: all 0.4s;
-          box-shadow: 0 10px 25px rgba(101,131,154,0.3);
+          box-shadow: 0 10px 30px rgba(101,131,154,0.3);
         }
-        .btn-primary-register:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(101,131,154,0.4); }
-
-        /* Docs */
-        .docs-upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-        .doc-card-premium {
-          padding: 1.5rem; border-radius: 20px; border: 2px dashed rgba(255,255,255,0.1);
-          background: rgba(255,255,255,0.02); display: flex; align-items: center; gap: 1rem;
-          cursor: pointer; transition: all 0.3s;
-        }
-        .doc-card-premium:hover { border-color: var(--primary); background: rgba(255,255,255,0.05); }
-        .upload-icon-pulse { color: var(--primary); }
       `}</style>
     </div>
   );
