@@ -15,8 +15,23 @@ function HomeContent() {
     const company_token = searchParams.get('company_token');
 
     if (token && company_token) {
-      // Callback do OneID — repassa para /login processar
-      window.location.href = `/login?token=${token}&company_token=${company_token}`;
+      // Callback do OneID
+      const account_token = searchParams.get('account_token');
+
+      if (window.opener) {
+        // Estamos dentro do popup — envia token de volta para a janela pai
+        window.opener.postMessage(
+          { token, company_token, ...(account_token && { account_token: Number(account_token) }) },
+          window.location.origin
+        );
+        window.close();
+        return;
+      }
+
+      // Fallback: não é popup (redirect direto) — repassa para /login processar
+      const params = new URLSearchParams({ token, company_token });
+      if (account_token) params.set('account_token', account_token);
+      window.location.href = `/login?${params.toString()}`;
     } else {
       window.location.href = '/login';
     }
