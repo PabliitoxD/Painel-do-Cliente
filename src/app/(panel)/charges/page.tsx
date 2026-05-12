@@ -68,17 +68,13 @@ export default function ChargesPage() {
     setIsSaving(true);
     try {
       if (chargeInfo.billingType === 'unica') {
-        // Formata data de YYYY-MM-DD para DD/MM/YYYY de forma segura (sem timezone shift)
-        let formattedDate = undefined;
-        if (chargeInfo.dueDate) {
-          const [year, month, day] = chargeInfo.dueDate.split('-');
-          formattedDate = `${day}/${month}/${year}`;
-        }
-
+        // Testando formato ISO (YYYY-MM-DD) pois 422 persiste
         const payload: CreateChargePayload = {
           charge: {
             description: chargeInfo.name,
-            expiration_date: formattedDate,
+            expiration_date: chargeInfo.dueDate || undefined, // YYYY-MM-DD vindo direto do input
+            payer_name: 'Cliente Consumidor', // Adicionando pagador padrão para teste
+            payer_email: 'cliente@email.com',
             products: cartItems.map(i => ({ 
               name: i.name, 
               price: i.unitPrice.toFixed(2), 
@@ -86,6 +82,8 @@ export default function ChargesPage() {
             })),
           },
         };
+        
+        console.log("Enviando Payload Cobrança:", JSON.stringify(payload, null, 2));
         await chargesService.create(payload);
       } else {
         const planPayload: CreatePlanPayload = {
