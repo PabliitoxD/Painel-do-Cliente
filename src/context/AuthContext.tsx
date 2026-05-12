@@ -45,26 +45,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const storedUser = localStorage.getItem('tronnus_user');
       const isMockSession = localStorage.getItem('tronnus_mock_session') === 'true';
 
-      if (storedToken && !isMockSession) {
-        // Token real — valida com a API
-        try {
-          const res = await api.users.me();
-          if (res && res.user) {
-            setUser(res.user);
-            localStorage.setItem('tronnus_user', JSON.stringify(res.user));
-          } else if (storedUser) {
-            setUser(JSON.parse(storedUser));
-          }
-        } catch (error: any) {
-          console.error('Falha ao validar token:', error);
-          // 401 já foi tratado pelo client.ts (limpeza + redirect)
-          // Para outros erros, usa o usuário em cache
-          if (storedUser && storedToken) {
-            setUser(JSON.parse(storedUser));
-          }
+      if (storedToken && storedUser) {
+        // Usa dados em cache — a validação real acontece nas chamadas de API
+        setUser(JSON.parse(storedUser));
+
+        // Tenta atualizar dados do usuário em background (sem bloquear nem redirecionar)
+        if (!isMockSession) {
+          api.users.me().then((res: any) => {
+            if (res?.user) {
+              setUser(res.user);
+              localStorage.setItem('tronnus_user', JSON.stringify(res.user));
+            }
+          }).catch(() => {
+            // Ignora erro — mantém dados em cache
+          });
         }
       } else if (storedUser) {
-        // Sessão mock ou sem token mas com usuário em cache
         setUser(JSON.parse(storedUser));
       }
 
@@ -135,57 +131,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithOneId = async (token: string, company_token: string, account_token?: number) => {
     setIsLoading(true);
     try {
-      // Tenta autenticar via /authentication com o token do OneID
-      const response = await api.auth.loginOneId({ token, company_token, account_token });
+      // Autentica via /authentication (mesmo fluxo da web-2)
+      const response = await api.auth.loginOneId({ token, company_token });
 
-      if (response.access_token) {
-        localStorage.setItem('tronnus_token', response.access_token);
+      // Guarda o JWT retornado pela API
+      // A API retorna snake_case (auth_token) — web-2 converte via humps para authToken
+      const authToken = response.auth_token || response.authToken || response.access_token;
+      if (authToken) {
+        localStorage.setItem('tronnus_token', authToken);
+
+        // Extrai accountToken do payload JWT (como a web-2 faz)
+        try {
+          const payload = JSON.parse(atob(authToken.split('.')[1]));
+          if (payload.account_token || payload.accountToken) {
+            localStorage.setItem('tronnus_seller_token', String(payload.account_token || payload.accountToken));
+          }
+        } catch {
+          // Token não é JWT — segue sem account_token
+        }
       } else {
-        // Fallback: a API sandbox usa o próprio token do OneID como Bearer
+        // Fallback: usa o próprio token do OneID como Bearer
         localStorage.setItem('tronnus_token', token);
       }
 
+      // Guarda o token original do OneID (LOGIN_WITH_TOKEN na web-2)
+      localStorage.setItem('tronnus_oneid_token', token);
+
+      // Monta sessão com dados básicos — o AuthProvider carrega o resto depois
       const userData: User = response.user || {
         id: '1',
         name: 'Usuário',
         email: company_token,
         role: 'PRODUCER',
-        avatar: `https://ui-avatars.com/api/?name=Usuario&background=1b2932&color=65839a`
+        avatar: 'https://ui-avatars.com/api/?name=Usuario&background=1b2932&color=65839a'
       };
-
-      // Tenta buscar dados reais do usuário com o token obtido
-      try {
-        const me = await api.users.me();
-        if (me?.user) {
-          setUser(me.user);
-          localStorage.setItem('tronnus_user', JSON.stringify(me.user));
-        } else {
-          setUser(userData);
-          localStorage.setItem('tronnus_user', JSON.stringify(userData));
-        }
-      } catch {
-        setUser(userData);
-        localStorage.setItem('tronnus_user', JSON.stringify(userData));
-      }
+      setUser(userData);
+      localStorage.setItem('tronnus_user', JSON.stringify(userData));
 
       router.push('/dashboard');
     } catch (err) {
       console.error('OneID Login error:', err);
-      // Último recurso: usa token diretamente sem /authentication
+      // Fallback: usa token do OneID diretamente (sem /authentication)
       localStorage.setItem('tronnus_token', token);
-      try {
-        const me = await api.users.me();
-        const userData: User = me?.user || {
-          id: '1', name: 'Usuário OneID', email: '', role: 'PRODUCER',
-          avatar: 'https://ui-avatars.com/api/?name=OneID&background=1b2932&color=65839a'
-        };
-        setUser(userData);
-        localStorage.setItem('tronnus_user', JSON.stringify(userData));
-        router.push('/dashboard');
-      } catch (e2) {
-        localStorage.removeItem('tronnus_token');
-        throw new Error('Falha na autenticação via OneID. Verifique suas permissões.');
-      }
+      localStorage.setItem('tronnus_oneid_token', token);
+
+      const userData: User = {
+        id: '1', name: 'Usuário OneID', email: '', role: 'PRODUCER',
+        avatar: 'https://ui-avatars.com/api/?name=OneID&background=1b2932&color=65839a'
+      };
+      setUser(userData);
+      localStorage.setItem('tronnus_user', JSON.stringify(userData));
+
+      router.push('/dashboard');
     } finally {
       setIsLoading(false);
     }
