@@ -28,8 +28,8 @@ export default function WithdrawalHistoryPage() {
     try {
       const res = await api.withdrawals.list();
       // Ajustar conforme a estrutura da API
-      const data = Array.isArray(res) ? res : res.data || res.withdrawals || [];
-      setHistory(data);
+      const dataRes = Array.isArray(res) ? res : (res.data || res.withdrawals || []);
+      setHistory(Array.isArray(dataRes) ? dataRes : []);
     } catch (err: any) {
       console.error("Erro ao buscar histórico de saques:", err);
       setError(err.message || "Erro ao carregar histórico.");

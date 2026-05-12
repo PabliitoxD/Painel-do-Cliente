@@ -28,9 +28,10 @@ export default function WithdrawalRequestsPage() {
         api.withdrawals.list()
       ]);
 
-      if (summary) {
-        setAvailableBalance(summary.released || summary.available || 0);
-        setTotalBalance(summary.total || summary.amount || 0);
+      const summaryData = summary?.data || summary;
+      if (summaryData) {
+        setAvailableBalance(summaryData.released || summaryData.available || 0);
+        setTotalBalance(summaryData.total || summaryData.amount || 0);
       }
 
       const historyData = Array.isArray(history) ? history : (history.data || history.withdrawals || []);

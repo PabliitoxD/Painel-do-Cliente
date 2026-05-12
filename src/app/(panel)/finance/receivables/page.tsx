@@ -37,23 +37,30 @@ export default function ReceivablesPage() {
     Promise.all([
       api.receivableSchedules.getSummary().catch(() => null),
       api.receivableSchedules.listSchedules().catch(() => null)
-    ]).then(([summaryData, schedulesData]) => {
-      if (summaryData && Object.keys(summaryData).length > 0) {
+    ]).then(([summaryRes, schedulesRes]) => {
+      // Trata o Resumo (Pode vir direto ou dentro de .data)
+      const summaryData = summaryRes?.data || summaryRes;
+      if (summaryData && typeof summaryData === 'object') {
         setSummary({
-          total: summaryData.total || summaryData.amount || summary.total,
-          released: summaryData.released || summaryData.available || summary.released,
-          waiting: summaryData.waiting || summaryData.pending || summary.waiting,
-          blocked: summaryData.blocked || summaryData.retained || summary.blocked
+          total: summaryData.total ?? summaryData.amount ?? 0,
+          released: summaryData.released ?? summaryData.available ?? summaryData.amount_released ?? 0,
+          waiting: summaryData.waiting ?? summaryData.pending ?? summaryData.amount_waiting ?? 0,
+          blocked: summaryData.blocked ?? summaryData.retained ?? summaryData.amount_blocked ?? 0
         });
       }
-      if (schedulesData && Array.isArray(schedulesData) && schedulesData.length > 0) {
-        setSchedules(schedulesData.map(s => ({
-          date: s.date || new Date(s.scheduled_for).toLocaleDateString('pt-BR'),
+
+      // Trata a Agenda
+      const schedulesData = schedulesRes?.data || schedulesRes || [];
+      if (Array.isArray(schedulesData)) {
+        setSchedules(schedulesData.map((s: any) => ({
+          date: s.date || (s.scheduled_for ? new Date(s.scheduled_for).toLocaleDateString('pt-BR') : 'N/A'),
           amount: s.amount || s.value || 0,
           count: s.count || s.transactions_count || 1,
           status: s.status || 'PENDENTE'
         })));
       }
+    }).catch(err => {
+      console.error("Erro ao carregar dados de recebíveis:", err);
     }).finally(() => {
       setIsLoading(false);
     });

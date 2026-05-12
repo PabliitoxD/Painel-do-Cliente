@@ -35,23 +35,30 @@ export default function StatementsPage() {
 
   useEffect(() => {
     import('@/services/api').then(({ api }) => {
-      // Usamos listOrders como fallback. Se houver um endpoint específico para extrato,
-      // basta substituir para api.statements.listStatements() no futuro.
-      api.transactions.listOrders()
-        .then(res => {
-          const data = res.data || res || [];
+      setIsLoading(true);
+      Promise.all([
+        api.transactions.listOrders().catch(() => ({ data: [] })),
+        api.receivableSchedules.getSummary().catch(() => null)
+      ]).then(([ordersRes, summaryRes]) => {
+          // Trata Vendas
+          const data = ordersRes.data || ordersRes.orders || ordersRes || [];
           setStatementsData(Array.isArray(data) ? data : []);
+
+          // Trata Saldo (Se houver resumo da API, usamos ele para as métricas principais)
+          if (summaryRes) {
+            setApiSummary(summaryRes);
+          }
         })
         .catch(err => {
-          console.error("Erro ao buscar extratos:", err);
-          setStatementsData([]);
+          console.error("Erro ao buscar dados financeiros:", err);
         })
-
         .finally(() => {
           setIsLoading(false);
         });
     });
   }, []);
+
+  const [apiSummary, setApiSummary] = useState<any>(null);
 
   // Lógica de filtragem
   const filteredData = useMemo(() => {
@@ -90,14 +97,23 @@ export default function StatementsPage() {
     });
   }, [searchQuery, timeRange, statusFilter]);
 
-  // Cálculos de métricas baseados nos dados filtrados
+  // Cálculos de métricas baseados nos dados filtrados ou na API de resumo
   const metrics = useMemo(() => {
-    const inflows = filteredData.reduce((acc, item) => item.value > 0 ? acc + item.value : acc, 0);
-    const outflows = filteredData.reduce((acc, item) => item.value < 0 ? acc + item.value : acc, 0);
+    if (apiSummary && statusFilter === 'Todos' && searchQuery === '' && timeRange === 'Últimos 30 dias') {
+      return {
+        inflows: apiSummary.total || 0,
+        outflows: 0, // A API de resumo geralmente não traz saídas separadas aqui
+        balance: apiSummary.released || apiSummary.available || 0,
+        waiting: apiSummary.waiting || apiSummary.pending || 0
+      };
+    }
+
+    const inflows = filteredData.reduce((acc, item) => (item.value || item.amount) > 0 ? acc + (item.value || item.amount) : acc, 0);
+    const outflows = filteredData.reduce((acc, item) => (item.value || item.amount) < 0 ? acc + (item.value || item.amount) : acc, 0);
     const balance = inflows + outflows;
 
-    return { inflows, outflows, balance };
-  }, [filteredData]);
+    return { inflows, outflows, balance, waiting: 0 };
+  }, [filteredData, apiSummary, statusFilter, searchQuery, timeRange]);
 
   const formatCurrency = (val: number) => {
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -145,27 +161,33 @@ export default function StatementsPage() {
         <div className="stats-grid grid-3" style={{ marginBottom: '2rem' }}>
           <div className="stat-card">
             <div className="stat-top">
-              <span className="stat-title">Saldo Acumulado</span>
-              <Wallet size={20} className="text-muted" />
+              <span className="stat-title">Saldo Disponível</span>
+              <Wallet size={20} style={{ color: 'var(--success)' }} />
             </div>
-            <div className="stat-value" style={{ fontSize: '2.2rem' }}>{formatCurrency(metrics.balance)}</div>
-            <p className="text-muted" style={{ fontSize: '0.8rem' }}>Total líquido no período</p>
+            <div className="stat-value" style={{ fontSize: '2.2rem', color: 'var(--success)' }}>
+              {isLoading ? '...' : formatCurrency(apiSummary?.released || apiSummary?.available || metrics.balance)}
+            </div>
+            <p className="text-muted" style={{ fontSize: '0.8rem' }}>Liberado para saque</p>
           </div>
           <div className="stat-card">
             <div className="stat-top">
-              <span className="stat-title">Entradas (+)</span>
-              <ArrowUpRight size={20} style={{ color: 'var(--success)' }} />
+              <span className="stat-title">A Receber</span>
+              <ArrowUpRight size={20} style={{ color: 'var(--warning)' }} />
             </div>
-            <div className="stat-value" style={{ fontSize: '2.2rem', color: 'var(--success)' }}>{formatCurrency(metrics.inflows)}</div>
-            <p className="text-muted" style={{ fontSize: '0.8rem' }}>Soma de todos os ganhos</p>
+            <div className="stat-value" style={{ fontSize: '2.2rem', color: 'var(--warning)' }}>
+              {isLoading ? '...' : formatCurrency(apiSummary?.waiting || apiSummary?.pending || metrics.inflows)}
+            </div>
+            <p className="text-muted" style={{ fontSize: '0.8rem' }}>Previsão de recebimentos</p>
           </div>
           <div className="stat-card">
             <div className="stat-top">
-              <span className="stat-title">Saídas (-)</span>
+              <span className="stat-title">Saldo Bloqueado</span>
               <ArrowDownLeft size={20} style={{ color: 'var(--danger)' }} />
             </div>
-            <div className="stat-value" style={{ fontSize: '2.2rem', color: 'var(--danger)' }}>{formatCurrency(Math.abs(metrics.outflows))}</div>
-            <p className="text-muted" style={{ fontSize: '0.8rem' }}>Soma de todos os débitos</p>
+            <div className="stat-value" style={{ fontSize: '2.2rem', color: 'var(--danger)' }}>
+              {isLoading ? '...' : formatCurrency(apiSummary?.blocked || apiSummary?.retained || 0)}
+            </div>
+            <p className="text-muted" style={{ fontSize: '0.8rem' }}>Retenções de segurança</p>
           </div>
         </div>
 
