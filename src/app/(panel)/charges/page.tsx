@@ -68,23 +68,30 @@ export default function ChargesPage() {
     setIsSaving(true);
     try {
       if (chargeInfo.billingType === 'unica') {
-        // Testando formato ISO (YYYY-MM-DD) pois 422 persiste
-        const payload: CreateChargePayload = {
-          charge: {
-            description: chargeInfo.name,
-            expiration_date: chargeInfo.dueDate || undefined, // YYYY-MM-DD vindo direto do input
-            payer_name: 'Cliente Consumidor', // Adicionando pagador padrão para teste
-            payer_email: 'cliente@email.com',
-            products: cartItems.map(i => ({ 
-              name: i.name, 
-              price: i.unitPrice.toFixed(2), 
-              quantity: String(i.quantity) 
-            })),
-          },
+        // Tentando payload achatado e com números (sem wrapper "charge")
+        // E voltando para DD/MM/YYYY que é comum em gateways BR
+        let formattedDate = undefined;
+        if (chargeInfo.dueDate) {
+          const [year, month, day] = chargeInfo.dueDate.split('-');
+          formattedDate = `${day}/${month}/${year}`;
+        }
+
+        const payload: any = {
+          description: chargeInfo.name,
+          expiration_date: formattedDate,
+          payer_name: 'Cliente Consumidor',
+          payer_email: 'cliente@email.com',
+          products: cartItems.map(i => ({ 
+            name: i.name, 
+            price: i.unitPrice, // Enviando como número
+            quantity: i.quantity // Enviando como número
+          })),
         };
         
-        console.log("Enviando Payload Cobrança:", JSON.stringify(payload, null, 2));
-        await chargesService.create(payload);
+        console.log("Enviando Payload Alternativo (Achatado):", JSON.stringify(payload, null, 2));
+        // Usamos fetchApi direto para testar sem o wrapper da interface
+        const { fetchApi } = await import('@/services/api/client');
+        await fetchApi('/charges', { method: 'POST', body: JSON.stringify(payload) });
       } else {
         const planPayload: CreatePlanPayload = {
           name: chargeInfo.name,
