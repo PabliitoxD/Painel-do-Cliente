@@ -14,18 +14,88 @@ export default function RegisterPage() {
   const [accountType, setAccountType] = useState<'PF' | 'PJ'>('PJ');
   
   const [formData, setFormData] = useState({
-    respName: '', respCpf: '', email: '', phoneType: 'celular', phone: '',
+    // Dados Básico / Responsável
+    respName: '', respCpf: '', email: '', phoneType: 'celular', phoneDdd: '', phone: '',
+    birthDate: '', occupation: '', motherName: '', monthlyIncome: '',
+    
+    // Dados Empresa (PJ)
     bizDescription: '', salesChannel: 'site', siteUrl: '', cnpj: '', razaoSocial: '',
-    nomeFantasia: '', foundationDate: '', annualRevenue: '', cep: '', address: '',
-    number: '', complement: '', neighborhood: '', city: '', state: '',
+    nomeFantasia: '', annualRevenue: '', companyEmail: '',
+    
+    // Endereço Empresa
+    cep: '', address: '', number: '', complement: '', neighborhood: '', city: '', state: '', referencePoint: '',
+    
+    // Telefone Empresa
+    companyPhoneType: 'celular', companyPhoneDdd: '', companyPhone: '',
+    
+    // Dados Representante Legal (PJ)
+    repName: '', repEmail: '', repCpf: '', repMotherName: '', repBirthDate: '', repMonthlyIncome: '', repOccupation: '',
+    
+    // Endereço Representante (PJ)
+    repCep: '', repAddress: '', repNumber: '', repComplement: '', repNeighborhood: '', repCity: '', repState: '', repReferencePoint: '',
+    
+    // Telefone Representante (PJ)
+    repPhoneType: 'celular', repPhoneDdd: '', repPhone: '',
+    
+    // Dados Bancários
     bank: '', agency: '', agencyDigit: '', account: '', accountDigit: '',
-    bankAccountType: '', bankAccountName: '', receiverType: '',
+    bankAccountType: 'corrente', bankAccountName: '', receiverType: 'PF', bankAccountDoc: '',
+    
     password: '', confirmPassword: ''
   });
 
+  const handleCepBlur = async (type: 'company' | 'rep') => {
+    const cepValue = type === 'company' ? formData.cep : formData.repCep;
+    const cep = cepValue.replace(/\D/g, '');
+    if (cep.length === 8) {
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const data = await response.json();
+        if (!data.erro) {
+          if (type === 'company') {
+            setFormData({
+              ...formData,
+              address: data.logradouro,
+              neighborhood: data.bairro,
+              city: data.localidade,
+              state: data.uf
+            });
+          } else {
+            setFormData({
+              ...formData,
+              repAddress: data.logradouro,
+              repNeighborhood: data.bairro,
+              repCity: data.localidade,
+              repState: data.uf
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao buscar CEP:", error);
+      }
+    }
+  };
+
+  const banks = [
+    { code: '001', name: 'Banco do Brasil' },
+    { code: '033', name: 'Santander' },
+    { code: '104', name: 'Caixa Econômica' },
+    { code: '237', name: 'Bradesco' },
+    { code: '341', name: 'Itaú' },
+    { code: '077', name: 'Inter' },
+    { code: '260', name: 'Nubank' },
+    { code: '422', name: 'Safra' },
+    { code: '748', name: 'Sicredi' },
+    { code: '756', name: 'Sicoob' },
+    { code: '655', name: 'Neon' },
+    { code: '290', name: 'PagBank' },
+    { code: '336', name: 'C6 Bank' },
+  ];
+
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
-    if (step < 4) {
+    const maxSteps = accountType === 'PJ' ? 5 : 4;
+    if (step < maxSteps) {
       setStep(step + 1);
       window.scrollTo(0, 0);
     } else {
@@ -41,9 +111,15 @@ export default function RegisterPage() {
     }, 2000);
   };
 
-  const steps = [
+  const steps = accountType === 'PJ' ? [
     { id: 1, label: 'Básico' },
     { id: 2, label: 'Empresa' },
+    { id: 3, label: 'Rep. Legal' },
+    { id: 4, label: 'Banco' },
+    { id: 5, label: 'Docs' }
+  ] : [
+    { id: 1, label: 'Básico' },
+    { id: 2, label: 'Endereço' },
     { id: 3, label: 'Banco' },
     { id: 4, label: 'Docs' }
   ];
@@ -70,7 +146,6 @@ export default function RegisterPage() {
           <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem' }}>Leva menos de 2 minutos.</p>
         </div>
 
-        {/* Stepper Maior e com Destaque */}
         <div className="steps-tracker-premium">
           {steps.map((s, idx) => (
             <div key={s.id} className="step-wrapper">
@@ -109,136 +184,191 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div className="form-section-highlight-premium">
-                <div className="section-header-pill">
-                  <User size={16} />
-                  <span>Informações do Responsável</span>
-                </div>
-                
-                <div className="form-group-full">
-                  <label>Nome do responsável*</label>
-                  <div className="input-group-premium">
-                    <User size={20} className="field-icon" />
-                    <input type="text" placeholder="Digite seu nome completo" value={formData.respName} onChange={e => setFormData({...formData, respName: e.target.value})} required />
+              {accountType === 'PF' ? (
+                <div className="form-section-highlight-premium">
+                  <div className="section-header-pill"><User size={16} /><span>Informações do Responsável</span></div>
+                  <div className="form-grid-2">
+                    <div className="form-group-full"><label>Nome do responsável*</label><div className="input-group-premium"><User size={20} className="field-icon" /><input type="text" placeholder="Digite seu nome completo" value={formData.respName} onChange={e => setFormData({...formData, respName: e.target.value})} required /></div></div>
+                    <div className="form-group-full"><label>E-mail*</label><div className="input-group-premium"><Mail size={20} className="field-icon" /><input type="email" placeholder="seu@email.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required /></div></div>
                   </div>
-                </div>
-
-                <div className="form-grid-2">
-                  <div className="form-group-full">
-                    <label>CPF do responsável*</label>
-                    <div className="input-group-premium no-icon">
-                      <input type="text" placeholder="000.000.000-00" value={formData.respCpf} onChange={e => setFormData({...formData, respCpf: e.target.value})} required />
-                    </div>
+                  <div className="form-grid-2">
+                    <div className="form-group-full"><label>CPF do responsável*</label><div className="input-group-premium no-icon"><input type="text" placeholder="000.000.000-00" value={formData.respCpf} onChange={e => setFormData({...formData, respCpf: e.target.value})} required /></div></div>
+                    <div className="form-group-full"><label>Data de nascimento*</label><div className="input-group-premium no-icon"><input type="text" placeholder="00/00/0000" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} required /></div></div>
                   </div>
-                  <div className="form-group-full">
-                    <label>E-mail*</label>
-                    <div className="input-group-premium">
-                      <Mail size={20} className="field-icon" />
-                      <input type="email" placeholder="seu@email.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="form-grid-2">
-                  <div className="form-group-full">
-                    <label>Tipo de telefone*</label>
-                    <div className="select-wrapper-premium">
-                      <select className="select-premium" value={formData.phoneType} onChange={e => setFormData({...formData, phoneType: e.target.value})}>
-                        <option value="celular">Celular / WhatsApp</option>
-                        <option value="fixo">Telefone fixo</option>
+                  <div className="form-group-full"><label>Descrição do Modelo de Negócio (Opcional)</label><textarea className="textarea-premium" style={{ height: '80px' }} placeholder="Descreva brevemente seu modelo de negócio" value={formData.bizDescription} onChange={e => setFormData({...formData, bizDescription: e.target.value})} /></div>
+                  <div className="form-grid-2">
+                    <div className="form-group-full">
+                      <label>Canal de Vendas*</label>
+                      <select className="select-premium" value={formData.salesChannel} onChange={e => setFormData({...formData, salesChannel: e.target.value})} required>
+                        <option value="site">Site</option><option value="social">Redes Sociais</option><option value="balcao">Balcão</option>
                       </select>
                     </div>
+                    {(formData.salesChannel === 'site' || formData.salesChannel === 'social') && (
+                      <div className="form-group-full"><label>Site / Rede Social*</label><div className="input-group-premium"><Globe size={20} className="field-icon" /><input type="text" placeholder="www.seusite.com.br" value={formData.siteUrl} onChange={e => setFormData({...formData, siteUrl: e.target.value})} required /></div></div>
+                    )}
+                  </div>
+                  <div className="form-grid-2">
+                    <div className="form-group-full"><label>Ocupação profissional*</label><div className="input-group-premium no-icon"><input type="text" placeholder="Sua profissão" value={formData.occupation} onChange={e => setFormData({...formData, occupation: e.target.value})} required /></div></div>
+                    <div className="form-group-full"><label>Nome da mãe*</label><div className="input-group-premium no-icon"><input type="text" placeholder="Nome completo da mãe" value={formData.motherName} onChange={e => setFormData({...formData, motherName: e.target.value})} required /></div></div>
                   </div>
                   <div className="form-group-full">
-                    <label>Número de telefone*</label>
-                    <div className="input-group-premium">
-                      <Phone size={20} className="field-icon" />
-                      <input type="text" placeholder="(00) 90000-0000" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} required />
-                    </div>
+                    <label>Renda mensal*</label>
+                    <select className="select-premium" value={formData.monthlyIncome} onChange={e => setFormData({...formData, monthlyIncome: e.target.value})} required>
+                      <option value="">Selecione sua renda</option>
+                      <option value="Até R$ 5.000">Até R$ 5.000</option><option value="R$ 5.000 a R$ 15.000">R$ 5.000 a R$ 15.000</option><option value="R$ 15.000 a R$ 25.000">R$ 15.000 a R$ 25.000</option><option value="R$ 25.000 a R$ 50.000">R$ 25.000 a R$ 50.000</option><option value="Acima de R$ 50.000">Acima de R$ 50.000</option><option value="Não tenho renda ainda">Não tenho renda ainda</option>
+                    </select>
+                  </div>
+                  <div className="form-grid-3" style={{ gridTemplateColumns: '1.2fr 0.8fr 1.5fr' }}>
+                    <div className="form-group-full"><label>Tipo de telefone*</label><select className="select-premium" value={formData.phoneType} onChange={e => setFormData({...formData, phoneType: e.target.value})} required><option value="celular">Celular</option><option value="fixo">Fixo</option></select></div>
+                    <div className="form-group-full"><label>DDD*</label><div className="input-group-premium no-icon"><input type="text" placeholder="(000)" value={formData.phoneDdd} onChange={e => setFormData({...formData, phoneDdd: e.target.value})} required /></div></div>
+                    <div className="form-group-full"><label>Número de telefone*</label><div className="input-group-premium"><Phone size={20} className="field-icon" /><input type="text" placeholder="0 0000-0000" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} required /></div></div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="form-section-highlight-premium">
+                  <div className="section-header-pill"><Building2 size={16} /><span>Dados da Empresa</span></div>
+                  <div className="form-grid-2">
+                    <div className="form-group-full"><label>Nome fantasia*</label><input className="input-control-premium" type="text" placeholder="Nome da empresa" value={formData.nomeFantasia} onChange={e => setFormData({...formData, nomeFantasia: e.target.value})} required /></div>
+                    <div className="form-group-full"><label>Razão social*</label><input className="input-control-premium" type="text" placeholder="Razão social completa" value={formData.razaoSocial} onChange={e => setFormData({...formData, razaoSocial: e.target.value})} required /></div>
+                  </div>
+                  <div className="form-grid-2">
+                    <div className="form-group-full"><label>E-mail da empresa*</label><input className="input-control-premium" type="email" placeholder="empresa@email.com" value={formData.companyEmail} onChange={e => setFormData({...formData, companyEmail: e.target.value})} required /></div>
+                    <div className="form-group-full"><label>Número do CNPJ*</label><input className="input-control-premium" type="text" placeholder="00.000.000/0000-00" value={formData.cnpj} onChange={e => setFormData({...formData, cnpj: e.target.value})} required /></div>
+                  </div>
+                </div>
+              )}
 
-              <button type="submit" className="btn-primary-register">
-                Próximo Passo <ArrowRight size={22} />
-              </button>
+              <button type="submit" className="btn-primary-register">Próximo Passo <ArrowRight size={22} /></button>
             </div>
           )}
 
           {step === 2 && (
             <div className="animate-fade-in" style={{ display: 'grid', gap: '1.5rem' }}>
-              <div className="form-group-full">
-                <label>Descrição do modelo de negócio</label>
-                <textarea className="textarea-premium" placeholder="Breve descrição do que sua empresa faz..." value={formData.bizDescription} onChange={e => setFormData({...formData, bizDescription: e.target.value})} />
-              </div>
-
-              <div className="form-grid-2">
-                <div className="form-group-full">
-                  <label>Canal de vendas</label>
-                  <select className="select-premium" value={formData.salesChannel} onChange={e => setFormData({...formData, salesChannel: e.target.value})}>
-                    <option value="site">Site</option>
-                    <option value="social">Redes Sociais</option>
-                  </select>
-                </div>
-                <div className="form-group-full">
-                  <label>URL do Site</label>
-                  <div className="input-group-premium">
-                    <Globe size={20} className="field-icon" />
-                    <input type="text" placeholder="www.seusite.com.br" value={formData.siteUrl} onChange={e => setFormData({...formData, siteUrl: e.target.value})} />
+              {accountType === 'PJ' && (
+                <>
+                  <div className="form-section-highlight-premium">
+                    <div className="section-header-pill"><span>Informações Adicionais</span></div>
+                    <div className="form-group-full">
+                      <label>Faturamento Anual*</label>
+                      <select className="select-premium" value={formData.annualRevenue} onChange={e => setFormData({...formData, annualRevenue: e.target.value})} required>
+                        <option value="">Selecione a faixa</option>
+                        <option value="Até R$ 50.000,00">Até R$ 50.000,00</option><option value="R$ 50.000 a R$ 150.000">R$ 50.000 a R$ 150.000</option><option value="R$ 150.000 a R$ 300.000">R$ 150.000 a R$ 300.000</option><option value="R$ 300.000 a R$ 500.000">R$ 300.000 a R$ 500.000</option><option value="R$ 500.000 a R$ 1.000.000">R$ 500.000 a R$ 1.000.000</option><option value="Acima de R$ 1.000.000,00">Acima de R$ 1.000.000,00</option><option value="Não tenho faturamento ainda">Não tenho faturamento ainda</option>
+                      </select>
+                    </div>
+                    <div className="form-group-full"><label>Descrição do Modelo de Negócio (Opcional)</label><textarea className="textarea-premium" style={{ height: '80px' }} placeholder="Descreva o que sua empresa faz" value={formData.bizDescription} onChange={e => setFormData({...formData, bizDescription: e.target.value})} /></div>
+                    <div className="form-grid-2">
+                      <div className="form-group-full">
+                        <label>Canal de Vendas (Opcional)</label>
+                        <select className="select-premium" value={formData.salesChannel} onChange={e => setFormData({...formData, salesChannel: e.target.value})}>
+                          <option value="">Nenhum</option><option value="site">Site</option><option value="social">Redes Sociais</option><option value="balcao">Balcão</option>
+                        </select>
+                      </div>
+                      <div className="form-group-full"><label>Site do recebedor (Opcional)</label><input className="input-control-premium" type="text" placeholder="www.seusite.com.br" value={formData.siteUrl} onChange={e => setFormData({...formData, siteUrl: e.target.value})} /></div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="form-grid-2">
-                <div className="form-group-full">
-                  <label>CNPJ da empresa*</label>
-                  <input className="input-control-premium" type="text" placeholder="00.000.000/0000-00" value={formData.cnpj} onChange={e => setFormData({...formData, cnpj: e.target.value})} required />
-                </div>
-                <div className="form-group-full">
-                  <label>Razão social*</label>
-                  <input className="input-control-premium" type="text" placeholder="Nome empresarial completo" value={formData.razaoSocial} onChange={e => setFormData({...formData, razaoSocial: e.target.value})} required />
-                </div>
-              </div>
+                  <div className="form-section-highlight-premium address-section">
+                    <div className="section-header-pill"><span>Endereço Empresa</span></div>
+                    <div className="form-grid-2" style={{ gridTemplateColumns: '0.8fr 2.2fr' }}>
+                      <div className="form-group-full"><label>CEP*</label><input className="input-control-premium" type="text" placeholder="00000-000" value={formData.cep} onChange={e => setFormData({...formData, cep: e.target.value})} onBlur={() => handleCepBlur('company')} required /></div>
+                      <div className="form-group-full"><label>Logradouro*</label><input className="input-control-premium" type="text" placeholder="Rua, Av, etc." value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} required /></div>
+                    </div>
+                    <div className="form-grid-2">
+                      <div className="form-group-full"><label>Número*</label><input className="input-control-premium" type="text" placeholder="00" value={formData.number} onChange={e => setFormData({...formData, number: e.target.value})} required /></div>
+                      <div className="form-group-full"><label>Complemento (Opcional)</label><input className="input-control-premium" type="text" placeholder="Apto, Bloco, etc." value={formData.complement} onChange={e => setFormData({...formData, complement: e.target.value})} /></div>
+                    </div>
+                    <div className="form-grid-3">
+                      <div className="form-group-full"><label>Bairro*</label><input className="input-control-premium" type="text" placeholder="Bairro" value={formData.neighborhood} onChange={e => setFormData({...formData, neighborhood: e.target.value})} required /></div>
+                      <div className="form-group-full"><label>Cidade*</label><input className="input-control-premium" type="text" placeholder="Cidade" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} required /></div>
+                      <div className="form-group-full"><label>Estado*</label><input className="input-control-premium" type="text" placeholder="UF" value={formData.state} onChange={e => setFormData({...formData, state: e.target.value})} required /></div>
+                    </div>
+                    <div className="form-group-full"><label>Ponto de referência (Opcional)</label><input className="input-control-premium" type="text" placeholder="Próximo a..." value={formData.referencePoint} onChange={e => setFormData({...formData, referencePoint: e.target.value})} /></div>
+                  </div>
 
-              <div className="form-section-highlight-premium address-section">
-                <div className="section-header-pill"><span>Endereço Comercial</span></div>
-                <div className="form-grid-2" style={{ gridTemplateColumns: '0.8fr 2.2fr' }}>
-                  <div className="form-group-full"><label>CEP*</label><input className="input-control-premium" type="text" placeholder="00000-000" value={formData.cep} onChange={e => setFormData({...formData, cep: e.target.value})} required /></div>
-                  <div className="form-group-full"><label>Logradouro*</label><input className="input-control-premium" type="text" placeholder="Rua, Av, etc." value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} required /></div>
+                  <div className="form-section-highlight-premium">
+                    <div className="section-header-pill"><span>Telefone Empresa</span></div>
+                    <div className="form-grid-3" style={{ gridTemplateColumns: '1.2fr 0.8fr 1.5fr' }}>
+                      <div className="form-group-full"><label>Tipo de telefone*</label><select className="select-premium" value={formData.companyPhoneType} onChange={e => setFormData({...formData, companyPhoneType: e.target.value})} required><option value="celular">Celular</option><option value="fixo">Fixo</option></select></div>
+                      <div className="form-group-full"><label>DDD*</label><div className="input-group-premium no-icon"><input type="text" placeholder="(000)" value={formData.companyPhoneDdd} onChange={e => setFormData({...formData, companyPhoneDdd: e.target.value})} required /></div></div>
+                      <div className="form-group-full"><label>Número*</label><div className="input-group-premium"><Phone size={20} className="field-icon" /><input type="text" placeholder="0 0000-0000" value={formData.companyPhone} onChange={e => setFormData({...formData, companyPhone: e.target.value})} required /></div></div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {accountType === 'PF' && (
+                <div className="form-section-highlight-premium address-section">
+                  <div className="section-header-pill"><span>Endereço</span></div>
+                  <div className="form-grid-2" style={{ gridTemplateColumns: '0.8fr 2.2fr' }}>
+                    <div className="form-group-full"><label>CEP*</label><input className="input-control-premium" type="text" placeholder="00000-000" value={formData.cep} onChange={e => setFormData({...formData, cep: e.target.value})} onBlur={() => handleCepBlur('company')} required /></div>
+                    <div className="form-group-full"><label>Logradouro*</label><input className="input-control-premium" type="text" placeholder="Rua, Av, etc." value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} required /></div>
+                  </div>
+                  <div className="form-grid-2">
+                    <div className="form-group-full"><label>Número*</label><input className="input-control-premium" type="text" placeholder="00" value={formData.number} onChange={e => setFormData({...formData, number: e.target.value})} required /></div>
+                    <div className="form-group-full"><label>Complemento*</label><input className="input-control-premium" type="text" placeholder="Apto, Bloco, etc." value={formData.complement} onChange={e => setFormData({...formData, complement: e.target.value})} required /></div>
+                  </div>
+                  <div className="form-grid-3">
+                    <div className="form-group-full"><label>Bairro*</label><input className="input-control-premium" type="text" placeholder="Bairro" value={formData.neighborhood} onChange={e => setFormData({...formData, neighborhood: e.target.value})} required /></div>
+                    <div className="form-group-full"><label>Cidade*</label><input className="input-control-premium" type="text" placeholder="Cidade" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} required /></div>
+                    <div className="form-group-full"><label>Estado*</label><input className="input-control-premium" type="text" placeholder="UF" value={formData.state} onChange={e => setFormData({...formData, state: e.target.value})} required /></div>
+                  </div>
+                  <div className="form-group-full"><label>Ponto de referência*</label><input className="input-control-premium" type="text" placeholder="Próximo a..." value={formData.referencePoint} onChange={e => setFormData({...formData, referencePoint: e.target.value})} required /></div>
                 </div>
-                <div className="form-grid-3">
-                  <div className="form-group-full"><label>Número</label><input className="input-control-premium" type="text" placeholder="00" value={formData.number} onChange={e => setFormData({...formData, number: e.target.value})} /></div>
-                  <div className="form-group-full"><label>Bairro*</label><input className="input-control-premium" type="text" placeholder="Bairro" value={formData.neighborhood} onChange={e => setFormData({...formData, neighborhood: e.target.value})} required /></div>
-                  <div className="form-group-full"><label>Cidade/UF*</label><input className="input-control-premium" type="text" placeholder="Cidade - UF" value={`${formData.city}${formData.state ? ' - ' + formData.state : ''}`} required /></div>
-                </div>
-              </div>
+              )}
 
               <button type="submit" className="btn-primary-register">Continuar <ArrowRight size={22} /></button>
             </div>
           )}
 
-          {step === 3 && (
+          {step === 3 && accountType === 'PJ' && (
             <div className="animate-fade-in" style={{ display: 'grid', gap: '1.5rem' }}>
-              <div className="form-group-full">
-                <label>Banco*</label>
-                <select className="select-premium" value={formData.bank} onChange={e => setFormData({...formData, bank: e.target.value})} required>
-                  <option value="">Selecione o banco</option>
-                  <option value="001">Banco do Brasil</option>
-                  <option value="260">Nubank</option>
-                  <option value="341">Itaú</option>
-                </select>
+              <div className="form-section-highlight-premium">
+                <div className="section-header-pill"><span>Dados do Representante Legal</span></div>
+                <div className="form-grid-2">
+                  <div className="form-group-full"><label>Nome do representante legal*</label><input className="input-control-premium" type="text" placeholder="Nome completo" value={formData.repName} onChange={e => setFormData({...formData, repName: e.target.value})} required /></div>
+                  <div className="form-group-full"><label>E-mail do representante legal*</label><input className="input-control-premium" type="email" placeholder="email@rep.com" value={formData.repEmail} onChange={e => setFormData({...formData, repEmail: e.target.value})} required /></div>
+                </div>
+                <div className="form-grid-2">
+                  <div className="form-group-full"><label>Número do CPF*</label><input className="input-control-premium" type="text" placeholder="000.000.000-00" value={formData.repCpf} onChange={e => setFormData({...formData, repCpf: e.target.value})} required /></div>
+                  <div className="form-group-full"><label>Nome da mãe*</label><input className="input-control-premium" type="text" placeholder="Nome completo da mãe" value={formData.repMotherName} onChange={e => setFormData({...formData, repMotherName: e.target.value})} required /></div>
+                </div>
+                <div className="form-grid-2">
+                  <div className="form-group-full"><label>Aniversário*</label><input className="input-control-premium" type="text" placeholder="00/00/0000" value={formData.repBirthDate} onChange={e => setFormData({...formData, repBirthDate: e.target.value})} required /></div>
+                  <div className="form-group-full"><label>Ocupação profissional*</label><input className="input-control-premium" type="text" placeholder="Cargo/Profissão" value={formData.repOccupation} onChange={e => setFormData({...formData, repOccupation: e.target.value})} required /></div>
+                </div>
+                <div className="form-group-full">
+                  <label>Renda mensal*</label>
+                  <select className="select-premium" value={formData.repMonthlyIncome} onChange={e => setFormData({...formData, repMonthlyIncome: e.target.value})} required>
+                    <option value="">Selecione a renda</option>
+                    <option value="Até R$ 5.000">Até R$ 5.000</option><option value="R$ 5.000 a R$ 15.000">R$ 5.000 a R$ 15.000</option><option value="R$ 15.000 a R$ 25.000">R$ 15.000 a R$ 25.000</option><option value="R$ 25.000 a R$ 50.000">R$ 25.000 a R$ 50.000</option><option value="Acima de R$ 50.000">Acima de R$ 50.000</option><option value="Não tenho renda ainda">Não tenho renda ainda</option>
+                  </select>
+                </div>
               </div>
 
-              <div className="form-grid-2">
-                <div className="form-group-full"><label>Agência*</label><input className="input-control-premium" type="text" placeholder="0000" value={formData.agency} onChange={e => setFormData({...formData, agency: e.target.value})} required /></div>
-                <div className="form-group-full"><label>Conta* (com dígito)</label><input className="input-control-premium" type="text" placeholder="00000-0" value={formData.account} onChange={e => setFormData({...formData, account: e.target.value})} required /></div>
+              <div className="form-section-highlight-premium address-section">
+                <div className="section-header-pill"><span>Endereço Representante</span></div>
+                <div className="form-grid-2" style={{ gridTemplateColumns: '0.8fr 2.2fr' }}>
+                  <div className="form-group-full"><label>CEP*</label><input className="input-control-premium" type="text" placeholder="00000-000" value={formData.repCep} onChange={e => setFormData({...formData, repCep: e.target.value})} onBlur={() => handleCepBlur('rep')} required /></div>
+                  <div className="form-group-full"><label>Logradouro*</label><input className="input-control-premium" type="text" placeholder="Rua, Av, etc." value={formData.repAddress} onChange={e => setFormData({...formData, repAddress: e.target.value})} required /></div>
+                </div>
+                <div className="form-grid-2">
+                  <div className="form-group-full"><label>Número*</label><input className="input-control-premium" type="text" placeholder="00" value={formData.repNumber} onChange={e => setFormData({...formData, repNumber: e.target.value})} required /></div>
+                  <div className="form-group-full"><label>Complemento (Opcional)</label><input className="input-control-premium" type="text" placeholder="Apto, Bloco, etc." value={formData.repComplement} onChange={e => setFormData({...formData, repComplement: e.target.value})} /></div>
+                </div>
+                <div className="form-grid-3">
+                  <div className="form-group-full"><label>Bairro*</label><input className="input-control-premium" type="text" placeholder="Bairro" value={formData.repNeighborhood} onChange={e => setFormData({...formData, repNeighborhood: e.target.value})} required /></div>
+                  <div className="form-group-full"><label>Cidade*</label><input className="input-control-premium" type="text" placeholder="Cidade" value={formData.repCity} onChange={e => setFormData({...formData, repCity: e.target.value})} required /></div>
+                  <div className="form-group-full"><label>Estado*</label><input className="input-control-premium" type="text" placeholder="UF" value={formData.repState} onChange={e => setFormData({...formData, repState: e.target.value})} required /></div>
+                </div>
+                <div className="form-group-full"><label>Ponto de referência (Opcional)</label><input className="input-control-premium" type="text" placeholder="Próximo a..." value={formData.repReferencePoint} onChange={e => setFormData({...formData, repReferencePoint: e.target.value})} /></div>
               </div>
 
-              <div className="form-group-full">
-                <label>Titular da conta*</label>
-                <div className="input-group-premium">
-                  <User size={20} className="field-icon" />
-                  <input type="text" placeholder="Nome completo do titular" value={formData.bankAccountName} onChange={e => setFormData({...formData, bankAccountName: e.target.value})} required />
+              <div className="form-section-highlight-premium">
+                <div className="section-header-pill"><span>Telefone Representante</span></div>
+                <div className="form-grid-3" style={{ gridTemplateColumns: '1.2fr 0.8fr 1.5fr' }}>
+                  <div className="form-group-full"><label>Tipo de telefone*</label><select className="select-premium" value={formData.repPhoneType} onChange={e => setFormData({...formData, repPhoneType: e.target.value})} required><option value="celular">Celular</option><option value="fixo">Fixo</option></select></div>
+                  <div className="form-group-full"><label>DDD*</label><div className="input-group-premium no-icon"><input type="text" placeholder="(000)" value={formData.repPhoneDdd} onChange={e => setFormData({...formData, repPhoneDdd: e.target.value})} required /></div></div>
+                  <div className="form-group-full"><label>Número*</label><div className="input-group-premium"><Phone size={20} className="field-icon" /><input type="text" placeholder="0 0000-0000" value={formData.repPhone} onChange={e => setFormData({...formData, repPhone: e.target.value})} required /></div></div>
                 </div>
               </div>
 
@@ -246,35 +376,54 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {step === 4 && (
+          {((step === 4 && accountType === 'PJ') || (step === 3 && accountType === 'PF')) && (
+            <div className="animate-fade-in" style={{ display: 'grid', gap: '1.5rem' }}>
+              <div className="form-section-highlight-premium">
+                <div className="section-header-pill"><span>Dados Bancários</span></div>
+                <div className="form-group-full">
+                  <label>Banco*</label>
+                  <select className="select-premium" value={formData.bank} onChange={e => setFormData({...formData, bank: e.target.value})} required>
+                    <option value="">Selecione o banco</option>
+                    {banks.map(bank => (<option key={bank.code} value={bank.code}>{bank.code} - {bank.name}</option>))}
+                  </select>
+                </div>
+                <div className="form-grid-2">
+                  <div className="form-group-full"><label>Agência*</label><input className="input-control-premium" type="text" placeholder="0000" value={formData.agency} onChange={e => setFormData({...formData, agency: e.target.value})} required /></div>
+                  <div className="form-group-full"><label>Dígito Agência</label><input className="input-control-premium" type="text" placeholder="0" value={formData.agencyDigit} onChange={e => setFormData({...formData, agencyDigit: e.target.value})} /></div>
+                </div>
+                <div className="form-grid-2">
+                  <div className="form-group-full"><label>Conta Bancária*</label><input className="input-control-premium" type="text" placeholder="00000" value={formData.account} onChange={e => setFormData({...formData, account: e.target.value})} required /></div>
+                  <div className="form-group-full"><label>Dígito Conta</label><input className="input-control-premium" type="text" placeholder="0" value={formData.accountDigit} onChange={e => setFormData({...formData, accountDigit: e.target.value})} /></div>
+                </div>
+                <div className="form-group-full">
+                  <label>Tipo de Conta*</label>
+                  <select className="select-premium" value={formData.bankAccountType} onChange={e => setFormData({...formData, bankAccountType: e.target.value})} required>
+                    <option value="corrente">Conta corrente</option><option value="corrente_conjunta">Conta corrente conjunta</option><option value="poupanca">Conta poupança</option><option value="poupanca_conjunta">Conta poupança conjunta</option>
+                  </select>
+                </div>
+                <div className="form-group-full"><label>Nome da conta bancária*</label><div className="input-group-premium"><User size={20} className="field-icon" /><input type="text" placeholder="Nome completo do titular" value={formData.bankAccountName} onChange={e => setFormData({...formData, bankAccountName: e.target.value})} required /></div></div>
+                <div className="form-grid-2">
+                  <div className="form-group-full"><label>Tipo de recebedor*</label><select className="select-premium" value={formData.receiverType} onChange={e => setFormData({...formData, receiverType: e.target.value})} required><option value="PF">Pessoa Física</option><option value="PJ">Pessoa Jurídica</option></select></div>
+                  <div className="form-group-full"><label>Nº Documento da Conta Bancária*</label><input className="input-control-premium" type="text" placeholder="CPF ou CNPJ" value={formData.bankAccountDoc} onChange={e => setFormData({...formData, bankAccountDoc: e.target.value})} required /></div>
+                </div>
+              </div>
+              <button type="submit" className="btn-primary-register">Próximo Passo <ArrowRight size={22} /></button>
+            </div>
+          )}
+
+          {((step === 5 && accountType === 'PJ') || (step === 4 && accountType === 'PF')) && (
             <div className="animate-fade-in" style={{ display: 'grid', gap: '1.5rem' }}>
               <div className="docs-upload-grid">
                 {[
-                  'Contrato Social', 'RG do Responsável', 'Comprovante Residência', 'Extrato Bancário'
+                  accountType === 'PJ' ? 'Contrato Social' : 'Documento com Foto', 'RG do Responsável', 'Comprovante Residência', 'Extrato Bancário'
                 ].map((doc, idx) => (
-                  <div key={idx} className="doc-card-premium">
-                    <Upload size={24} className="upload-icon-pulse" />
-                    <div className="doc-info">
-                      <strong>{doc}</strong>
-                      <span>PDF ou Imagem</span>
-                    </div>
-                  </div>
+                  <div key={idx} className="doc-card-premium"><Upload size={24} className="upload-icon-pulse" /><div className="doc-info"><strong>{doc}</strong><span>PDF ou Imagem</span></div></div>
                 ))}
               </div>
-
               <div className="form-section-highlight-premium">
-                <div className="form-group-full">
-                  <label>Crie uma senha de acesso*</label>
-                  <div className="input-group-premium">
-                    <Lock size={20} className="field-icon" />
-                    <input type="password" placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required />
-                  </div>
-                </div>
+                <div className="form-group-full"><label>Crie uma senha de acesso*</label><div className="input-group-premium"><Lock size={20} className="field-icon" /><input type="password" placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required /></div></div>
               </div>
-
-              <button type="submit" className="btn-primary-register" disabled={isLoading}>
-                {isLoading ? 'Criando sua conta...' : 'Finalizar Cadastro'}
-              </button>
+              <button type="submit" className="btn-primary-register" disabled={isLoading}>{isLoading ? 'Criando sua conta...' : 'Finalizar Cadastro'}</button>
             </div>
           )}
         </form>
@@ -329,6 +478,7 @@ export default function RegisterPage() {
         .section-header-pill { display: inline-flex; align-items: center; gap: 0.6rem; background: rgba(101,131,154,0.15); color: var(--primary); padding: 0.5rem 1.25rem; border-radius: 100px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 2.5rem; }
         
         .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
         .form-group-full { margin-bottom: 1.75rem; }
         .form-group-full label { font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.6); margin-bottom: 0.75rem; display: block; }
 
