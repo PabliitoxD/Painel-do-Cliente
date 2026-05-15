@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.sandbox.superfin.com.br';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.superfin.com.br';
 
 export async function fetchApi<T>(
   endpoint: string,

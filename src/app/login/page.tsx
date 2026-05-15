@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import '@/styles/login.css';
 
 // ─── Config OneID ─────────────────────────────────────────────────────────────
-const ONEID_SDK_URL = 'https://auth.sandbox.oneid.com.br/auth.js';
+const ONEID_SDK_URL = 'https://auth.oneid.com.br/auth.js';
 const ONEID_COMPANY_TOKEN = '85081a949e63b592cc511566374365b2';
 
 function LoginContent() {
@@ -44,7 +44,7 @@ function LoginContent() {
       .then(() => loadScript('oneid-sdk-script', ONEID_SDK_URL, {
         name: 'leavening_login_with',
         'data-name': 'env',
-        env: 'sandbox',
+        env: 'production',
       }))
       .then(() => {
         console.log('OneID SDK carregado, getTokenAuth =', typeof (window as any).getTokenAuth);
