@@ -13,16 +13,22 @@ export const backofficeService = {
   /**
    * List chargebacks with specific filters
    */
-  listChargebacks: (filters?: ChargebackFilters) => {
-    const queryParams = new URLSearchParams();
-    
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined) queryParams.append(key, String(value));
-      });
-    }
-
-    const query = queryParams.toString();
-    return fetchApi<any>(`/backoffice/chargebacks${query ? `?${query}` : ''}`);
+  listChargebacks: async (filters?: ChargebackFilters) => {
+    // const queryParams = new URLSearchParams();
+    // 
+    // if (filters) {
+    //   Object.entries(filters).forEach(([key, value]) => {
+    //     if (value !== undefined) queryParams.append(key, String(value));
+    //   });
+    // }
+    //
+    // const query = queryParams.toString();
+    // return fetchApi<any>(`/backoffice/chargebacks${query ? `?${query}` : ''}`);
+    return Promise.resolve({
+      data: [
+        { id: '1', reason: 'Fraude', status: 'IN_ANALYSIS', amount: 150.00, date: new Date().toISOString() }
+      ],
+      meta: { total: 1 }
+    });
   },
 };

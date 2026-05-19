@@ -14,25 +14,31 @@ export const transactionsService = {
   /**
    * Consult a specific transaction by token
    */
-  getOrderByToken: (token: string) => {
-    return fetchApi<any>(`/orders/${token}`);
+  getOrderByToken: async (token: string) => {
+    // return fetchApi<any>(`/orders/${token}`);
+    return Promise.resolve({ id: '1', token, status: 'PAID', amount: 150 });
   },
 
   /**
    * List transactions with optional filters
    */
-  listOrders: (filters?: OrderFilters) => {
-    const query = filters ? new URLSearchParams(filters as any).toString() : '';
-    return fetchApi<any>(`/orders${query ? `?${query}` : ''}`);
+  listOrders: async (filters?: OrderFilters) => {
+    // const query = filters ? new URLSearchParams(filters as any).toString() : '';
+    // return fetchApi<any>(`/orders${query ? `?${query}` : ''}`);
+    return Promise.resolve({
+      data: [{ id: '1', token: 'tok_1', status: 'PAID', amount: 150 }],
+      meta: { total: 1, current_page: 1, per_page: 10 }
+    });
   },
 
   /**
    * Create a new transaction
    */
-  createOrder: (payload: any) => {
-    return fetchApi<any>('/orders', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+  createOrder: async (payload: any) => {
+    // return fetchApi<any>('/orders', {
+    //   method: 'POST',
+    //   body: JSON.stringify(payload),
+    // });
+    return Promise.resolve({ id: '2', status: 'CREATED', amount: payload?.amount || 100 });
   },
 };
