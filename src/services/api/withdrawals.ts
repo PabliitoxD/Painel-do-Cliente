@@ -21,7 +21,12 @@ export const withdrawalsService = {
    */
   list: async (): Promise<any> => {
     // return fetchApi<any>('/withdrawals');
-    return Promise.resolve({ data: [{ id: 'w_1', amount: 1000, status: 'COMPLETED' }] });
+    return Promise.resolve({ data: [
+      { id: 'w_1', amount: 1500, status: 'COMPLETED', created_at: new Date(Date.now() - 86400000 * 2).toISOString() },
+      { id: 'w_2', amount: 800, status: 'PENDING', created_at: new Date().toISOString() },
+      { id: 'w_3', amount: 5000, status: 'COMPLETED', created_at: new Date(Date.now() - 86400000 * 5).toISOString() },
+      { id: 'w_4', amount: 350, status: 'FAILED', created_at: new Date(Date.now() - 86400000 * 10).toISOString() }
+    ] });
   },
 };
 
