@@ -238,7 +238,7 @@ export const chargesService = {
   create: async (payload: CreateChargePayload): Promise<ChargeDetailResponse> => {
     // return fetchApi<ChargeDetailResponse>('/charges', { method: 'POST', body: JSON.stringify(payload) });
     return Promise.resolve({
-      charge: { id: 'new', token: 'tok_new_mocked', code: 'CHG-NEW', description: payload.charge.description || 'Nova Cobrança', price: payload.charge.products[0]?.price || 100, status: 'NOT_PAID', expiration_date: payload.charge.expiration_date || '10/10/2026', payer_name: payload.charge.payer_name, payer_email: payload.charge.payer_email, checkout_url: '/checkout/tok_new_mocked' }
+      charge: { id: 'new', token: 'tok_new_mocked', code: 'CHG-NEW', description: payload.charge.description || 'Nova Cobrança', price: Number(payload.charge.products[0]?.price) || 100, status: 'NOT_PAID', expiration_date: payload.charge.expiration_date || '10/10/2026', payer_name: payload.charge.payer_name, payer_email: payload.charge.payer_email, checkout_url: '/checkout/tok_new_mocked' }
     });
   },
 
@@ -286,10 +286,10 @@ export const subscriptionsService = {
     // return fetchApi<SubscriptionsListResponse>(`/subscription/subscriptions${buildQs(params)}`);
     return Promise.resolve({
       subscriptions: [
-        { id: 'sub_1', token: 'sub_tok_1', code: 'REC-001', status: 'active', customer: { id: 'cust_1', name: 'João Carlos', email: 'jc@example.com' }, expiration_day: 5, created_at: new Date(Date.now() - 86400000 * 30).toISOString(), next_billing_date: new Date(Date.now() + 86400000 * 5).toISOString(), plan: { name: 'Plano Pro', price: 90 } },
-        { id: 'sub_2', token: 'sub_tok_2', code: 'REC-002', status: 'active', customer: { id: 'cust_2', name: 'Maria Silva', email: 'maria@example.com' }, expiration_day: 15, created_at: new Date(Date.now() - 86400000 * 60).toISOString(), next_billing_date: new Date(Date.now() + 86400000 * 15).toISOString(), plan: { name: 'Plano Pro', price: 90 } },
-        { id: 'sub_3', token: 'sub_tok_3', code: 'REC-003', status: 'cancelled', customer: { id: 'cust_3', name: 'Pedro Alves', email: 'pedro@example.com' }, expiration_day: 10, created_at: new Date(Date.now() - 86400000 * 90).toISOString(), next_billing_date: new Date(Date.now() - 86400000 * 5).toISOString(), plan: { name: 'Plano Básico', price: 50 } },
-        { id: 'sub_4', token: 'sub_tok_4', code: 'REC-004', status: 'active', customer: { id: 'cust_4', name: 'Ana Souza', email: 'ana@example.com' }, expiration_day: 20, created_at: new Date(Date.now() - 86400000 * 15).toISOString(), next_billing_date: new Date(Date.now() + 86400000 * 20).toISOString(), plan: { name: 'Plano Premium', price: 150 } }
+        { id: 'sub_1', token: 'sub_tok_1', code: 'REC-001', status: 'active', customer: { id: 'cust_1', name: 'João Carlos', email: 'jc@example.com' }, expiration_day: 5, created_at: new Date(Date.now() - 86400000 * 30).toISOString(), next_billing_date: new Date(Date.now() + 86400000 * 5).toISOString(), plan: { id: 'plan_1', token: 'ptok', name: 'Plano Pro', price: 90, periodicity: 1, public: true, status: 'active' } },
+        { id: 'sub_2', token: 'sub_tok_2', code: 'REC-002', status: 'active', customer: { id: 'cust_2', name: 'Maria Silva', email: 'maria@example.com' }, expiration_day: 15, created_at: new Date(Date.now() - 86400000 * 60).toISOString(), next_billing_date: new Date(Date.now() + 86400000 * 15).toISOString(), plan: { id: 'plan_1', token: 'ptok', name: 'Plano Pro', price: 90, periodicity: 1, public: true, status: 'active' } },
+        { id: 'sub_3', token: 'sub_tok_3', code: 'REC-003', status: 'cancelled', customer: { id: 'cust_3', name: 'Pedro Alves', email: 'pedro@example.com' }, expiration_day: 10, created_at: new Date(Date.now() - 86400000 * 90).toISOString(), next_billing_date: new Date(Date.now() - 86400000 * 5).toISOString(), plan: { id: 'plan_1', token: 'ptok', name: 'Plano Básico', price: 50, periodicity: 1, public: true, status: 'active' } },
+        { id: 'sub_4', token: 'sub_tok_4', code: 'REC-004', status: 'active', customer: { id: 'cust_4', name: 'Ana Souza', email: 'ana@example.com' }, expiration_day: 20, created_at: new Date(Date.now() - 86400000 * 15).toISOString(), next_billing_date: new Date(Date.now() + 86400000 * 20).toISOString(), plan: { id: 'plan_1', token: 'ptok', name: 'Plano Premium', price: 150, periodicity: 1, public: true, status: 'active' } }
       ],
       meta: { current_page: 1, per_page: 10, total_count: 4 }
     });
