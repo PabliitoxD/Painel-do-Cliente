@@ -12,7 +12,7 @@ export const reportsService = {
   /**
    * Generate/fetch transaction reports
    */
-  orderReport: async (filters?: ReportOrderFilters) => {
+  orderReport: async (filters?: ReportOrderFilters): Promise<any> => {
     // const queryParams = new URLSearchParams();
     // 
     // if (filters) {

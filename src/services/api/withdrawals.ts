@@ -8,7 +8,7 @@ export const withdrawalsService = {
   /**
    * Create a new withdrawal request
    */
-  createWithdraw: async (payload: WithdrawPayload) => {
+  createWithdraw: async (payload: WithdrawPayload): Promise<any> => {
     // return fetchApi<any>('/withdraw', {
     //   method: 'POST',
     //   body: JSON.stringify(payload),
@@ -19,7 +19,7 @@ export const withdrawalsService = {
   /**
    * List all withdrawal requests
    */
-  list: async () => {
+  list: async (): Promise<any> => {
     // return fetchApi<any>('/withdrawals');
     return Promise.resolve({ data: [{ id: 'w_1', amount: 1000, status: 'COMPLETED' }] });
   },

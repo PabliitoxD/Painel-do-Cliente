@@ -21,7 +21,7 @@ export const authService = {
   /**
    * Login using standard Email and Password
    */
-  loginEmail: async (payload: LoginEmailPayload) => {
+  loginEmail: async (payload: LoginEmailPayload): Promise<any> => {
     // Assuming standard /login or /authentication endpoint for email/password
     // Adapt path if necessary when the backend is finalized
     // return fetchApi<AuthResponse>('/authentication', {
