@@ -219,8 +219,12 @@ export const chargesService = {
   list: async (params?: ChargesListParams): Promise<ChargesListResponse> => {
     // return fetchApi<ChargesListResponse>(`/charges${buildQs(params)}`);
     return Promise.resolve({
-      charges: [{ id: '1', token: 'tok_1', code: 'CHG-001', description: 'Mock Charge 1', price: 100, status: 'PAID', expiration_date: '10/10/2026', payer_name: 'John Doe', payer_email: 'john@example.com' }],
-      meta: { current_page: 1, per_page: 10, total_count: 1 }
+      charges: [
+        { id: '1', token: 'tok_1', code: 'CHG-001', description: 'Consultoria Financeira', price: 500, status: 'PAID', expiration_date: new Date(Date.now() + 86400000*5).toISOString(), payer_name: 'Marcos Almeida', payer_email: 'marcos@example.com', checkout_url: 'https://checkout.tronnus.com/c/tok_1' },
+        { id: '2', token: 'tok_2', code: 'CHG-002', description: 'E-book Guia Definitivo', price: 49.90, status: 'NOT_PAID', expiration_date: new Date(Date.now() + 86400000*2).toISOString(), payer_name: 'Juliana Costa', payer_email: 'juliana@example.com', checkout_url: 'https://checkout.tronnus.com/c/tok_2' },
+        { id: '3', token: 'tok_3', code: 'CHG-003', description: 'Mentoria em Grupo', price: 1200, status: 'EXPIRED', expiration_date: new Date(Date.now() - 86400000*2).toISOString(), payer_name: 'Roberto Dias', payer_email: 'roberto@example.com', checkout_url: 'https://checkout.tronnus.com/c/tok_3' }
+      ],
+      meta: { current_page: 1, per_page: 10, total_count: 3 }
     });
   },
 
@@ -234,7 +238,7 @@ export const chargesService = {
   create: async (payload: CreateChargePayload): Promise<ChargeDetailResponse> => {
     // return fetchApi<ChargeDetailResponse>('/charges', { method: 'POST', body: JSON.stringify(payload) });
     return Promise.resolve({
-      charge: { id: 'new', token: 'tok_new', code: 'CHG-NEW', description: payload.charge.description || 'New Mock Charge', price: 100, status: 'NOT_PAID', expiration_date: payload.charge.expiration_date || '10/10/2026', payer_name: payload.charge.payer_name, payer_email: payload.charge.payer_email }
+      charge: { id: 'new', token: 'tok_new_mocked', code: 'CHG-NEW', description: payload.charge.description || 'Nova Cobrança', price: payload.charge.products[0]?.price || 100, status: 'NOT_PAID', expiration_date: payload.charge.expiration_date || '10/10/2026', payer_name: payload.charge.payer_name, payer_email: payload.charge.payer_email, checkout_url: '/checkout/tok_new_mocked' }
     });
   },
 
@@ -281,8 +285,13 @@ export const subscriptionsService = {
   list: async (params?: { page?: number; per_page?: number }): Promise<SubscriptionsListResponse> => {
     // return fetchApi<SubscriptionsListResponse>(`/subscription/subscriptions${buildQs(params)}`);
     return Promise.resolve({
-      subscriptions: [{ id: '1', token: 'sub_tok_1', status: 'active', customer: { id: 'cust_1', name: 'John Doe', email: 'john@example.com' }, expiration_day: 10, created_at: new Date().toISOString(), next_billing_date: new Date().toISOString() }],
-      meta: { current_page: 1, per_page: 10, total_count: 1 }
+      subscriptions: [
+        { id: 'sub_1', token: 'sub_tok_1', code: 'REC-001', status: 'active', customer: { id: 'cust_1', name: 'João Carlos', email: 'jc@example.com' }, expiration_day: 5, created_at: new Date(Date.now() - 86400000 * 30).toISOString(), next_billing_date: new Date(Date.now() + 86400000 * 5).toISOString(), plan: { name: 'Plano Pro', price: 90 } },
+        { id: 'sub_2', token: 'sub_tok_2', code: 'REC-002', status: 'active', customer: { id: 'cust_2', name: 'Maria Silva', email: 'maria@example.com' }, expiration_day: 15, created_at: new Date(Date.now() - 86400000 * 60).toISOString(), next_billing_date: new Date(Date.now() + 86400000 * 15).toISOString(), plan: { name: 'Plano Pro', price: 90 } },
+        { id: 'sub_3', token: 'sub_tok_3', code: 'REC-003', status: 'cancelled', customer: { id: 'cust_3', name: 'Pedro Alves', email: 'pedro@example.com' }, expiration_day: 10, created_at: new Date(Date.now() - 86400000 * 90).toISOString(), next_billing_date: new Date(Date.now() - 86400000 * 5).toISOString(), plan: { name: 'Plano Básico', price: 50 } },
+        { id: 'sub_4', token: 'sub_tok_4', code: 'REC-004', status: 'active', customer: { id: 'cust_4', name: 'Ana Souza', email: 'ana@example.com' }, expiration_day: 20, created_at: new Date(Date.now() - 86400000 * 15).toISOString(), next_billing_date: new Date(Date.now() + 86400000 * 20).toISOString(), plan: { name: 'Plano Premium', price: 150 } }
+      ],
+      meta: { current_page: 1, per_page: 10, total_count: 4 }
     });
   },
 
