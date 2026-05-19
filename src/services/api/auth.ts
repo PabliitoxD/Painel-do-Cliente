@@ -21,12 +21,17 @@ export const authService = {
   /**
    * Login using standard Email and Password
    */
-  loginEmail: (payload: LoginEmailPayload) => {
+  loginEmail: async (payload: LoginEmailPayload) => {
     // Assuming standard /login or /authentication endpoint for email/password
     // Adapt path if necessary when the backend is finalized
-    return fetchApi<AuthResponse>('/authentication', {
-      method: 'POST',
-      body: JSON.stringify(payload),
+    // return fetchApi<AuthResponse>('/authentication', {
+    //   method: 'POST',
+    //   body: JSON.stringify(payload),
+    // });
+    return Promise.resolve({
+      access_token: 'mock_access_token_123',
+      authToken: 'mock_access_token_123',
+      user: { id: 'mock_id', name: 'Mock User', email: payload.email },
     });
   },
 

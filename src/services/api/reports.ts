@@ -12,16 +12,17 @@ export const reportsService = {
   /**
    * Generate/fetch transaction reports
    */
-  orderReport: (filters?: ReportOrderFilters) => {
-    const queryParams = new URLSearchParams();
-    
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined) queryParams.append(key, String(value));
-      });
-    }
-
-    const query = queryParams.toString();
-    return fetchApi<any>(`/reports/order${query ? `?${query}` : ''}`);
+  orderReport: async (filters?: ReportOrderFilters) => {
+    // const queryParams = new URLSearchParams();
+    // 
+    // if (filters) {
+    //   Object.entries(filters).forEach(([key, value]) => {
+    //     if (value !== undefined) queryParams.append(key, String(value));
+    //   });
+    // }
+    //
+    // const query = queryParams.toString();
+    // return fetchApi<any>(`/reports/order${query ? `?${query}` : ''}`);
+    return Promise.resolve({ url: 'https://example.com/mock-report.pdf' });
   },
 };

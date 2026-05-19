@@ -9,17 +9,19 @@ export const webhooksService = {
   /**
    * List all webhooks
    */
-  listWebhooks: () => {
-    return fetchApi<any>('/webhooks');
+  listWebhooks: async () => {
+    // return fetchApi<any>('/webhooks');
+    return Promise.resolve({ data: [{ id: '1', url: 'https://mysite.com/webhook', events: ['charge.paid'] }] });
   },
 
   /**
    * Create a new webhook
    */
-  createWebhook: (payload: WebhookPayload) => {
-    return fetchApi<any>('/webhooks', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+  createWebhook: async (payload: WebhookPayload) => {
+    // return fetchApi<any>('/webhooks', {
+    //   method: 'POST',
+    //   body: JSON.stringify(payload),
+    // });
+    return Promise.resolve({ id: '2', ...payload });
   },
 };

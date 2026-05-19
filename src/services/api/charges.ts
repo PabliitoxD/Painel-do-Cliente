@@ -216,67 +216,127 @@ function buildQs(params?: Record<string, any>): string {
 
 // ── One-time charges ──────────────────────────────────────────────────────────
 export const chargesService = {
-  list: (params?: ChargesListParams): Promise<ChargesListResponse> =>
-    fetchApi<ChargesListResponse>(`/charges${buildQs(params)}`),
+  list: async (params?: ChargesListParams): Promise<ChargesListResponse> => {
+    // return fetchApi<ChargesListResponse>(`/charges${buildQs(params)}`);
+    return Promise.resolve({
+      charges: [{ id: '1', token: 'tok_1', code: 'CHG-001', description: 'Mock Charge 1', price: 100, status: 'PAID', expiration_date: '10/10/2026', payer_name: 'John Doe', payer_email: 'john@example.com' }],
+      meta: { current_page: 1, per_page: 10, total_count: 1 }
+    });
+  },
 
-  get: (token: string): Promise<ChargeDetailResponse> =>
-    fetchApi<ChargeDetailResponse>(`/charges/${token}`),
+  get: async (token: string): Promise<ChargeDetailResponse> => {
+    // return fetchApi<ChargeDetailResponse>(`/charges/${token}`);
+    return Promise.resolve({
+      charge: { id: '1', token, code: 'CHG-001', description: 'Mock Charge 1', price: 100, status: 'PAID', expiration_date: '10/10/2026', payer_name: 'John Doe', payer_email: 'john@example.com' }
+    });
+  },
 
-  create: (payload: CreateChargePayload): Promise<ChargeDetailResponse> =>
-    fetchApi<ChargeDetailResponse>('/charges', { method: 'POST', body: JSON.stringify(payload) }),
+  create: async (payload: CreateChargePayload): Promise<ChargeDetailResponse> => {
+    // return fetchApi<ChargeDetailResponse>('/charges', { method: 'POST', body: JSON.stringify(payload) });
+    return Promise.resolve({
+      charge: { id: 'new', token: 'tok_new', code: 'CHG-NEW', description: payload.charge.description || 'New Mock Charge', price: 100, status: 'NOT_PAID', expiration_date: payload.charge.expiration_date || '10/10/2026', payer_name: payload.charge.payer_name, payer_email: payload.charge.payer_email }
+    });
+  },
 
-  processPayment: (payload: ProcessPaymentPayload): Promise<any> =>
-    fetchApi<any>('/payments', { method: 'POST', body: JSON.stringify(payload) }),
+  processPayment: async (payload: ProcessPaymentPayload): Promise<any> => {
+    // return fetchApi<any>('/payments', { method: 'POST', body: JSON.stringify(payload) });
+    return Promise.resolve({ status: 'success', message: 'Payment processed successfully (Mock)' });
+  },
 };
 
 // ── Plans ─────────────────────────────────────────────────────────────────────
 export const plansService = {
-  list: (params?: { page?: number; per_page?: number }): Promise<PlansListResponse> =>
-    fetchApi<PlansListResponse>(`/subscription/plans${buildQs(params)}`),
+  list: async (params?: { page?: number; per_page?: number }): Promise<PlansListResponse> => {
+    // return fetchApi<PlansListResponse>(`/subscription/plans${buildQs(params)}`);
+    return Promise.resolve({
+      plans: [{ id: '1', token: 'plan_tok_1', name: 'Plano Básico', price: 50, periodicity: 1, public: true, status: 'active', created_at: new Date().toISOString() }],
+      meta: { current_page: 1, per_page: 10, total_count: 1 }
+    });
+  },
 
-  get: (token: string): Promise<PlanDetailResponse> =>
-    fetchApi<PlanDetailResponse>(`/subscription/plans/${token}`),
+  get: async (token: string): Promise<PlanDetailResponse> => {
+    // return fetchApi<PlanDetailResponse>(`/subscription/plans/${token}`);
+    return Promise.resolve({
+      plan: { id: '1', token, name: 'Plano Básico', price: 50, periodicity: 1, public: true, status: 'active', created_at: new Date().toISOString() }
+    });
+  },
 
-  create: (payload: CreatePlanPayload): Promise<PlanDetailResponse> =>
-    fetchApi<PlanDetailResponse>('/subscription/plans', { method: 'POST', body: JSON.stringify(payload) }),
+  create: async (payload: CreatePlanPayload): Promise<PlanDetailResponse> => {
+    // return fetchApi<PlanDetailResponse>('/subscription/plans', { method: 'POST', body: JSON.stringify(payload) });
+    return Promise.resolve({
+      plan: { id: 'new_plan', token: 'new_plan_tok', name: payload.name, price: Number(payload.price), periodicity: payload.periodicity, public: payload.public || true, status: 'active', created_at: new Date().toISOString() }
+    });
+  },
 
-  update: (token: string, payload: Partial<CreatePlanPayload>): Promise<PlanDetailResponse> =>
-    fetchApi<PlanDetailResponse>(`/subscription/plans/${token}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  update: async (token: string, payload: Partial<CreatePlanPayload>): Promise<PlanDetailResponse> => {
+    // return fetchApi<PlanDetailResponse>(`/subscription/plans/${token}`, { method: 'PUT', body: JSON.stringify(payload) });
+    return Promise.resolve({
+      plan: { id: '1', token, name: payload.name || 'Plano Básico', price: Number(payload.price || 50), periodicity: payload.periodicity || 1, public: payload.public !== false, status: 'active', created_at: new Date().toISOString() }
+    });
+  },
 };
 
 // ── Subscriptions ─────────────────────────────────────────────────────────────
 export const subscriptionsService = {
-  list: (params?: { page?: number; per_page?: number }): Promise<SubscriptionsListResponse> =>
-    fetchApi<SubscriptionsListResponse>(`/subscription/subscriptions${buildQs(params)}`),
+  list: async (params?: { page?: number; per_page?: number }): Promise<SubscriptionsListResponse> => {
+    // return fetchApi<SubscriptionsListResponse>(`/subscription/subscriptions${buildQs(params)}`);
+    return Promise.resolve({
+      subscriptions: [{ id: '1', token: 'sub_tok_1', status: 'active', customer: { id: 'cust_1', name: 'John Doe', email: 'john@example.com' }, expiration_day: 10, created_at: new Date().toISOString(), next_billing_date: new Date().toISOString() }],
+      meta: { current_page: 1, per_page: 10, total_count: 1 }
+    });
+  },
 
-  get: (token: string): Promise<SubscriptionDetailResponse> =>
-    fetchApi<SubscriptionDetailResponse>(`/subscription/subscriptions/${token}`),
+  get: async (token: string): Promise<SubscriptionDetailResponse> => {
+    // return fetchApi<SubscriptionDetailResponse>(`/subscription/subscriptions/${token}`);
+    return Promise.resolve({
+      subscription: { id: '1', token, status: 'active', customer: { id: 'cust_1', name: 'John Doe', email: 'john@example.com' }, expiration_day: 10, created_at: new Date().toISOString(), next_billing_date: new Date().toISOString() }
+    });
+  },
 
-  create: (payload: CreateSubscriptionPayload): Promise<SubscriptionDetailResponse> =>
-    fetchApi<SubscriptionDetailResponse>('/subscription/subscriptions', { method: 'POST', body: JSON.stringify(payload) }),
+  create: async (payload: CreateSubscriptionPayload): Promise<SubscriptionDetailResponse> => {
+    // return fetchApi<SubscriptionDetailResponse>('/subscription/subscriptions', { method: 'POST', body: JSON.stringify(payload) });
+    return Promise.resolve({
+      subscription: { id: 'new_sub', token: 'new_sub_tok', status: 'active', customer: { id: 'cust_new', name: payload.subscription.customer.name, email: payload.subscription.customer.email }, expiration_day: 1, created_at: new Date().toISOString(), next_billing_date: new Date().toISOString() }
+    });
+  },
 
-  cancel: (token: string): Promise<any> =>
-    fetchApi<any>(`/subscription/subscriptions/cancel/${token}`, { method: 'PUT' }),
+  cancel: async (token: string): Promise<any> => {
+    // return fetchApi<any>(`/subscription/subscriptions/cancel/${token}`, { method: 'PUT' });
+    return Promise.resolve({ status: 'cancelled' });
+  },
 
   /** POST /payments/full — first-time subscription payment with card */
-  processFirstPayment: (payload: ProcessSubscriptionPaymentPayload): Promise<any> =>
-    fetchApi<any>('/payments/full', { method: 'POST', body: JSON.stringify(payload) }),
+  processFirstPayment: async (payload: ProcessSubscriptionPaymentPayload): Promise<any> => {
+    // return fetchApi<any>('/payments/full', { method: 'POST', body: JSON.stringify(payload) });
+    return Promise.resolve({ status: 'success', message: 'Subscription payment processed successfully (Mock)' });
+  },
 };
 
 // ── Invoices ──────────────────────────────────────────────────────────────────
 export const invoicesService = {
-  list: (params?: { page?: number; per_page?: number; status?: string }): Promise<InvoicesListResponse> =>
-    fetchApi<InvoicesListResponse>(`/subscription/invoices${buildQs(params)}`),
+  list: async (params?: { page?: number; per_page?: number; status?: string }): Promise<InvoicesListResponse> => {
+    // return fetchApi<InvoicesListResponse>(`/subscription/invoices${buildQs(params)}`);
+    return Promise.resolve({
+      invoices: [{ id: '1', token: 'inv_tok_1', status: 'paid', price: 50, created_at: new Date().toISOString() }],
+      meta: { current_page: 1, per_page: 10, total_count: 1 }
+    });
+  },
 
-  get: (token: string): Promise<{ invoice: ApiInvoice }> =>
-    fetchApi<{ invoice: ApiInvoice }>(`/subscription/invoices/${token}`),
+  get: async (token: string): Promise<{ invoice: ApiInvoice }> => {
+    // return fetchApi<{ invoice: ApiInvoice }>(`/subscription/invoices/${token}`);
+    return Promise.resolve({
+      invoice: { id: '1', token, status: 'paid', price: 50, created_at: new Date().toISOString() }
+    });
+  },
 
   /** POST /payments/pay — pay an existing invoice */
-  pay: (invoiceToken: string, customer: SubscriptionCustomer, payment: any): Promise<any> =>
-    fetchApi<any>('/payments/pay', {
-      method: 'POST',
-      body: JSON.stringify({ order_type: 'invoice', token: invoiceToken, customer, payment }),
-    }),
+  pay: async (invoiceToken: string, customer: SubscriptionCustomer, payment: any): Promise<any> => {
+    // return fetchApi<any>('/payments/pay', {
+    //   method: 'POST',
+    //   body: JSON.stringify({ order_type: 'invoice', token: invoiceToken, customer, payment }),
+    // });
+    return Promise.resolve({ status: 'success', message: 'Invoice paid successfully (Mock)' });
+  },
 };
 
 
