@@ -4,7 +4,7 @@ export const receivableSchedulesService = {
   /**
    * List schedule of receivables
    */
-  listSchedules: async () => {
+  listSchedules: async (): Promise<any> => {
     // return fetchApi<any>('/receivable_schedules');
     return Promise.resolve({ data: [] });
   },
@@ -12,7 +12,7 @@ export const receivableSchedulesService = {
   /**
    * Get a summary of the receivable schedule
    */
-  getSummary: async () => {
+  getSummary: async (): Promise<any> => {
     // return fetchApi<any>('/receivable_schedules/summary');
     return Promise.resolve({ available: 5000, pending: 2000, total: 7000 });
   },

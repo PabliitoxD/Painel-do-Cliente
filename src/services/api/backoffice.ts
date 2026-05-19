@@ -13,7 +13,7 @@ export const backofficeService = {
   /**
    * List chargebacks with specific filters
    */
-  listChargebacks: async (filters?: ChargebackFilters) => {
+  listChargebacks: async (filters?: ChargebackFilters): Promise<any> => {
     // const queryParams = new URLSearchParams();
     // 
     // if (filters) {

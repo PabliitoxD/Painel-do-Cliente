@@ -13,7 +13,7 @@ export const bankAccountsService = {
   /**
    * List user bank accounts
    */
-  listBankAccounts: async () => {
+  listBankAccounts: async (): Promise<any> => {
     // return fetchApi<any>('/bank_accounts');
     return Promise.resolve({
       data: [
@@ -25,7 +25,7 @@ export const bankAccountsService = {
   /**
    * Create a new bank account
    */
-  createBankAccount: async (payload: BankAccountPayload) => {
+  createBankAccount: async (payload: BankAccountPayload): Promise<any> => {
     // return fetchApi<any>('/bank_accounts', {
     //   method: 'POST',
     //   body: JSON.stringify(payload),

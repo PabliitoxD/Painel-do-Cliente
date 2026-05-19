@@ -9,7 +9,7 @@ export const webhooksService = {
   /**
    * List all webhooks
    */
-  listWebhooks: async () => {
+  listWebhooks: async (): Promise<any> => {
     // return fetchApi<any>('/webhooks');
     return Promise.resolve({ data: [{ id: '1', url: 'https://mysite.com/webhook', events: ['charge.paid'] }] });
   },
@@ -17,7 +17,7 @@ export const webhooksService = {
   /**
    * Create a new webhook
    */
-  createWebhook: async (payload: WebhookPayload) => {
+  createWebhook: async (payload: WebhookPayload): Promise<any> => {
     // return fetchApi<any>('/webhooks', {
     //   method: 'POST',
     //   body: JSON.stringify(payload),
