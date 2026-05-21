@@ -123,7 +123,7 @@ function LoginContent() {
             alt="Tronnus"
             className="login-logo"
           />
-          <h1 className="gradient-text">Painel do Produtor</h1>
+          <h1 className="gradient-text">Acessar o Painel</h1>
           <p>Acesse sua conta para gerenciar seus negócios</p>
           {error && <div className="login-error animate-fade-in">{error}</div>}
         </div>
@@ -167,6 +167,11 @@ function LoginContent() {
           <button type="submit" className="btn-primary login-submit" disabled={busy}>
             {isLoading ? 'Entrando...' : 'Entrar no Painel'}
           </button>
+
+          <div style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.85rem' }}>
+            <span style={{ color: 'var(--text-muted)' }}>Não tem cadastro? </span>
+            <a href="https://dados-customer-dashboard.xq1cqc.easypanel.host/register" className="signup-link" style={{ fontWeight: 600 }}>Cadastre-se aqui</a>
+          </div>
         </form>
 
         <div className="login-divider"><span>OU</span></div>
