@@ -2,7 +2,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Search, Plus, X, Receipt, Trash2, ShoppingCart, DollarSign, FileText, Link as LinkIcon, RefreshCcw, Tag, AlertTriangle, CheckCircle, Clock, User } from 'lucide-react';
-import { chargesService, plansService, subscriptionsService, ApiCharge, ApiSubscription, CreateChargePayload, CreatePlanPayload, frequencyToPeriodicity, periodicityLabel } from '@/services/api/charges';
+import { chargesService, plansService, subscriptionsService, ApiCharge, ApiSubscription, ApiPlan, CreateChargePayload, CreatePlanPayload, frequencyToPeriodicity, periodicityLabel } from '@/services/api/charges';
 import { translateStatus, getStatusPillClass, formatCurrency } from '@/utils/formatters';
 
 type TabType = 'avulsa' | 'recorrente';
