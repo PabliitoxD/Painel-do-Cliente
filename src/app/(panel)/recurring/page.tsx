@@ -23,6 +23,7 @@ export default function RecurringPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [selectedSubscription, setSelectedSubscription] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -251,7 +252,7 @@ export default function RecurringPage() {
                       </span>
                     </td>
                     <td>
-                      <button className="btn-ghost" style={{ padding: '0.4rem' }}>
+                      <button className="btn-ghost" onClick={() => setSelectedSubscription(item)} style={{ padding: '0.4rem' }}>
                         <MoreHorizontal size={18} />
                       </button>
                     </td>
@@ -261,6 +262,135 @@ export default function RecurringPage() {
             </tbody>
           </table>
         </div>
+
+        {/* MODAL DETALHES DA ASSINATURA */}
+        {selectedSubscription && (
+          <div className="modal-overlay" onClick={() => setSelectedSubscription(null)} style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:999, backdropFilter:'blur(4px)' }}>
+            <div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()} style={{ background:'var(--surface)', maxWidth:'650px', width:'95%', maxHeight:'85vh', overflowY:'auto', borderRadius:'16px', padding:'0', border:'1px solid var(--border)', boxShadow:'0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+              
+              <div style={{ padding:'1.5rem', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center', background:'rgba(255,255,255,0.02)' }}>
+                <h2 style={{ fontSize:'1.25rem', fontWeight:600, display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                  <CreditCard className="text-primary" size={20} /> Detalhes da Assinatura
+                </h2>
+                <button className="btn-ghost" onClick={() => setSelectedSubscription(null)} style={{ padding:'0.4rem' }}><XCircle size={20} /></button>
+              </div>
+
+              <div style={{ padding:'1.5rem', display:'flex', flexDirection:'column', gap:'1.5rem' }}>
+                
+                {/* Header info */}
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', background:'var(--background)', padding:'1.25rem', borderRadius:'12px', border:'1px solid var(--border)' }}>
+                  <div>
+                    <p style={{ color:'var(--text-dim)', fontSize:'0.85rem', marginBottom:'0.25rem' }}>Status Atual</p>
+                    <span className="status-pill" style={{ 
+                      background: getStatusStyle(selectedSubscription.status).bg, 
+                      color: getStatusStyle(selectedSubscription.status).color,
+                      border: `1px solid ${getStatusStyle(selectedSubscription.status).color}33`,
+                      fontSize:'0.8rem'
+                    }}>
+                      {getStatusStyle(selectedSubscription.status).label}
+                    </span>
+                  </div>
+                  <div style={{ textAlign:'right' }}>
+                    <p style={{ color:'var(--text-dim)', fontSize:'0.85rem', marginBottom:'0.25rem' }}>Valor Recorrente</p>
+                    <p style={{ fontSize:'1.25rem', fontWeight:700, color:'var(--primary)' }}>
+                      {formatCurrency(parseFloat(selectedSubscription.price || selectedSubscription.plan?.price || 0))}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Cliente Info */}
+                <div>
+                  <h3 style={{ fontSize:'1rem', fontWeight:600, marginBottom:'0.75rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                    <User size={16} className="text-dim"/> Dados do Cliente
+                  </h3>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem', background:'var(--background)', padding:'1.25rem', borderRadius:'12px', border:'1px solid var(--border)' }}>
+                    <div>
+                      <p style={{ fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:'0.2rem' }}>Nome</p>
+                      <p style={{ fontWeight:500 }}>{selectedSubscription.customer?.name || 'Não informado'}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:'0.2rem' }}>E-mail</p>
+                      <p style={{ fontWeight:500 }}>{selectedSubscription.customer?.email || 'Não informado'}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:'0.2rem' }}>Documento (CPF/CNPJ)</p>
+                      <p style={{ fontWeight:500 }}>{selectedSubscription.customer?.document || 'Não informado'}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:'0.2rem' }}>Telefone</p>
+                      <p style={{ fontWeight:500 }}>{selectedSubscription.customer?.phone || 'Não informado'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dados da Compra */}
+                <div>
+                  <h3 style={{ fontSize:'1rem', fontWeight:600, marginBottom:'0.75rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                    <CreditCard size={16} className="text-dim" /> Dados do Plano
+                  </h3>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem', background:'var(--background)', padding:'1.25rem', borderRadius:'12px', border:'1px solid var(--border)' }}>
+                    <div>
+                      <p style={{ fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:'0.2rem' }}>Produto/Plano Assinado</p>
+                      <p style={{ fontWeight:500 }}>{selectedSubscription.plan?.name || 'Assinatura Padrão'}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:'0.2rem' }}>ID da Assinatura</p>
+                      <p style={{ fontWeight:500, fontFamily:'monospace' }}>{selectedSubscription.token}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:'0.2rem' }}>Ciclo (Recorrência)</p>
+                      <p style={{ fontWeight:500 }}>
+                        {selectedSubscription.plan?.periodicity === 1 ? 'Mensal' : 
+                         selectedSubscription.plan?.periodicity === 3 ? 'Trimestral' : 
+                         selectedSubscription.plan?.periodicity === 6 ? 'Semestral' : 
+                         selectedSubscription.plan?.periodicity === 12 ? 'Anual' : 'Personalizada'}
+                      </p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:'0.2rem' }}>Data de Criação</p>
+                      <p style={{ fontWeight:500 }}>{formatDate(selectedSubscription.created_at)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Histórico / Próxima Cobrança */}
+                <div>
+                  <h3 style={{ fontSize:'1rem', fontWeight:600, marginBottom:'0.75rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                    <Clock size={16} className="text-dim"/> Histórico & Próxima Cobrança
+                  </h3>
+                  <div style={{ background:'var(--background)', padding:'1.25rem', borderRadius:'12px', border:'1px solid var(--border)' }}>
+                    
+                    <div style={{ display:'flex', gap:'1rem', alignItems:'flex-start', marginBottom:'1.25rem' }}>
+                      <div style={{ marginTop:'0.2rem' }}><CheckCircle2 size={16} className="text-primary"/></div>
+                      <div>
+                        <p style={{ fontWeight:500, fontSize:'0.9rem' }}>Assinatura Iniciada</p>
+                        <p style={{ fontSize:'0.8rem', color:'var(--text-dim)' }}>{formatDate(selectedSubscription.created_at)}</p>
+                      </div>
+                    </div>
+
+                    <div style={{ position:'relative', paddingLeft:'0.45rem', marginLeft:'0.3rem', borderLeft:'2px dashed var(--border)', paddingBottom:'1.25rem', marginBottom:'1.25rem', marginTop:'-1.5rem', paddingTop:'1.5rem', zIndex:0 }}>
+                    </div>
+
+                    <div style={{ display:'flex', gap:'1rem', alignItems:'flex-start', marginTop:'-2.5rem', zIndex:1, position:'relative' }}>
+                      <div style={{ marginTop:'0.2rem', background:'var(--background)' }}><Calendar size={16} className="text-warning"/></div>
+                      <div>
+                        <p style={{ fontWeight:500, fontSize:'0.9rem' }}>Próxima Cobrança Agendada</p>
+                        <p style={{ fontSize:'0.8rem', color:'var(--text-dim)' }}>{formatDate(selectedSubscription.next_billing_date) || '—'}</p>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </div>
+
+              </div>
+              
+              <div style={{ padding:'1.25rem 1.5rem', borderTop:'1px solid var(--border)', display:'flex', justifyContent:'flex-end', background:'var(--background)', borderBottomLeftRadius:'16px', borderBottomRightRadius:'16px' }}>
+                <button className="btn-ghost" onClick={() => setSelectedSubscription(null)}>Fechar Detalhes</button>
+              </div>
+
+            </div>
+          </div>
+        )}
       </div>
       <style jsx>{`
         @keyframes spin { to { transform: rotate(360deg); } }
