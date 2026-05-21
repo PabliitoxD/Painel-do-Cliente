@@ -39,18 +39,29 @@ export default function ChargesPage() {
     try {
       if (tab === 'avulsa') {
         const res: any = await chargesService.list({ per_page: 50 });
-        const list = res.charges || res.data || (Array.isArray(res) ? res : []);
-        setRows(list.map((c: ApiCharge) => ({
-          type: 'avulsa', token: c.token, code: c.code, label: c.description || '—',
-          value: Number(c.price)||0, status: c.status || 'PENDENTE', extra: c.expiration_date, raw: c,
+        const list = res.charges || res.data || res.items || (Array.isArray(res) ? res : []);
+        setRows(list.map((c: any) => ({
+          type: 'avulsa', 
+          token: c.token || c.id || c.uuid, 
+          code: c.code || c.id || c.uuid, 
+          label: c.description || c.name || c.title || '—',
+          value: Number(c.price || c.amount || c.value) || 0, 
+          status: c.status || 'PENDENTE', 
+          extra: c.expiration_date || c.due_date, 
+          raw: c,
         })));
       } else {
         const res: any = await plansService.list({ per_page: 50 });
-        const list = res.plans || res.data || (Array.isArray(res) ? res : []);
-        setRows(list.map((p: ApiPlan) => ({
-          type: 'recorrente', token: p.token, code: p.code, label: p.name || '—',
-          value: Number(p.price) || 0, status: p.status || 'ATIVO',
-          extra: periodicityLabel[p.periodicity] || 'Mensal', raw: p,
+        const list = res.plans || res.data || res.items || (Array.isArray(res) ? res : []);
+        setRows(list.map((p: any) => ({
+          type: 'recorrente', 
+          token: p.token || p.id || p.uuid, 
+          code: p.code || p.id || p.uuid, 
+          label: p.name || p.description || p.title || '—',
+          value: Number(p.price || p.amount || p.value) || 0, 
+          status: p.status || 'ATIVO',
+          extra: periodicityLabel[p.periodicity] || p.periodicity || 'Mensal', 
+          raw: p,
         })));
       }
     } catch (e: any) { setError(e.message || 'Erro ao carregar.'); }
@@ -98,6 +109,7 @@ export default function ChargesPage() {
           name: chargeInfo.name,
           price: totalValue.toFixed(2),
           periodicity: frequencyToPeriodicity[chargeInfo.frequency] ?? 1,
+          public: true,
         };
         await plansService.create(planPayload);
       }
