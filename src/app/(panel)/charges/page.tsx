@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Search, Plus, X, Receipt, Trash2, ShoppingCart, DollarSign, FileText, Link as LinkIcon, RefreshCcw, Tag, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Search, Plus, X, Receipt, Trash2, ShoppingCart, DollarSign, FileText, Link as LinkIcon, RefreshCcw, Tag, AlertTriangle, CheckCircle, Clock, User } from 'lucide-react';
 import { chargesService, plansService, subscriptionsService, ApiCharge, ApiSubscription, CreateChargePayload, CreatePlanPayload, frequencyToPeriodicity, periodicityLabel } from '@/services/api/charges';
 import { translateStatus, getStatusPillClass, formatCurrency } from '@/utils/formatters';
 
@@ -30,7 +30,7 @@ export default function ChargesPage() {
 
   // form state
   const [cartItems, setCartItems] = useState([{ id: Date.now(), name: '', unitPrice: 0, quantity: 1 }]);
-  const [chargeInfo, setChargeInfo] = useState({ name: '', dueDate: '', billingType: 'unica' as 'unica'|'recorrente', frequency: 'mensal', hasLimit: false, limitCount: 12, hasTrial: false, trialDays: 7 });
+  const [chargeInfo, setChargeInfo] = useState({ name: '', dueDate: '', customerName: '', customerEmail: '', billingType: 'unica' as 'unica'|'recorrente', frequency: 'mensal', hasLimit: false, limitCount: 12, hasTrial: false, trialDays: 7 });
 
   const totalValue = useMemo(() => cartItems.reduce((a, i) => a + (i.unitPrice||0)*(i.quantity||0), 0), [cartItems]);
 
@@ -59,7 +59,7 @@ export default function ChargesPage() {
 
   const openModal = () => {
     setCartItems([{ id: Date.now(), name: '', unitPrice: 0, quantity: 1 }]);
-    setChargeInfo({ name: '', dueDate: '', billingType: 'unica', frequency: 'mensal', hasLimit: false, limitCount: 12, hasTrial: false, trialDays: 7 });
+    setChargeInfo({ name: '', dueDate: '', customerName: '', customerEmail: '', billingType: 'unica', frequency: 'mensal', hasLimit: false, limitCount: 12, hasTrial: false, trialDays: 7 });
     setIsModalOpen(true);
   };
 
@@ -76,22 +76,21 @@ export default function ChargesPage() {
           formattedDate = `${day}/${month}/${year}`;
         }
 
-        const payload: any = {
-          description: chargeInfo.name,
-          expiration_date: formattedDate,
-          payer_name: 'Cliente Consumidor',
-          payer_email: 'cliente@email.com',
-          products: cartItems.map(i => ({ 
-            name: i.name, 
-            price: i.unitPrice, // Enviando como número
-            quantity: i.quantity // Enviando como número
-          })),
+        const payload: CreateChargePayload = {
+          charge: {
+            description: chargeInfo.name,
+            expiration_date: formattedDate,
+            payer_name: chargeInfo.customerName || 'Cliente Consumidor',
+            payer_email: chargeInfo.customerEmail || 'cliente@email.com',
+            products: cartItems.map(i => ({ 
+              name: i.name, 
+              price: i.unitPrice.toFixed(2),
+              quantity: String(i.quantity)
+            })),
+          }
         };
         
-        console.log("Enviando Payload Alternativo (Achatado):", JSON.stringify(payload, null, 2));
-        // Usamos fetchApi direto para testar sem o wrapper da interface
-        const { fetchApi } = await import('@/services/api/client');
-        await fetchApi('/charges', { method: 'POST', body: JSON.stringify(payload) });
+        await chargesService.create(payload);
       } else {
         const planPayload: CreatePlanPayload = {
           name: chargeInfo.name,
@@ -229,6 +228,21 @@ export default function ChargesPage() {
                     </select>
                   </div>
                 )}
+              </div>
+
+              {/* Customer Info */}
+              <div style={{ background:'var(--background)', padding:'1.25rem', borderRadius:'12px', border:'1px solid var(--border)', marginTop:'1rem' }}>
+                <h4 style={{ display:'flex', alignItems:'center', gap:'0.5rem', fontWeight:600, marginBottom:'1rem' }}><User size={18} className="text-primary"/>Informações do Cliente <span style={{fontSize:'0.85rem', color:'var(--text-dim)', fontWeight:400}}>(Opcional)</span></h4>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem' }}>
+                  <div className="form-group" style={{ marginBottom:0 }}>
+                    <label>Nome do Cliente</label>
+                    <input className="form-control" type="text" placeholder="Ex: João da Silva" value={chargeInfo.customerName} onChange={e => setChargeInfo({...chargeInfo, customerName:e.target.value})}/>
+                  </div>
+                  <div className="form-group" style={{ marginBottom:0 }}>
+                    <label>E-mail</label>
+                    <input className="form-control" type="email" placeholder="joao@email.com" value={chargeInfo.customerEmail} onChange={e => setChargeInfo({...chargeInfo, customerEmail:e.target.value})}/>
+                  </div>
+                </div>
               </div>
 
               {/* Products / cart */}
