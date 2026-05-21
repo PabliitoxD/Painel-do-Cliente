@@ -38,17 +38,19 @@ export default function ChargesPage() {
     setIsLoading(true); setError(null);
     try {
       if (tab === 'avulsa') {
-        const res = await chargesService.list({ per_page: 50 });
-        setRows((res.charges ?? []).map((c: ApiCharge) => ({
+        const res: any = await chargesService.list({ per_page: 50 });
+        const list = res.charges || res.data || (Array.isArray(res) ? res : []);
+        setRows(list.map((c: ApiCharge) => ({
           type: 'avulsa', token: c.token, code: c.code, label: c.description || '—',
-          value: Number(c.price)||0, status: c.status, extra: c.expiration_date, raw: c,
+          value: Number(c.price)||0, status: c.status || 'PENDENTE', extra: c.expiration_date, raw: c,
         })));
       } else {
-        const res = await subscriptionsService.list({ per_page: 50 });
-        setRows((res.subscriptions ?? []).map((s: ApiSubscription) => ({
-          type: 'recorrente', token: s.token, code: s.code, label: s.customer?.name || '—',
-          value: Number((s as any).price) || 0, status: s.status,
-          extra: s.next_billing_date, raw: s,
+        const res: any = await plansService.list({ per_page: 50 });
+        const list = res.plans || res.data || (Array.isArray(res) ? res : []);
+        setRows(list.map((p: ApiPlan) => ({
+          type: 'recorrente', token: p.token, code: p.code, label: p.name || '—',
+          value: Number(p.price) || 0, status: p.status || 'ATIVO',
+          extra: periodicityLabel[p.periodicity] || 'Mensal', raw: p,
         })));
       }
     } catch (e: any) { setError(e.message || 'Erro ao carregar.'); }
@@ -109,7 +111,7 @@ export default function ChargesPage() {
 
   const checkoutUrl = (r: Row) => {
     if (r.type === 'avulsa') return (r.raw as ApiCharge).checkout_url || (typeof window !== 'undefined' ? `${window.location.origin}/checkout/${r.token}` : `/checkout/${r.token}`);
-    return (r.raw as ApiSubscription).plan ? `${typeof window !== 'undefined' ? window.location.origin : ''}/checkout/plan/${r.token}` : '—';
+    return `${typeof window !== 'undefined' ? window.location.origin : ''}/checkout/plan/${r.token}`;
   };
 
   return (
@@ -149,8 +151,8 @@ export default function ChargesPage() {
           <table className="transactions-table">
             <thead><tr>
               <th>Código</th>
-              <th>{tab === 'avulsa' ? 'Descrição' : 'Cliente'}</th>
-              <th>{tab === 'avulsa' ? 'Vencimento' : 'Próx. Cobrança'}</th>
+              <th>{tab === 'avulsa' ? 'Descrição' : 'Plano'}</th>
+              <th>{tab === 'avulsa' ? 'Vencimento' : 'Frequência'}</th>
               <th>Valor</th>
               <th>Status</th>
               <th style={{ textAlign:'right' }}>Ações</th>
@@ -299,7 +301,7 @@ export default function ChargesPage() {
                 {[
                   { label:'Valor', value: formatCurrency(selected.value), icon:<DollarSign size={16}/> },
                   { label:'Status', value: translateStatus(selected.status), icon:<CheckCircle size={16}/> },
-                  { label: selected.type==='avulsa' ? 'Vencimento' : 'Próx. Cobrança', value: selected.extra||'—', icon:<Clock size={16}/> },
+                  { label: selected.type==='avulsa' ? 'Vencimento' : 'Frequência', value: selected.extra||'—', icon:<Clock size={16}/> },
                 ].map((item,i) => (
                   <div key={i} style={{ background:'var(--background)', padding:'1rem', borderRadius:'12px', border:'1px solid var(--border)' }}>
                     <div style={{ color:'var(--text-dim)', fontSize:'0.85rem', display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.4rem' }}>{item.icon}{item.label}</div>
