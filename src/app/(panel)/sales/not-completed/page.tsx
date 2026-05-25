@@ -7,7 +7,8 @@ export default function NotCompletedSalesPage() {
     <SalesList 
       title="Vendas Não Concluídas" 
       description="Boletos vencidos, PIX não pagos e falhas no cartão."
-      statuses={['canceled', 'failed', 'abandoned', 'cancelada', 'recusada']} 
+      statuses={['canceled', 'failed', 'abandoned', 'cancelada', 'recusada', 'not_completed', 'não concluída']} 
+      viewType="not-completed"
     />
   );
 }
