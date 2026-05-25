@@ -308,10 +308,27 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
                 </tr>
               ) : filteredData.length > 0 ? (
                 filteredData.map((item, i) => {
-                  const methodLow = (item.payment_method || item.method || '').toLowerCase();
+                  const actualMethod = item.payment?.method || item.payment_method || item.method || '';
+                  const methodLow = actualMethod.toLowerCase();
                   return (
                     <tr key={item.id || i}>
-                      <td className="id-text" style={{ fontSize: '0.8rem' }}>{item.token || item.id}</td>
+                      <td className="id-text" style={{ fontSize: '0.8rem' }}>
+                        {item.token || item.id}
+                        {(item.recurrence || item.subscription) && (
+                          <div style={{ marginTop: '4px' }}>
+                            <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: 'rgba(0, 193, 180, 0.15)', color: '#00c1b4', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 600, border: '1px solid rgba(0, 193, 180, 0.3)' }}>
+                              {(() => {
+                                const p = String(item.recurrence?.periodicy || item.recurrence?.periodicity || item.subscription?.plan?.periodicity || '').toLowerCase();
+                                if (p === '1' || p === 'monthly' || p === 'mensal') return 'Mensal';
+                                if (p === '3' || p === 'quarterly' || p === 'trimestral') return 'Trimestral';
+                                if (p === '6' || p === 'semiannual' || p === 'semestral') return 'Semestral';
+                                if (p === '12' || p === 'yearly' || p === 'annual' || p === 'anual') return 'Anual';
+                                return 'Recorrente';
+                              })()}
+                            </span>
+                          </div>
+                        )}
+                      </td>
                       <td style={{ fontWeight: 600 }}>{item.client || item.customer?.name || 'Cliente'}</td>
                       <td className="text-muted">{item.product || item.description || 'Produto'}</td>
                       <td className="text-muted">{new Date(item.created_at || item.date || Date.now()).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
@@ -320,7 +337,7 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
                           {methodLow.includes('credit') || methodLow.includes('cart') ? <CreditCard size={14} /> : 
                            methodLow.includes('pix') ? <Wallet size={14} /> : <Banknote size={14} />}
-                          {translateMethod(item.payment_method || item.method)}
+                          {translateMethod(actualMethod)}
                         </div>
                       </td>
                       <td>
