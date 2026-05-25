@@ -466,7 +466,7 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
               )}
 
               {activeTab === 'historico' && (
-                <div style={{ marginBottom: '2.5rem', animate: 'fade-in' }}>
+                <div className="animate-fade-in" style={{ marginBottom: '2.5rem' }}>
                   <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text-main)' }}>Histórico da Transação</h3>
                   <div style={{ background: 'var(--surface)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border)', marginBottom: '2rem' }}>
                     {selectedOrder.status?.log?.length > 0 ? (
@@ -523,7 +523,7 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
               )}
 
               {activeTab === 'rastreamento' && (
-                <div style={{ marginBottom: '2.5rem', animate: 'fade-in' }}>
+                <div className="animate-fade-in" style={{ marginBottom: '2.5rem' }}>
                   <table style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
                     <thead style={{ background: 'rgba(0,0,0,0.2)' }}>
                       <tr>
@@ -570,7 +570,7 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
               )}
 
               {activeTab === 'taxas' && (
-                <div style={{ marginBottom: '2.5rem', animate: 'fade-in' }}>
+                <div className="animate-fade-in" style={{ marginBottom: '2.5rem' }}>
                   <table style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
                     <thead style={{ background: 'rgba(0,0,0,0.2)' }}>
                       <tr>
