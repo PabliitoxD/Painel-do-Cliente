@@ -367,7 +367,7 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
             
             <div style={{ padding: '2rem', background: 'var(--background)' }}>
               
-              <div style={{ display: 'flex', gap: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '2rem' }}>
+              <div className="modal-tabs" style={{ display: 'flex', gap: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '2rem' }}>
                 <span onClick={() => setActiveTab('geral')} className={activeTab === 'geral' ? '' : 'text-muted'} style={{ cursor: 'pointer', fontWeight: activeTab === 'geral' ? 600 : 400, color: activeTab === 'geral' ? 'var(--primary)' : 'inherit', borderBottom: activeTab === 'geral' ? '2px solid var(--primary)' : 'none', paddingBottom: '0.6rem', marginBottom: '-0.5rem' }}>Geral</span>
                 <span onClick={() => setActiveTab('historico')} className={activeTab === 'historico' ? '' : 'text-muted'} style={{ cursor: 'pointer', fontWeight: activeTab === 'historico' ? 600 : 400, color: activeTab === 'historico' ? 'var(--primary)' : 'inherit', borderBottom: activeTab === 'historico' ? '2px solid var(--primary)' : 'none', paddingBottom: '0.6rem', marginBottom: '-0.5rem' }}>Histórico</span>
                 <span onClick={() => setActiveTab('rastreamento')} className={activeTab === 'rastreamento' ? '' : 'text-muted'} style={{ cursor: 'pointer', fontWeight: activeTab === 'rastreamento' ? 600 : 400, color: activeTab === 'rastreamento' ? 'var(--primary)' : 'inherit', borderBottom: activeTab === 'rastreamento' ? '2px solid var(--primary)' : 'none', paddingBottom: '0.6rem', marginBottom: '-0.5rem' }}>Rastreamento</span>
@@ -376,7 +376,7 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
 
               {activeTab === 'geral' && (
                 <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem', marginBottom: '2.5rem', fontSize: '0.95rem' }}>
+                  <div className="modal-grid-150">
                     <div className="text-muted">Cliente</div>
                     <div style={{ fontWeight: 500 }}>{selectedOrder.client || selectedOrder.customer?.name || 'Cliente não informado'}</div>
                     
@@ -422,7 +422,7 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
                     </table>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: '1rem', marginBottom: '2.5rem', fontSize: '0.95rem' }}>
+                  <div className="modal-grid">
                     <div className="text-muted">Data do pedido</div>
                     <div style={{ color: 'var(--text-main)' }}>{new Date(selectedOrder.transaction?.registration_date || selectedOrder.created_at || selectedOrder.date || Date.now()).toLocaleString('pt-BR')}</div>
 
@@ -458,7 +458,7 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
                     Pagamento {translateStatus(selectedOrder.status?.code || selectedOrder.status).toUpperCase()} em {new Date(selectedOrder.status?.registration_date || selectedOrder.updated_at || selectedOrder.created_at || selectedOrder.date || Date.now()).toLocaleString('pt-BR')}
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: '1rem', fontSize: '0.95rem', borderBottom: '1px solid var(--border)', paddingBottom: '2rem', marginBottom: '2rem' }}>
+                  <div className="modal-grid" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '2rem', marginBottom: '2rem' }}>
                     <div className="text-muted">Prazo para reembolso</div>
                     <div className="text-muted">7 dias após a compra (O comprador pode solicitar reembolso pela plataforma até essa data)</div>
                   </div>
@@ -600,16 +600,16 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
                 </div>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button className="btn-primary" style={{ background: '#d3365b', color: 'white', padding: '0.8rem 1.5rem', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', transition: 'filter 0.2s' }} onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.1)'} onMouseLeave={e => e.currentTarget.style.filter = 'brightness(1)'}>
+              <div className="modal-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="modal-actions-left" style={{ display: 'flex', gap: '1rem' }}>
+                  <button className="btn-primary modal-action-btn" style={{ background: '#d3365b', color: 'white', padding: '0.8rem 1.5rem', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', transition: 'filter 0.2s' }} onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.1)'} onMouseLeave={e => e.currentTarget.style.filter = 'brightness(1)'}>
                     Estornar venda
                   </button>
-                  <button className="btn-ghost" style={{ background: 'var(--surface)', padding: '0.8rem 1.5rem', borderRadius: '8px', fontWeight: 600, border: '1px solid var(--border)', cursor: 'pointer' }}>
+                  <button className="btn-ghost modal-action-btn" style={{ background: 'var(--surface)', padding: '0.8rem 1.5rem', borderRadius: '8px', fontWeight: 600, border: '1px solid var(--border)', cursor: 'pointer' }}>
                     Alterar
                   </button>
                 </div>
-                <button className="btn-ghost" style={{ background: 'var(--surface)', padding: '0.8rem 1.5rem', borderRadius: '8px', fontWeight: 600, border: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => setSelectedOrder(null)}>
+                <button className="btn-ghost modal-action-btn" style={{ background: 'var(--surface)', padding: '0.8rem 1.5rem', borderRadius: '8px', fontWeight: 600, border: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => setSelectedOrder(null)}>
                   Fechar
                 </button>
               </div>
@@ -630,6 +630,21 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
           background: var(--primary);
           color: white;
         }
+        .modal-grid {
+          display: grid;
+          grid-template-columns: 250px 1fr;
+          gap: 1rem;
+          margin-bottom: 2.5rem;
+          font-size: 0.95rem;
+        }
+        .modal-grid-150 {
+          display: grid;
+          grid-template-columns: 150px 1fr;
+          gap: 1rem;
+          margin-bottom: 2.5rem;
+          font-size: 0.95rem;
+        }
+
         @media (max-width: 768px) {
           .table-filters {
             flex-direction: column;
@@ -646,6 +661,27 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
           }
           .page-header .btn-primary {
             order: 2;
+            width: 100%;
+          }
+          .modal-grid, .modal-grid-150 {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+          }
+          .modal-tabs {
+            flex-wrap: wrap;
+            gap: 1rem !important;
+          }
+          .modal-actions {
+            flex-direction: column;
+            width: 100%;
+            gap: 0.5rem;
+          }
+          .modal-actions-left {
+            flex-direction: column;
+            width: 100%;
+            gap: 0.5rem !important;
+          }
+          .modal-action-btn {
             width: 100%;
           }
         }
