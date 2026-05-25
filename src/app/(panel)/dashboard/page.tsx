@@ -62,10 +62,13 @@ export default function DashboardHome() {
     allOrders.forEach((t: any) => {
       const amount = parseFloat(t.amount || t.value || 0);
       const status = (t.status || '').toLowerCase();
-      const method = (t.payment_method || t.method || '').toLowerCase();
+      const actualMethod = t.payment?.method || t.payment_method || t.method || '';
+      const method = actualMethod.toLowerCase();
+
+      const isApproved = ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active'].includes(status);
 
       // Faturamento e Quantidade (consideramos vendas concluídas/aprovadas)
-      if (['approved', 'paid', 'aprovada', 'pago', 'completed', 'active'].includes(status)) {
+      if (isApproved) {
         faturamento += amount;
         quantidade += 1;
       }
@@ -78,8 +81,11 @@ export default function DashboardHome() {
         'Recorrência': ['recurrence', 'recorrência', 'recorrencia', 'subscription']
       };
       
-      if (selectedMethodMap[selectedPaymentMethod]?.includes(method) || 
-         (selectedPaymentMethod === 'Cartão' && (method.includes('credit') || method.includes('cart')))) {
+      const isMethodMatch = selectedMethodMap[selectedPaymentMethod]?.includes(method) || 
+                           (selectedPaymentMethod === 'Cartão' && (method.includes('credit') || method.includes('cart'))) ||
+                           (selectedPaymentMethod === 'Recorrência' && (t.recurrence || t.subscription));
+
+      if (isMethodMatch && isApproved) {
         metodoSelecionado += amount;
       }
       
@@ -400,7 +406,7 @@ export default function DashboardHome() {
                     <td>{t.date || (t.created_at ? new Date(t.created_at).toLocaleString() : 'N/A')}</td>
                     <td>
                       <div className="valor-text">{t.value || formatCurrency(t.amount || 0)}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>{translateMethod(t.method || t.payment_method)}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>{translateMethod(t.payment?.method || t.payment_method || t.method)}</div>
                     </td>
                     <td>
                       <span className={`status-pill ${getStatusPillClass(t.status)}`}>
