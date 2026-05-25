@@ -21,9 +21,10 @@ interface SalesListProps {
   title: string;
   description: string;
   statuses: string[];
+  viewType?: 'approved' | 'not-completed' | 'waiting' | 'all';
 }
 
-export function SalesList({ title, description, statuses }: SalesListProps) {
+export function SalesList({ title, description, statuses, viewType = 'all' }: SalesListProps) {
   const [ordersData, setOrdersData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -33,7 +34,12 @@ export function SalesList({ title, description, statuses }: SalesListProps) {
   const [showCustomDate, setShowCustomDate] = useState(false);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('Todos');
+  const [isMethodMenuOpen, setIsMethodMenuOpen] = useState(false);
+  const methodOptions = ['Todos', 'Cartão de Crédito', 'Pix', 'Boleto'];
+
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState('geral');
 
   const timeOptions = ['Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Esse mês', 'Personalizado'];
 
@@ -44,7 +50,25 @@ export function SalesList({ title, description, statuses }: SalesListProps) {
         const data = Array.isArray(res.data) ? res.data : Array.isArray(res) ? res : [];
         const filteredByStatus = data.filter((item: any) => {
           const s = (item.status || '').toLowerCase();
-          return statuses.includes(s) || (statuses.length === 1 && statuses[0] === 'all');
+          const methodLow = (item.payment_method || item.method || '').toLowerCase();
+          
+          let matchesView = true;
+
+          if (viewType === 'approved') {
+            if (methodLow.includes('transfer') || methodLow.includes('system') || methodLow.includes('bancária')) {
+              matchesView = false;
+            }
+          } else if (viewType === 'not-completed') {
+            const isCard = methodLow.includes('credit') || methodLow.includes('cart');
+            if (!isCard) matchesView = false;
+          } else if (viewType === 'waiting') {
+            const isPixOrBoleto = methodLow.includes('pix') || methodLow.includes('boleto') || methodLow.includes('bank_slip');
+            if (!isPixOrBoleto) matchesView = false;
+          }
+
+          const matchesStatus = statuses.includes(s) || (statuses.length === 1 && statuses[0] === 'all');
+
+          return matchesStatus && matchesView;
         });
         setOrdersData(filteredByStatus);
       })
@@ -54,7 +78,7 @@ export function SalesList({ title, description, statuses }: SalesListProps) {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [statuses]);
+  }, [statuses, viewType]);
 
   // Filtragem (Busca + Data)
   const filteredData = useMemo(() => {
@@ -88,9 +112,21 @@ export function SalesList({ title, description, statuses }: SalesListProps) {
         matchesTime = itemDate >= s && itemDate <= e;
       }
 
-      return matchesSearch && matchesTime;
+      let matchesMethod = true;
+      if (paymentMethodFilter !== 'Todos') {
+        const methodLow = (item.payment_method || item.method || '').toLowerCase();
+        if (paymentMethodFilter === 'Cartão de Crédito') {
+          matchesMethod = methodLow.includes('credit') || methodLow.includes('cart');
+        } else if (paymentMethodFilter === 'Pix') {
+          matchesMethod = methodLow.includes('pix');
+        } else if (paymentMethodFilter === 'Boleto') {
+          matchesMethod = methodLow.includes('boleto') || methodLow.includes('bank_slip');
+        }
+      }
+
+      return matchesSearch && matchesTime && matchesMethod;
     });
-  }, [ordersData, searchQuery, timeRange, dateRange]);
+  }, [ordersData, searchQuery, timeRange, dateRange, paymentMethodFilter]);
 
   const formatCurrency = (val: number) => fmtBrl(val);
 
@@ -211,9 +247,36 @@ export function SalesList({ title, description, statuses }: SalesListProps) {
             )}
           </div>
 
-          {(searchQuery !== '' || timeRange !== 'Últimos 30 dias') && (
+          <div style={{ position: 'relative' }}>
             <button 
-              onClick={() => { setSearchQuery(''); setTimeRange('Últimos 30 dias'); setShowCustomDate(false); }}
+              className="btn-ghost" 
+              onClick={() => setIsMethodMenuOpen(!isMethodMenuOpen)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.8rem 1.2rem', borderRadius: '12px', background: 'var(--background)' }}
+            >
+              <Wallet size={18} /> {paymentMethodFilter === 'Todos' ? 'Método' : paymentMethodFilter} <ChevronDown size={14} />
+            </button>
+            {isMethodMenuOpen && (
+              <div className="filter-menu glass-panel animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 100, width: '200px', padding: '0.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                {methodOptions.map(opt => (
+                  <button 
+                    key={opt}
+                    onClick={() => { 
+                      setPaymentMethodFilter(opt); 
+                      setIsMethodMenuOpen(false); 
+                    }}
+                    className={`filter-item ${paymentMethodFilter === opt ? 'active' : ''}`}
+                    style={{ width: '100%', textAlign: 'left', padding: '0.6rem 1rem', borderRadius: '8px', fontSize: '0.9rem' }}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {(searchQuery !== '' || timeRange !== 'Últimos 30 dias' || paymentMethodFilter !== 'Todos') && (
+            <button 
+              onClick={() => { setSearchQuery(''); setTimeRange('Últimos 30 dias'); setShowCustomDate(false); setPaymentMethodFilter('Todos'); }}
               style={{ padding: '0.5rem', color: 'var(--danger)', opacity: 0.8, background: 'none', border: 'none', cursor: 'pointer' }}
             >
               <X size={18} />
@@ -268,7 +331,7 @@ export function SalesList({ title, description, statuses }: SalesListProps) {
                       <td>
                         <button 
                           className="btn-ghost" 
-                          onClick={() => setSelectedOrder(item)}
+                          onClick={() => { setSelectedOrder(item); setActiveTab('geral'); }}
                           style={{ padding: '0.4rem', borderRadius: '8px' }}
                           title="Detalhes da Venda"
                         >
@@ -305,98 +368,237 @@ export function SalesList({ title, description, statuses }: SalesListProps) {
             <div style={{ padding: '2rem', background: 'var(--background)' }}>
               
               <div style={{ display: 'flex', gap: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '2rem' }}>
-                <span style={{ fontWeight: 600, color: 'var(--primary)', borderBottom: '2px solid var(--primary)', paddingBottom: '0.6rem', marginBottom: '-0.5rem' }}>Geral</span>
-                <span className="text-muted" style={{ cursor: 'pointer' }}>Histórico</span>
-                <span className="text-muted" style={{ cursor: 'pointer' }}>Rastreamento</span>
-                <span className="text-muted" style={{ cursor: 'pointer' }}>Taxas e comissões</span>
+                <span onClick={() => setActiveTab('geral')} className={activeTab === 'geral' ? '' : 'text-muted'} style={{ cursor: 'pointer', fontWeight: activeTab === 'geral' ? 600 : 400, color: activeTab === 'geral' ? 'var(--primary)' : 'inherit', borderBottom: activeTab === 'geral' ? '2px solid var(--primary)' : 'none', paddingBottom: '0.6rem', marginBottom: '-0.5rem' }}>Geral</span>
+                <span onClick={() => setActiveTab('historico')} className={activeTab === 'historico' ? '' : 'text-muted'} style={{ cursor: 'pointer', fontWeight: activeTab === 'historico' ? 600 : 400, color: activeTab === 'historico' ? 'var(--primary)' : 'inherit', borderBottom: activeTab === 'historico' ? '2px solid var(--primary)' : 'none', paddingBottom: '0.6rem', marginBottom: '-0.5rem' }}>Histórico</span>
+                <span onClick={() => setActiveTab('rastreamento')} className={activeTab === 'rastreamento' ? '' : 'text-muted'} style={{ cursor: 'pointer', fontWeight: activeTab === 'rastreamento' ? 600 : 400, color: activeTab === 'rastreamento' ? 'var(--primary)' : 'inherit', borderBottom: activeTab === 'rastreamento' ? '2px solid var(--primary)' : 'none', paddingBottom: '0.6rem', marginBottom: '-0.5rem' }}>Rastreamento</span>
+                <span onClick={() => setActiveTab('taxas')} className={activeTab === 'taxas' ? '' : 'text-muted'} style={{ cursor: 'pointer', fontWeight: activeTab === 'taxas' ? 600 : 400, color: activeTab === 'taxas' ? 'var(--primary)' : 'inherit', borderBottom: activeTab === 'taxas' ? '2px solid var(--primary)' : 'none', paddingBottom: '0.6rem', marginBottom: '-0.5rem' }}>Taxas e comissões</span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem', marginBottom: '2.5rem', fontSize: '0.95rem' }}>
-                <div className="text-muted">Cliente</div>
-                <div style={{ fontWeight: 500 }}>{selectedOrder.client || selectedOrder.customer?.name || 'Cliente não informado'}</div>
-                
-                <div className="text-muted">Gênero</div>
-                <div style={{ color: 'var(--text-main)' }}>—</div>
+              {activeTab === 'geral' && (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem', marginBottom: '2.5rem', fontSize: '0.95rem' }}>
+                    <div className="text-muted">Cliente</div>
+                    <div style={{ fontWeight: 500 }}>{selectedOrder.client || selectedOrder.customer?.name || 'Cliente não informado'}</div>
+                    
+                    <div className="text-muted">Gênero</div>
+                    <div style={{ color: 'var(--text-main)' }}>—</div>
 
-                <div className="text-muted">Tipo</div>
-                <div style={{ color: 'var(--text-main)' }}>—</div>
+                    <div className="text-muted">Tipo</div>
+                    <div style={{ color: 'var(--text-main)' }}>—</div>
 
-                <div className="text-muted">CPF</div>
-                <div style={{ color: 'var(--primary)' }}>{selectedOrder.customer?.document || '—'}</div>
+                    <div className="text-muted">CPF/Documento</div>
+                    <div style={{ color: 'var(--primary)' }}>{selectedOrder.customer?.doc || selectedOrder.customer?.document || '—'}</div>
 
-                <div className="text-muted">E-mail</div>
-                <div style={{ color: 'var(--primary)' }}>{selectedOrder.customer?.email || '—'}</div>
-                
-                <div className="text-muted">Telefone</div>
-                <div style={{ color: 'var(--primary)' }}>{selectedOrder.customer?.phone || '—'}</div>
-              </div>
+                    <div className="text-muted">E-mail</div>
+                    <div style={{ color: 'var(--primary)' }}>{selectedOrder.customer?.email || '—'}</div>
+                    
+                    <div className="text-muted">Telefone</div>
+                    <div style={{ color: 'var(--primary)' }}>{selectedOrder.customer?.phone || '—'}</div>
+                  </div>
 
-              <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden', marginBottom: '2.5rem' }}>
-                <table style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
-                  <thead style={{ background: 'rgba(0,0,0,0.2)' }}>
-                    <tr>
-                      <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>Código</th>
-                      <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>Produto</th>
-                      <th style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, color: 'var(--text-muted)' }}>Valor</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td style={{ padding: '1rem', borderBottom: 'none' }} className="text-muted">{selectedOrder.token || selectedOrder.id}</td>
-                      <td style={{ padding: '1rem', fontWeight: 500, borderBottom: 'none' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <div style={{ width: '36px', height: '36px', background: 'var(--surface-hover)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Banknote size={16} />
+                  <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden', marginBottom: '2.5rem' }}>
+                    <table style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
+                      <thead style={{ background: 'rgba(0,0,0,0.2)' }}>
+                        <tr>
+                          <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>Código</th>
+                          <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>Produto</th>
+                          <th style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, color: 'var(--text-muted)' }}>Valor</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td style={{ padding: '1rem', borderBottom: 'none' }} className="text-muted">{selectedOrder.token || selectedOrder.id || selectedOrder.transaction?.code}</td>
+                          <td style={{ padding: '1rem', fontWeight: 500, borderBottom: 'none' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                              <div style={{ width: '36px', height: '36px', background: 'var(--surface-hover)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Banknote size={16} />
+                              </div>
+                              {(selectedOrder.items && selectedOrder.items[0]?.name) || selectedOrder.product || selectedOrder.description || 'Produto Genérico'}
+                            </div>
+                          </td>
+                          <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, borderBottom: 'none' }}>{formatCurrency(selectedOrder.transaction?.total || selectedOrder.amount || selectedOrder.value || 0)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: '1rem', marginBottom: '2.5rem', fontSize: '0.95rem' }}>
+                    <div className="text-muted">Data do pedido</div>
+                    <div style={{ color: 'var(--text-main)' }}>{new Date(selectedOrder.transaction?.registration_date || selectedOrder.created_at || selectedOrder.date || Date.now()).toLocaleString('pt-BR')}</div>
+
+                    <div className="text-muted">Total dos itens (+)</div>
+                    <div style={{ color: 'var(--text-main)' }}>{formatCurrency((selectedOrder.items && selectedOrder.items[0]?.value) || selectedOrder.transaction?.items || selectedOrder.amount || selectedOrder.value || 0)}</div>
+
+                    <div className="text-muted" style={{ fontWeight: 600 }}>Valor da venda (=)</div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{formatCurrency(selectedOrder.transaction?.total || selectedOrder.amount || selectedOrder.value || 0)}</div>
+
+                    <div className="text-muted">Adquirente</div>
+                    <div style={{ color: 'var(--text-main)' }}>Superfin</div>
+
+                    <div className="text-muted">Meio de pagamento</div>
+                    <div style={{ color: 'var(--text-main)' }}>{translateMethod(selectedOrder.payment?.method || selectedOrder.payment_method || selectedOrder.method)}</div>
+
+                    <div className="text-muted">Condição de pagamento</div>
+                    <div style={{ color: 'var(--text-main)' }}>{formatCurrency(selectedOrder.transaction?.total || selectedOrder.amount || selectedOrder.value || 0)} {selectedOrder.payment?.plots > 1 ? `em ${selectedOrder.payment.plots}x` : 'à vista'}</div>
+                  </div>
+
+                  <div style={{ 
+                    background: getStatusPillClass(selectedOrder.status?.code || selectedOrder.status) === 'aprovada' ? 'var(--success)' : 
+                                getStatusPillClass(selectedOrder.status?.code || selectedOrder.status) === 'recusada' ? 'var(--danger)' : 'var(--surface-hover)', 
+                    color: 'white', 
+                    padding: '1.2rem 1.5rem', 
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    marginBottom: '2rem',
+                    fontSize: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                  }}>
+                    Pagamento {translateStatus(selectedOrder.status?.code || selectedOrder.status).toUpperCase()} em {new Date(selectedOrder.status?.registration_date || selectedOrder.updated_at || selectedOrder.created_at || selectedOrder.date || Date.now()).toLocaleString('pt-BR')}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: '1rem', fontSize: '0.95rem', borderBottom: '1px solid var(--border)', paddingBottom: '2rem', marginBottom: '2rem' }}>
+                    <div className="text-muted">Prazo para reembolso</div>
+                    <div className="text-muted">7 dias após a compra (O comprador pode solicitar reembolso pela plataforma até essa data)</div>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'historico' && (
+                <div style={{ marginBottom: '2.5rem', animate: 'fade-in' }}>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text-main)' }}>Histórico da Transação</h3>
+                  <div style={{ background: 'var(--surface)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border)', marginBottom: '2rem' }}>
+                    {selectedOrder.status?.log?.length > 0 ? (
+                      selectedOrder.status.log.map((logItem: any, idx: number) => (
+                        <div key={idx} style={{ display: 'flex', gap: '1rem', marginBottom: idx !== selectedOrder.status.log.length - 1 ? '1rem' : 0 }}>
+                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--primary)', marginTop: '5px' }}></div>
+                          <div>
+                            <div style={{ fontWeight: 500, fontSize: '0.9rem', color: 'var(--text-main)' }}>{translateStatus(logItem.code)}</div>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{logItem.message}</div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>{logItem.registration_date}</div>
                           </div>
-                          {selectedOrder.product || selectedOrder.description || 'Produto Genérico'}
                         </div>
-                      </td>
-                      <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, borderBottom: 'none' }}>{formatCurrency(selectedOrder.amount || selectedOrder.value || 0)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                      ))
+                    ) : (
+                      <div className="text-muted" style={{ fontSize: '0.9rem' }}>Nenhum log de transação encontrado.</div>
+                    )}
+                  </div>
+                  
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text-main)' }}>Histórico de Vendas do Cliente</h3>
+                  <div style={{ background: 'var(--surface)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border)' }}>
+                    {(() => {
+                      const clientHistory = ordersData.filter(o => {
+                        const emailMatch = o.customer?.email && selectedOrder.customer?.email && o.customer.email === selectedOrder.customer.email;
+                        const docMatch = (o.customer?.doc || o.customer?.document) && (selectedOrder.customer?.doc || selectedOrder.customer?.document) && (o.customer.doc === selectedOrder.customer.doc || o.customer.document === selectedOrder.customer.document);
+                        return emailMatch || docMatch;
+                      });
+                      return clientHistory.length > 0 ? (
+                        <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse' }}>
+                          <thead>
+                            <tr style={{ color: 'var(--text-muted)', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
+                              <th style={{ paddingBottom: '0.5rem' }}>Data</th>
+                              <th style={{ paddingBottom: '0.5rem' }}>ID</th>
+                              <th style={{ paddingBottom: '0.5rem' }}>Valor</th>
+                              <th style={{ paddingBottom: '0.5rem' }}>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {clientHistory.map((histOrder, idx) => (
+                              <tr key={idx} style={{ borderBottom: idx !== clientHistory.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                                <td style={{ padding: '0.5rem 0' }}>{new Date(histOrder.transaction?.registration_date || histOrder.created_at || histOrder.date || Date.now()).toLocaleDateString('pt-BR')}</td>
+                                <td style={{ padding: '0.5rem 0' }}>{histOrder.transaction?.code || histOrder.token || histOrder.id}</td>
+                                <td style={{ padding: '0.5rem 0' }}>{formatCurrency(histOrder.transaction?.total || histOrder.amount || histOrder.value || 0)}</td>
+                                <td style={{ padding: '0.5rem 0' }}><span style={{ color: getStatusPillClass(histOrder.status?.code || histOrder.status) === 'aprovada' ? 'var(--success)' : 'inherit' }}>{translateStatus(histOrder.status?.code || histOrder.status)}</span></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <div className="text-muted" style={{ fontSize: '0.9rem' }}>Nenhuma outra compra encontrada para este cliente.</div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: '1rem', marginBottom: '2.5rem', fontSize: '0.95rem' }}>
-                <div className="text-muted">Data do pedido</div>
-                <div style={{ color: 'var(--text-main)' }}>{new Date(selectedOrder.created_at || selectedOrder.date || Date.now()).toLocaleString('pt-BR')}</div>
+              {activeTab === 'rastreamento' && (
+                <div style={{ marginBottom: '2.5rem', animate: 'fade-in' }}>
+                  <table style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
+                    <thead style={{ background: 'rgba(0,0,0,0.2)' }}>
+                      <tr>
+                        <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>Propriedade</th>
+                        <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>Referência</td>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>—</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>IP de acesso</td>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>{selectedOrder.customer?.ip_address || '—'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>SRC</td>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>—</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>UTM source</td>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>{selectedOrder.tracking?.utm_source || '—'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>UTM medium</td>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>{selectedOrder.tracking?.utm_medium || '—'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>UTM campaign</td>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>{selectedOrder.tracking?.utm_campaign || '—'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>UTM term</td>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>{selectedOrder.tracking?.utm_term || '—'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '1rem', borderBottom: 'none' }}>UTM content</td>
+                        <td style={{ padding: '1rem', borderBottom: 'none', fontWeight: 500 }}>{selectedOrder.tracking?.utm_content || '—'}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
-                <div className="text-muted">Total dos itens (+)</div>
-                <div style={{ color: 'var(--text-main)' }}>{formatCurrency(selectedOrder.amount || selectedOrder.value || 0)}</div>
-
-                <div className="text-muted" style={{ fontWeight: 600 }}>Valor da venda (=)</div>
-                <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{formatCurrency(selectedOrder.amount || selectedOrder.value || 0)}</div>
-
-                <div className="text-muted">Adquirente</div>
-                <div style={{ color: 'var(--text-main)' }}>Superfin</div>
-
-                <div className="text-muted">Meio de pagamento</div>
-                <div style={{ color: 'var(--text-main)' }}>{translateMethod(selectedOrder.payment_method || selectedOrder.method)}</div>
-
-                <div className="text-muted">Condição de pagamento</div>
-                <div style={{ color: 'var(--text-main)' }}>{formatCurrency(selectedOrder.amount || selectedOrder.value || 0)} à vista</div>
-              </div>
-
-              <div style={{ 
-                background: getStatusPillClass(selectedOrder.status) === 'aprovada' ? 'var(--success)' : 
-                            getStatusPillClass(selectedOrder.status) === 'recusada' ? 'var(--danger)' : 'var(--surface-hover)', 
-                color: 'white', 
-                padding: '1.2rem 1.5rem', 
-                borderRadius: '8px',
-                fontWeight: 600,
-                marginBottom: '2rem',
-                fontSize: '1rem',
-                display: 'flex',
-                alignItems: 'center',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-              }}>
-                Pagamento {translateStatus(selectedOrder.status).toUpperCase()} em {new Date(selectedOrder.updated_at || selectedOrder.created_at || selectedOrder.date || Date.now()).toLocaleString('pt-BR')}
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: '1rem', fontSize: '0.95rem', borderBottom: '1px solid var(--border)', paddingBottom: '2rem', marginBottom: '2rem' }}>
-                <div className="text-muted">Prazo para reembolso</div>
-                <div className="text-muted">7 dias após a compra (O comprador pode solicitar reembolso pela plataforma até essa data)</div>
-              </div>
+              {activeTab === 'taxas' && (
+                <div style={{ marginBottom: '2.5rem', animate: 'fade-in' }}>
+                  <table style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
+                    <thead style={{ background: 'rgba(0,0,0,0.2)' }}>
+                      <tr>
+                        <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>Indicador</th>
+                        <th style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, color: 'var(--text-muted)' }}>Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>Total pago pelo comprador</td>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)', textAlign: 'right', fontWeight: 600 }}>{formatCurrency(selectedOrder.transaction?.total || selectedOrder.amount || selectedOrder.value || 0)}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>Valor da venda sem taxas e impostos</td>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)', textAlign: 'right', fontWeight: 500 }}>{formatCurrency(selectedOrder.transaction?.subtotal || selectedOrder.amount || selectedOrder.value || 0)}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>Valor base para cálculo de comissões</td>
+                        <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)', textAlign: 'right', fontWeight: 500 }}>{formatCurrency(selectedOrder.transaction?.subtotal || selectedOrder.amount || selectedOrder.value || 0)}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '1rem', borderBottom: 'none' }}>Sua comissão</td>
+                        <td style={{ padding: '1rem', borderBottom: 'none', textAlign: 'right', fontWeight: 600, color: 'var(--success)' }}>{formatCurrency(selectedOrder.transaction?.fee_producer || selectedOrder.amount || selectedOrder.value || 0)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', gap: '1rem' }}>

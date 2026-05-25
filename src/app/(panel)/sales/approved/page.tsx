@@ -8,6 +8,7 @@ export default function ApprovedSalesPage() {
       title="Vendas Aprovadas" 
       description="Lista de transações concluídas com sucesso."
       statuses={['approved', 'completed', 'paid']} 
+      viewType="approved"
     />
   );
 }
