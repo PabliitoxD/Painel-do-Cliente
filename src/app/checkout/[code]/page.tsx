@@ -54,7 +54,43 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!code) return;
     setIsLoading(true);
-    // Try one-time charge first, then subscription plan
+
+    // Try finding locally first to prevent transient sandbox fallback to generic mock records
+    if (typeof window !== 'undefined') {
+      const storedCharges = localStorage.getItem('local_charges');
+      if (storedCharges) {
+        try {
+          const list = JSON.parse(storedCharges);
+          const found = list.find((c: any) => c.token === code || c.id === code || c.code === code);
+          if (found) {
+            const mapped = mapApiToCheckout(found, false);
+            setChargeData(mapped);
+            const enabled = localStorage.getItem(`allow_boleto_${mapped.token}`) !== 'false';
+            setAllowBoleto(enabled);
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) {}
+      }
+
+      const storedPlans = localStorage.getItem('local_plans');
+      if (storedPlans) {
+        try {
+          const list = JSON.parse(storedPlans);
+          const found = list.find((p: any) => p.token === code || p.id === code || p.code === code);
+          if (found) {
+            const mapped = mapApiToCheckout(found, true);
+            setChargeData(mapped);
+            const enabled = localStorage.getItem(`allow_boleto_${mapped.token}`) !== 'false';
+            setAllowBoleto(enabled);
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) {}
+      }
+    }
+
+    // Fallback: Try one-time charge first, then subscription plan
     chargesService.get(code)
       .then(res => {
         const charge = (res as any).charge ?? res;
