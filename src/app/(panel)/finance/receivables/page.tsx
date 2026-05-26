@@ -32,6 +32,8 @@ export default function ReceivablesPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSimulationOpen, setIsSimulationOpen] = useState(false);
+  const [isConsultModalOpen, setIsConsultModalOpen] = useState(false);
+  const [consultDateRange, setConsultDateRange] = useState({ start: '', end: '' });
 
   useEffect(() => {
     Promise.all([
@@ -146,34 +148,48 @@ export default function ReceivablesPage() {
                 <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-dim)' }}>Carregando agenda...</div>
               ) : schedules.length === 0 ? (
                 <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-dim)' }}>Nenhum recebível agendado.</div>
-              ) : schedules.map((day, i) => (
-                <div key={i} className="agenda-item" style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  padding: '1.5rem 0',
-                  borderBottom: i === 3 ? 'none' : '1px solid var(--border)',
-                }}>
-                  <div>
-                    <p style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.3rem' }}>{day.date}</p>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>{day.count} vendas processadas</p>
+              ) : schedules.slice(0, 5).map((day, i) => {
+                const isReleased = day.status.toLowerCase() === 'released' || day.status.toLowerCase() === 'paid' || day.status.toLowerCase() === 'liberado' || day.status.toLowerCase() === 'aprovado' || getStatusPillClass(day.status) === 'aprovada';
+                return (
+                  <div key={i} className="agenda-item" style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '1.5rem 0',
+                    borderBottom: i === Math.min(schedules.length, 5) - 1 ? 'none' : '1px solid var(--border)',
+                  }}>
+                    <div>
+                      <p style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.3rem' }}>
+                        {isReleased ? 'Valor Liberado' : `Disponível em: ${day.date}`}
+                      </p>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>{day.count} vendas processadas</p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <p style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '0.2rem' }}>
+                        {formatCurrency(day.amount)}
+                      </p>
+                      <span style={{ 
+                        fontSize: '0.7rem', 
+                        letterSpacing: '0.5px',
+                        color: isReleased ? 'var(--success)' : 'var(--warning)',
+                        fontWeight: 800
+                      }}>
+                        {isReleased ? 'Disponível' : 'Aguardando'}
+                      </span>
+                    </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '0.2rem' }}>
-                      R$ {day.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                    <span style={{ 
-                      fontSize: '0.7rem', 
-                      letterSpacing: '0.5px',
-                      color: getStatusPillClass(day.status) === 'aprovada' ? 'var(--success)' : 'var(--warning)',
-                      fontWeight: 800
-                    }}>
-                      {translateStatus(day.status)}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
+            {schedules.length > 0 && (
+              <button 
+                className="btn-ghost" 
+                onClick={() => setIsConsultModalOpen(true)}
+                style={{ width: '100%', padding: '1rem', marginTop: '1rem', borderTop: '1px solid var(--border)', fontWeight: 600, color: 'var(--primary)' }}
+              >
+                Consultar Relatório Completo
+              </button>
+            )}
           </div>
 
           {/* Dica de Liquidez */}
@@ -213,6 +229,85 @@ export default function ReceivablesPage() {
           </div>
         </div>
       </div>
+
+      {isConsultModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="glass-panel animate-fade-in" style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '16px', maxWidth: '500px', width: '100%', position: 'relative', border: '1px solid var(--border)' }}>
+            <button 
+              onClick={() => setIsConsultModalOpen(false)} 
+              style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+            >
+              <X size={20} />
+            </button>
+            <h2 style={{ marginBottom: '1.5rem', fontSize: '1.4rem' }}>Consultar Recebimentos</h2>
+            
+            <p className="text-muted" style={{ marginBottom: '1.5rem', fontSize: '0.9rem', lineHeight: 1.5 }}>
+              Filtre o período desejado para visualizar e exportar o relatório de recebimentos.
+            </p>
+
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+              <div style={{ flex: 1 }}>
+                <label className="text-muted" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>Data Inicial</label>
+                <input 
+                  type="date" 
+                  value={consultDateRange.start}
+                  onChange={e => setConsultDateRange({...consultDateRange, start: e.target.value})}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.8rem', color: 'var(--text-main)', outline: 'none' }} 
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label className="text-muted" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>Data Final</label>
+                <input 
+                  type="date" 
+                  value={consultDateRange.end}
+                  onChange={e => setConsultDateRange({...consultDateRange, end: e.target.value})}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.8rem', color: 'var(--text-main)', outline: 'none' }} 
+                />
+              </div>
+            </div>
+            
+            <button 
+              className="btn-primary" 
+              style={{ width: '100%', padding: '1rem', fontWeight: 600 }} 
+              onClick={() => {
+                let filtered = schedules;
+                if (consultDateRange.start || consultDateRange.end) {
+                  filtered = schedules.filter(s => {
+                    const sDateStr = s.date || '';
+                    const sDate = sDateStr.includes('/') ? new Date(sDateStr.split('/').reverse().join('-') + 'T12:00:00') : new Date(sDateStr);
+                    if (isNaN(sDate.getTime())) return true;
+                    if (consultDateRange.start && sDate < new Date(`${consultDateRange.start}T00:00:00`)) return false;
+                    if (consultDateRange.end && sDate > new Date(`${consultDateRange.end}T23:59:59`)) return false;
+                    return true;
+                  });
+                }
+                
+                if (filtered.length === 0) {
+                  alert('Nenhum dado encontrado para esse período.');
+                  return;
+                }
+
+                const headers = ['Data', 'Vendas Processadas', 'Valor Total', 'Status'];
+                const csvContent = [
+                  headers.join(','),
+                  ...filtered.map(item => `${item.date},${item.count},${item.amount},${item.status}`)
+                ].join('\n');
+                
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `recebimentos_${new Date().toISOString().slice(0,10)}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
+            >
+              Exportar Relatório (CSV)
+            </button>
+          </div>
+        </div>
+      )}
 
       {isSimulationOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
