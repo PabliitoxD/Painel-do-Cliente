@@ -502,7 +502,7 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
                     )}
                   </div>
                   
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text-main)' }}>Histórico de Vendas do Cliente</h3>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text-main)' }}>Histórico de Transações do Cliente</h3>
                   <div style={{ background: 'var(--surface)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border)' }}>
                     {(() => {
                       const clientHistory = ordersData.filter(o => {
