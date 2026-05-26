@@ -5,7 +5,7 @@ import { SalesList } from '@/components/sales/SalesList';
 export default function WaitingSalesPage() {
   return (
     <SalesList 
-      title="Vendas Pendentes" 
+      title="Transações Pendentes" 
       description="Transações aguardando pagamento do cliente."
       statuses={['pending', 'waiting', 'pendente', 'aguardando']} 
       viewType="waiting"

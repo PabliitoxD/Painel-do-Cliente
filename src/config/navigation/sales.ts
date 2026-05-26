@@ -2,7 +2,7 @@ import { ShoppingBag } from 'lucide-react';
 import { NavItem } from './types';
 
 export const salesMenu: NavItem = {
-  label: 'Vendas', 
+  label: 'Transações', 
   icon: ShoppingBag,
   subItems: [
     { label: 'Aprovadas', href: '/sales/approved' },
