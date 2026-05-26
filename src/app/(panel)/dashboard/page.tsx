@@ -348,8 +348,8 @@ export default function DashboardHome() {
                   <span className="stat-trend trend-up" style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
                     Conversão: {stats.taxaConversao.toFixed(1)}%
                   </span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                    {stats.metodoAprovados} / {stats.metodoTotal} aprov.
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-main)', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                    {stats.metodoAprovados} de {stats.metodoTotal}
                   </span>
                 </div>
                 <div style={{ width: '100%', height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
