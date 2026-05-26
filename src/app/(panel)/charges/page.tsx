@@ -38,19 +38,25 @@ export default function ChargesPage() {
   const formatDateBR = (dateStr?: string) => {
     if (!dateStr) return 'Sem Vencimento';
     if (dateStr.includes('/')) return dateStr;
-    const parts = dateStr.split('-');
+    
+    // Remove any trailing time portion (T or space)
+    const cleanDate = dateStr.split('T')[0].split(' ')[0];
+    const parts = cleanDate.split('-');
     if (parts.length === 3) {
       const [y, m, d] = parts;
-      return `${d}/${m}/${y}`;
+      return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
     }
-    if (dateStr.includes('T')) {
-      const pureDate = dateStr.split('T')[0];
-      const subparts = pureDate.split('-');
-      if (subparts.length === 3) {
-        const [y, m, d] = subparts;
+    
+    try {
+      const parsed = new Date(dateStr);
+      if (!isNaN(parsed.getTime())) {
+        const d = String(parsed.getDate()).padStart(2, '0');
+        const m = String(parsed.getMonth() + 1).padStart(2, '0');
+        const y = parsed.getFullYear();
         return `${d}/${m}/${y}`;
       }
-    }
+    } catch (e) {}
+
     return dateStr;
   };
 
