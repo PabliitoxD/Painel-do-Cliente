@@ -157,7 +157,7 @@ export interface InvoicesListResponse {
 
 export interface ProcessPaymentPayload {
   token: string;
-  payment_method: 'credit_card' | 'pix';
+  payment_method: 'credit_card' | 'pix' | 'boleto';
   card_number?: string;
   card_holder_name?: string;
   card_expiration_date?: string;
@@ -174,7 +174,7 @@ export interface ProcessSubscriptionPaymentPayload {
   plan_token: string;
   customer: SubscriptionCustomer;
   payment: {
-    method: 'credit_card' | 'pix';
+    method: 'credit_card' | 'pix' | 'boleto';
     recurrency: true;
     card_number?: string;
     card_holder_name?: string;
