@@ -314,7 +314,7 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
                     <tr key={item.id || i}>
                       <td className="id-text" style={{ fontSize: '0.8rem' }}>
                         {item.token || item.id}
-                        {(item.recurrence || item.subscription) && (
+                        {(item.recurrence || item.subscription || item.is_recurrence || methodLow.includes('recurrence') || methodLow.includes('subscription')) && (
                           <div style={{ marginTop: '4px' }}>
                             <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: 'rgba(0, 193, 180, 0.15)', color: '#00c1b4', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 600, border: '1px solid rgba(0, 193, 180, 0.3)' }}>
                               {(() => {

@@ -45,6 +45,9 @@ export default function DashboardHome() {
     faturamento: 0,
     quantidade: 0,
     metodoSelecionado: 0,
+    taxaConversao: 0,
+    metodoTotal: 0,
+    metodoAprovados: 0,
     estornos: 0,
     cancelamentos: 0,
     chargebacks: 0,
@@ -55,6 +58,8 @@ export default function DashboardHome() {
     let faturamento = 0;
     let quantidade = 0;
     let metodoSelecionado = 0;
+    let metodoSelecionadoTotal = 0;
+    let metodoSelecionadoAprovados = 0;
     let estornos = 0;
     let cancelamentos = 0;
     let chargebacks = 0;
@@ -85,8 +90,12 @@ export default function DashboardHome() {
                            (selectedPaymentMethod === 'Cartão' && (method.includes('credit') || method.includes('cart'))) ||
                            (selectedPaymentMethod === 'Recorrência' && (t.recurrence || t.subscription));
 
-      if (isMethodMatch && isApproved) {
-        metodoSelecionado += amount;
+      if (isMethodMatch) {
+        metodoSelecionadoTotal++;
+        if (isApproved) {
+          metodoSelecionado += amount;
+          metodoSelecionadoAprovados++;
+        }
       }
       
       if (['refunded', 'estornado', 'reembolsado'].includes(status)) estornos++;
@@ -94,11 +103,15 @@ export default function DashboardHome() {
       if (status === 'chargeback') chargebacks++;
     });
 
-    
+    const taxaConversao = metodoSelecionadoTotal > 0 ? (metodoSelecionadoAprovados / metodoSelecionadoTotal) * 100 : 0;
+
     setStats({
       faturamento,
       quantidade,
       metodoSelecionado,
+      taxaConversao,
+      metodoTotal: metodoSelecionadoTotal,
+      metodoAprovados: metodoSelecionadoAprovados,
       estornos,
       cancelamentos,
       chargebacks
@@ -329,8 +342,27 @@ export default function DashboardHome() {
               <div className="stat-icon-wrapper"><TrendingUp size={24} /></div>
             </div>
             <div className="stat-value">{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.metodoSelecionado)}</div>
-            <div className="stat-footer">
-              <span className="stat-trend trend-up">—</span>
+            <div className="stat-footer" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.8rem', width: '100%' }}>
+              <div style={{ width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                  <span className="stat-trend trend-up" style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                    Conversão: {stats.taxaConversao.toFixed(1)}%
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                    {stats.metodoAprovados} / {stats.metodoTotal} aprov.
+                  </span>
+                </div>
+                <div style={{ width: '100%', height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div 
+                    style={{ 
+                      height: '100%', 
+                      width: `${stats.taxaConversao}%`, 
+                      background: stats.taxaConversao > 75 ? 'var(--success, #22c55e)' : stats.taxaConversao > 40 ? 'var(--warning, #eab308)' : 'var(--danger, #ef4444)',
+                      transition: 'width 0.5s ease-in-out'
+                    }} 
+                  />
+                </div>
+              </div>
               <div className="payment-chips">
                 {paymentMethods.map(m => (
                   <span 
@@ -401,7 +433,30 @@ export default function DashboardHome() {
                   </tr>
                 ) : transactions.map((t, i) => (
                   <tr key={i}>
-                    <td className="id-text">{t.id || t.token || 'N/A'}</td>
+                    <td className="id-text" style={{ fontSize: '0.8rem' }}>
+                      {t.id || t.token || 'N/A'}
+                      {(() => {
+                        const actualMethod = t.payment?.method || t.payment_method || t.method || '';
+                        const methodLow = actualMethod.toLowerCase();
+                        if (t.recurrence || t.subscription || t.is_recurrence || methodLow.includes('recurrence') || methodLow.includes('subscription')) {
+                          const p = String(t.recurrence?.periodicy || t.recurrence?.periodicity || t.subscription?.plan?.periodicity || '').toLowerCase();
+                          let label = 'Recorrente';
+                          if (p === '1' || p === 'monthly' || p === 'mensal') label = 'Mensal';
+                          else if (p === '3' || p === 'quarterly' || p === 'trimestral') label = 'Trimestral';
+                          else if (p === '6' || p === 'semiannual' || p === 'semestral') label = 'Semestral';
+                          else if (p === '12' || p === 'yearly' || p === 'annual' || p === 'anual') label = 'Anual';
+                          
+                          return (
+                            <div style={{ marginTop: '4px' }}>
+                              <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: 'rgba(0, 193, 180, 0.15)', color: '#00c1b4', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 600, border: '1px solid rgba(0, 193, 180, 0.3)' }}>
+                                {label}
+                              </span>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </td>
                     <td>{t.client || t.customer_name || 'N/A'}</td>
                     <td>{t.date || (t.created_at ? new Date(t.created_at).toLocaleString() : 'N/A')}</td>
                     <td>
