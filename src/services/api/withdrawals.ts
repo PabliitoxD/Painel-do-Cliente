@@ -21,5 +21,14 @@ export const withdrawalsService = {
   list: () => {
     return fetchApi<any>('/withdrawals');
   },
+
+  /**
+   * Cancel a withdrawal request
+   */
+  cancelWithdraw: (id: string) => {
+    return fetchApi<any>(`/withdrawals/${id}/cancel`, {
+      method: 'POST',
+    });
+  },
 };
 

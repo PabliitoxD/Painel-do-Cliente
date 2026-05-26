@@ -160,6 +160,17 @@ export default function WithdrawalHistoryPage() {
                   </div>
                 </div>
               )}
+              {(() => {
+                const justification = selectedDetails.justificativa || selectedDetails.justification || selectedDetails.reason || selectedDetails.refusal_reason || selectedDetails.notes || '';
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}>
+                    <span className="text-muted">Justificativa:</span>
+                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', fontSize: '0.9rem', color: justification ? 'var(--text-main)' : 'var(--text-dim)', fontStyle: justification ? 'normal' : 'italic' }}>
+                      {justification || "Nenhuma justificativa fornecida pelo backoffice."}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
