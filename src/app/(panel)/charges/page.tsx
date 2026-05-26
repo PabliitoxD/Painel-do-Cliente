@@ -27,12 +27,32 @@ export default function ChargesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selected, setSelected] = useState<Row | null>(null);
   const [search, setSearch] = useState('');
+  const [filterDate, setFilterDate] = useState('');
 
   // form state
   const [cartItems, setCartItems] = useState([{ id: Date.now(), name: '', unitPrice: 0, quantity: 1 }]);
-  const [chargeInfo, setChargeInfo] = useState({ name: '', dueDate: '', customerName: '', customerEmail: '', billingType: 'unica' as 'unica'|'recorrente', frequency: 'mensal', hasLimit: false, limitCount: 12, hasTrial: false, trialDays: 7, allowBoleto: true });
+  const [chargeInfo, setChargeInfo] = useState({ name: '', dueDate: '', customerName: '', customerEmail: '', billingType: 'unica' as 'unica'|'recorrente', frequency: 'mensal', hasLimit: false, limitCount: 12, hasTrial: false, trialDays: 7, allowBoleto: true, hasNoExpiration: false });
 
   const totalValue = useMemo(() => cartItems.reduce((a, i) => a + (i.unitPrice||0)*(i.quantity||0), 0), [cartItems]);
+
+  const formatDateBR = (dateStr?: string) => {
+    if (!dateStr) return 'Sem Vencimento';
+    if (dateStr.includes('/')) return dateStr;
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const [y, m, d] = parts;
+      return `${d}/${m}/${y}`;
+    }
+    if (dateStr.includes('T')) {
+      const pureDate = dateStr.split('T')[0];
+      const subparts = pureDate.split('-');
+      if (subparts.length === 3) {
+        const [y, m, d] = subparts;
+        return `${d}/${m}/${y}`;
+      }
+    }
+    return dateStr;
+  };
 
   const load = useCallback(async () => {
     setIsLoading(true); setError(null);
@@ -40,20 +60,58 @@ export default function ChargesPage() {
       if (tab === 'avulsa') {
         const res: any = await chargesService.list({ per_page: 50 });
         const list = res.charges || res.data || res.items || (Array.isArray(res) ? res : []);
-        setRows(list.map((c: any) => ({
+        
+        let localCharges: any[] = [];
+        if (typeof window !== 'undefined') {
+          const stored = localStorage.getItem('local_charges');
+          if (stored) {
+            try { localCharges = JSON.parse(stored); } catch (e) {}
+          }
+        }
+
+        const mappedApi: Row[] = list.map((c: any) => ({
           type: 'avulsa', 
           token: c.token || c.id || c.uuid, 
           code: c.code || c.id || c.uuid, 
           label: c.description || c.name || c.title || '—',
           value: Number(c.price || c.amount || c.value) || 0, 
           status: c.status || 'PENDENTE', 
-          extra: c.expiration_date || c.due_date, 
+          extra: formatDateBR(c.expiration_date || c.due_date), 
           raw: c,
-        })));
+        }));
+
+        const mappedLocal: Row[] = localCharges.map((c: any) => ({
+          type: 'avulsa',
+          token: c.token || c.id || c.uuid,
+          code: c.code || c.id || c.uuid,
+          label: c.description || c.name || c.title || '—',
+          value: Number(c.price || c.amount || c.value) || 0,
+          status: c.status || 'PENDENTE',
+          extra: formatDateBR(c.expiration_date || c.due_date),
+          raw: c,
+        }));
+
+        const combined = [...mappedLocal];
+        mappedApi.forEach((item: any) => {
+          if (!combined.some(c => c.token === item.token)) {
+            combined.push(item);
+          }
+        });
+
+        setRows(combined);
       } else {
         const res: any = await plansService.list({ per_page: 50 });
         const list = res.plans || res.data || res.items || (Array.isArray(res) ? res : []);
-        setRows(list.map((p: any) => ({
+        
+        let localPlans: any[] = [];
+        if (typeof window !== 'undefined') {
+          const stored = localStorage.getItem('local_plans');
+          if (stored) {
+            try { localPlans = JSON.parse(stored); } catch (e) {}
+          }
+        }
+
+        const mappedApi: Row[] = list.map((p: any) => ({
           type: 'recorrente', 
           token: p.token || p.id || p.uuid, 
           code: p.code || p.id || p.uuid, 
@@ -62,7 +120,27 @@ export default function ChargesPage() {
           status: p.status || 'ATIVO',
           extra: periodicityLabel[p.periodicity] || p.periodicity || 'Mensal', 
           raw: p,
-        })));
+        }));
+
+        const mappedLocal: Row[] = localPlans.map((p: any) => ({
+          type: 'recorrente',
+          token: p.token || p.id || p.uuid,
+          code: p.code || p.id || p.uuid,
+          label: p.name || p.description || p.title || '—',
+          value: Number(p.price || p.amount || p.value) || 0,
+          status: p.status || 'ATIVO',
+          extra: periodicityLabel[p.periodicity] || p.periodicity || 'Mensal',
+          raw: p,
+        }));
+
+        const combined = [...mappedLocal];
+        mappedApi.forEach((item: any) => {
+          if (!combined.some(p => p.token === item.token)) {
+            combined.push(item);
+          }
+        });
+
+        setRows(combined);
       }
     } catch (e: any) { setError(e.message || 'Erro ao carregar.'); }
     finally { setIsLoading(false); }
@@ -72,7 +150,7 @@ export default function ChargesPage() {
 
   const openModal = () => {
     setCartItems([{ id: Date.now(), name: '', unitPrice: 0, quantity: 1 }]);
-    setChargeInfo({ name: '', dueDate: '', customerName: '', customerEmail: '', billingType: 'unica', frequency: 'mensal', hasLimit: false, limitCount: 12, hasTrial: false, trialDays: 7, allowBoleto: true });
+    setChargeInfo({ name: '', dueDate: '', customerName: '', customerEmail: '', billingType: 'unica', frequency: 'mensal', hasLimit: false, limitCount: 12, hasTrial: false, trialDays: 7, allowBoleto: true, hasNoExpiration: false });
     setIsModalOpen(true);
   };
 
@@ -82,10 +160,8 @@ export default function ChargesPage() {
     try {
       let createdToken = '';
       if (chargeInfo.billingType === 'unica') {
-        // Tentando payload achatado e com números (sem wrapper "charge")
-        // E voltando para DD/MM/YYYY que é comum em gateways BR
         let formattedDate = undefined;
-        if (chargeInfo.dueDate) {
+        if (!chargeInfo.hasNoExpiration && chargeInfo.dueDate) {
           const [year, month, day] = chargeInfo.dueDate.split('-');
           formattedDate = `${day}/${month}/${year}`;
         }
@@ -107,6 +183,32 @@ export default function ChargesPage() {
         const res = await chargesService.create(payload);
         const data = (res as any)?.charge || (res as any)?.data || res;
         createdToken = data?.token || data?.id || '';
+
+        // Save locally so it persists and renders instantly for testing
+        if (createdToken && typeof window !== 'undefined') {
+          const stored = localStorage.getItem('local_charges');
+          let current: any[] = [];
+          if (stored) {
+            try { current = JSON.parse(stored); } catch (e) {}
+          }
+          current.unshift({
+            id: createdToken,
+            token: createdToken,
+            code: data?.code || createdToken,
+            description: chargeInfo.name,
+            price: totalValue,
+            status: 'NOT_PAID',
+            expiration_date: formattedDate || '',
+            payer_name: chargeInfo.customerName || 'Cliente Consumidor',
+            payer_email: chargeInfo.customerEmail || 'cliente@email.com',
+            products: cartItems.map(i => ({ 
+              name: i.name, 
+              price: i.unitPrice.toFixed(2),
+              quantity: String(i.quantity)
+            }))
+          });
+          localStorage.setItem('local_charges', JSON.stringify(current));
+        }
       } else {
         const planPayload: CreatePlanPayload = {
           name: chargeInfo.name,
@@ -117,6 +219,26 @@ export default function ChargesPage() {
         const res = await plansService.create(planPayload);
         const data = (res as any)?.plan || (res as any)?.data || res;
         createdToken = data?.token || data?.id || '';
+
+        // Save locally so it persists and renders instantly for testing
+        if (createdToken && typeof window !== 'undefined') {
+          const stored = localStorage.getItem('local_plans');
+          let current: any[] = [];
+          if (stored) {
+            try { current = JSON.parse(stored); } catch (e) {}
+          }
+          current.unshift({
+            id: createdToken,
+            token: createdToken,
+            code: data?.code || createdToken,
+            name: chargeInfo.name,
+            price: totalValue,
+            periodicity: frequencyToPeriodicity[chargeInfo.frequency] ?? 1,
+            public: true,
+            status: 'ATIVO'
+          });
+          localStorage.setItem('local_plans', JSON.stringify(current));
+        }
       }
 
       if (createdToken) {
@@ -129,11 +251,23 @@ export default function ChargesPage() {
     finally { setIsSaving(false); }
   };
 
-  const filtered = useMemo(() => rows.filter(r => !search || r.label.toLowerCase().includes(search.toLowerCase()) || (r.code||'').toLowerCase().includes(search.toLowerCase())), [rows, search]);
+  const filtered = useMemo(() => {
+    return rows.filter(r => {
+      const matchesSearch = !search || r.label.toLowerCase().includes(search.toLowerCase()) || (r.code||'').toLowerCase().includes(search.toLowerCase());
+      
+      let matchesDate = true;
+      if (filterDate) {
+        const [year, month, day] = filterDate.split('-');
+        const dateBR = `${day}/${month}/${year}`;
+        matchesDate = r.extra === dateBR;
+      }
+      
+      return matchesSearch && matchesDate;
+    });
+  }, [rows, search, filterDate]);
 
   const checkoutUrl = (r: Row) => {
-    if (r.type === 'avulsa') return (r.raw as ApiCharge).checkout_url || (typeof window !== 'undefined' ? `${window.location.origin}/checkout/${r.token}` : `/checkout/${r.token}`);
-    return `${typeof window !== 'undefined' ? window.location.origin : ''}/checkout/${r.token}`;
+    return `${typeof window !== 'undefined' ? window.location.origin : ''}/c/${r.token}`;
   };
 
   return (
@@ -158,12 +292,27 @@ export default function ChargesPage() {
         </div>
 
         {/* Filters */}
-        <div className="card" style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', padding: '1rem' }}>
-          <div style={{ flex: 1, background: 'var(--background)', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 1rem', borderRadius: '10px' }}>
+        <div className="card" style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', padding: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: '240px', background: 'var(--background)', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 1rem', borderRadius: '10px' }}>
             <Search size={18} className="text-muted" />
             <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)}
               style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', color: 'var(--text-main)' }} />
           </div>
+
+          {/* Filtro de Data de Vencimento */}
+          {tab === 'avulsa' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--background)', padding: '0.5rem 1rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 500 }}>Vencimento:</span>
+              <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} 
+                style={{ border: 'none', background: 'transparent', outline: 'none', color: 'var(--text-main)', fontSize: '0.85rem', fontFamily: 'inherit' }} />
+              {filterDate && (
+                <button onClick={() => setFilterDate('')} style={{ border:'none', background:'transparent', color:'var(--text-dim)', cursor:'pointer', display:'flex', alignItems:'center', padding:0, marginLeft:'0.25rem' }} title="Limpar data">
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          )}
+
           <button className="btn-ghost" onClick={load} title="Atualizar" style={{ padding: '0.6rem', borderRadius: '8px' }}><RefreshCcw size={18} /></button>
         </div>
 
@@ -245,8 +394,14 @@ export default function ChargesPage() {
                 </div>
                 {chargeInfo.billingType === 'unica' ? (
                   <div className="form-group" style={{ marginBottom:0 }}>
-                    <label>Vencimento</label>
-                    <input className="form-control" type="date" value={chargeInfo.dueDate} onChange={e => setChargeInfo({...chargeInfo, dueDate:e.target.value})}/>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.45rem' }}>
+                      <label style={{ margin:0 }}>Vencimento</label>
+                      <label style={{ display:'flex', alignItems:'center', gap:'0.3rem', fontSize:'0.78rem', color:'var(--text-dim)', fontWeight:400, margin:0, cursor:'pointer' }}>
+                        <input type="checkbox" checked={chargeInfo.hasNoExpiration} onChange={e => setChargeInfo({...chargeInfo, hasNoExpiration: e.target.checked})} style={{ accentColor:'var(--primary)', width:'13px', height:'13px' }}/>
+                        Sem vencimento
+                      </label>
+                    </div>
+                    <input className="form-control" type="date" value={chargeInfo.dueDate} onChange={e => setChargeInfo({...chargeInfo, dueDate:e.target.value})} disabled={chargeInfo.hasNoExpiration} style={{ opacity: chargeInfo.hasNoExpiration ? 0.5 : 1 }}/>
                   </div>
                 ) : (
                   <div className="form-group" style={{ marginBottom:0 }}>
