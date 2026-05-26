@@ -63,15 +63,18 @@ export default function StatementsPage() {
   // Lógica de filtragem
   const filteredData = useMemo(() => {
     return statementsData.filter(item => {
-      const itemDate = new Date(item.date);
+      const itemDate = new Date(item.date || item.created_at || item.transaction?.registration_date || Date.now());
       const now = new Date();
       
       // Filtro de Texto
-      const matchesSearch = item.description.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           item.id.toString().includes(searchQuery);
+      const desc = item.description || item.product || item.items?.[0]?.name || 'Venda';
+      const idStr = String(item.id || item.token || item.transaction?.code || '');
+      const matchesSearch = desc.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           idStr.includes(searchQuery);
 
       // Filtro de Status
-      const matchesStatus = statusFilter === 'Todos' || item.status === statusFilter;
+      const itemStatus = item.status?.code || item.status || 'aprovado';
+      const matchesStatus = statusFilter === 'Todos' || itemStatus === statusFilter;
 
       // Filtro de Tempo
       let matchesTime = true;
@@ -108,8 +111,14 @@ export default function StatementsPage() {
       };
     }
 
-    const inflows = filteredData.reduce((acc, item) => (item.value || item.amount) > 0 ? acc + (item.value || item.amount) : acc, 0);
-    const outflows = filteredData.reduce((acc, item) => (item.value || item.amount) < 0 ? acc + (item.value || item.amount) : acc, 0);
+    const inflows = filteredData.reduce((acc, item) => {
+      const val = parseFloat(item.value || item.amount || item.transaction?.total || 0);
+      return val >= 0 ? acc + val : acc;
+    }, 0);
+    const outflows = filteredData.reduce((acc, item) => {
+      const val = parseFloat(item.value || item.amount || item.transaction?.total || 0);
+      return val < 0 ? acc + val : acc;
+    }, 0);
     const balance = inflows + outflows;
 
     return { inflows, outflows, balance, waiting: 0 };
@@ -125,10 +134,10 @@ export default function StatementsPage() {
     const csvContent = [
       headers.join(','),
       ...filteredData.map(item => {
-        const dateStr = new Date(item.date || item.created_at).toLocaleDateString('pt-BR');
-        const desc = (item.description || item.token || 'Transação').replace(/,/g, ' ');
-        const val = item.value || item.amount || 0;
-        const status = item.status || 'aprovado';
+        const dateStr = new Date(item.date || item.created_at || item.transaction?.registration_date || Date.now()).toLocaleDateString('pt-BR');
+        const desc = (item.description || item.product || item.items?.[0]?.name || item.token || 'Transação').replace(/,/g, ' ');
+        const val = parseFloat(item.value || item.amount || item.transaction?.total || 0);
+        const status = item.status?.code || item.status || 'aprovado';
         const type = item.type || 'Venda';
         return `${type},${dateStr},${desc},${val},${status}`;
       })
@@ -330,11 +339,11 @@ export default function StatementsPage() {
                         width: '32px', 
                         height: '32px', 
                         borderRadius: '8px', 
-                        background: (item.value || item.amount) > 0 ? 'rgba(49, 120, 44, 0.1)' : 'rgba(203, 86, 86, 0.1)',
+                        background: parseFloat(item.value || item.amount || item.transaction?.total || 0) >= 0 ? 'rgba(49, 120, 44, 0.1)' : 'rgba(203, 86, 86, 0.1)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: (item.value || item.amount) > 0 ? 'var(--success)' : 'var(--danger)'
+                        color: parseFloat(item.value || item.amount || item.transaction?.total || 0) >= 0 ? 'var(--success)' : 'var(--danger)'
                       }}>
                         {item.type === 'Venda' ? <ArrowUpRight size={16} /> : 
                          item.type === 'Saque' ? <Wallet size={16} /> : <ArrowDownLeft size={16} />}
@@ -342,14 +351,14 @@ export default function StatementsPage() {
                       <span style={{ fontWeight: 500 }}>{item.type || 'Venda'}</span>
                     </div>
                   </td>
-                  <td className="text-muted">{new Date(item.date || item.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-                  <td>{item.description || item.token || 'Transação'}</td>
-                  <td style={{ fontWeight: 600, color: (item.value || item.amount) > 0 ? 'var(--text-main)' : 'var(--danger)' }}>
-                    {formatCurrency(item.value || item.amount || 0)}
+                  <td className="text-muted">{new Date(item.date || item.created_at || item.transaction?.registration_date || Date.now()).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                  <td>{item.description || item.product || item.items?.[0]?.name || item.token || 'Transação'}</td>
+                  <td style={{ fontWeight: 600, color: parseFloat(item.value || item.amount || item.transaction?.total || 0) >= 0 ? 'var(--text-main)' : 'var(--danger)' }}>
+                    {formatCurrency(parseFloat(item.value || item.amount || item.transaction?.total || 0))}
                   </td>
                   <td>
-                    <span className={`status-pill ${getStatusPillClass(item.status)}`}>
-                      {translateStatus(item.status)}
+                    <span className={`status-pill ${getStatusPillClass(item.status?.code || item.status)}`}>
+                      {translateStatus(item.status?.code || item.status)}
                     </span>
                   </td>
                 </tr>
