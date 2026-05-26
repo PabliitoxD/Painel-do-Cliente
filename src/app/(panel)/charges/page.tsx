@@ -133,7 +133,7 @@ export default function ChargesPage() {
 
   const checkoutUrl = (r: Row) => {
     if (r.type === 'avulsa') return (r.raw as ApiCharge).checkout_url || (typeof window !== 'undefined' ? `${window.location.origin}/checkout/${r.token}` : `/checkout/${r.token}`);
-    return `${typeof window !== 'undefined' ? window.location.origin : ''}/checkout/plan/${r.token}`;
+    return `${typeof window !== 'undefined' ? window.location.origin : ''}/checkout/${r.token}`;
   };
 
   return (
