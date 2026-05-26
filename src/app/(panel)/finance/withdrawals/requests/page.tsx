@@ -25,13 +25,15 @@ export default function WithdrawalRequestsPage() {
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const [rawAvailableBalance, setRawAvailableBalance] = useState<number>(0);
   const [pendingTotal, setPendingTotal] = useState<number>(0);
+  const [withdrawalFee, setWithdrawalFee] = useState<number>(3.67);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [summary, history] = await Promise.all([
+      const [summary, history, meRes] = await Promise.all([
         api.receivableSchedules.getSummary(),
-        api.withdrawals.list()
+        api.withdrawals.list(),
+        api.users.me().catch(() => null)
       ]);
 
       const summaryData = summary?.data || summary;
@@ -54,6 +56,15 @@ export default function WithdrawalRequestsPage() {
 
       // "se ficar aguardando baixa do saldo"
       setAvailableBalance(Math.max(0, rawAvail - pendSum));
+
+      // Extrai taxa de saque do plano do usuário
+      const meData = meRes?.data || meRes;
+      if (meData) {
+        const planFee = meData.withdrawal_fee ?? meData.plan?.withdrawal_fee ?? meData.plan?.saque_taxa ?? meData.saque_taxa;
+        if (planFee !== undefined && planFee !== null) {
+          setWithdrawalFee(parseFloat(planFee));
+        }
+      }
 
     } catch (err) {
       console.error("Erro ao carregar dados de saque:", err);
@@ -262,7 +273,7 @@ export default function WithdrawalRequestsPage() {
 
             {(() => {
               const amt = parseFloat(withdrawAmount) || 0;
-              const fee = 5.00;
+              const fee = withdrawalFee;
               const net = Math.max(0, amt - fee);
               return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '1.2rem', borderRadius: '12px', fontSize: '0.9rem' }}>
@@ -276,7 +287,7 @@ export default function WithdrawalRequestsPage() {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.25rem' }}>
                     <span style={{ fontWeight: 600 }}>Valor Líquido a Receber</span>
-                    <strong style={{ color: 'var(--success)', fontSize: '1.1rem' }}>{formatCurrency(amt >= 5 ? net : 0)}</strong>
+                    <strong style={{ color: 'var(--success)', fontSize: '1.1rem' }}>{formatCurrency(amt >= fee ? net : 0)}</strong>
                   </div>
                 </div>
               );
