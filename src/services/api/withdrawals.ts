@@ -28,5 +28,14 @@ export const withdrawalsService = {
       { id: 'w_4', amount: 350, status: 'FAILED', created_at: new Date(Date.now() - 86400000 * 10).toISOString() }
     ] });
   },
+
+  /**
+   * Cancel a withdrawal request
+   */
+  cancelWithdraw: (id: string) => {
+    return fetchApi<any>(`/withdrawals/${id}/cancel`, {
+      method: 'POST',
+    });
+  },
 };
 
