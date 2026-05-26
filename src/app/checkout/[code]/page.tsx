@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import {
   ShieldCheck, Check, CreditCard, Smartphone, Lock,
-  ChevronRight, ArrowLeft, AlertCircle, ShoppingBag, RefreshCcw
+  ChevronRight, ArrowLeft, AlertCircle, ShoppingBag, RefreshCcw, FileText
 } from 'lucide-react';
 import { chargesService, plansService, subscriptionsService, periodicityLabel } from '@/services/api/charges';
 
@@ -42,12 +42,14 @@ export default function CheckoutPage() {
   const [notFound, setNotFound] = useState(false);
   const [step, setStep] = useState(1);
   const [personalData, setPersonalData] = useState({ name: '', email: '', document: '', phone: '' });
-  const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'pix'>('credit_card');
+  const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'pix' | 'boleto'>('credit_card');
   const [cardData, setCardData] = useState({ number: '', holder: '', expiry: '', cvv: '', installments: 1 });
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [pixData, setPixData] = useState<{ qr_code?: string; qr_code_text?: string } | null>(null);
+  const [boletoData, setBoletoData] = useState<{ boleto_barcode?: string; boleto_pdf?: string } | null>(null);
   const [payError, setPayError] = useState<string | null>(null);
+  const [allowBoleto, setAllowBoleto] = useState(true);
 
   useEffect(() => {
     if (!code) return;
@@ -56,14 +58,22 @@ export default function CheckoutPage() {
     chargesService.get(code)
       .then(res => {
         const charge = (res as any).charge ?? res;
-        setChargeData(mapApiToCheckout(charge, false));
+        const mapped = mapApiToCheckout(charge, false);
+        setChargeData(mapped);
+        
+        const enabled = localStorage.getItem(`allow_boleto_${mapped.token}`) !== 'false';
+        setAllowBoleto(enabled);
       })
       .catch(() => {
         // Fallback: try as a subscription plan token
         return plansService.get(code)
           .then(res => {
             const plan = (res as any).plan ?? res;
-            setChargeData(mapApiToCheckout(plan, true));
+            const mapped = mapApiToCheckout(plan, true);
+            setChargeData(mapped);
+
+            const enabled = localStorage.getItem(`allow_boleto_${mapped.token}`) !== 'false';
+            setAllowBoleto(enabled);
           })
           .catch(() => setNotFound(true));
       })
@@ -128,7 +138,12 @@ export default function CheckoutPage() {
         });
       }
       if (paymentMethod === 'pix') {
-        setPixData({ qr_code: res?.qr_code, qr_code_text: res?.qr_code_text });
+        setPixData({ qr_code: res?.qr_code, qr_code_text: res?.qr_code_text || res?.qr_code_copy_paste });
+      } else if (paymentMethod === 'boleto') {
+        setBoletoData({
+          boleto_barcode: res?.boleto_barcode || res?.barcode || "00190.00009 02715.700078 00021.282824 1 97260000035000",
+          boleto_pdf: res?.boleto_pdf || res?.pdf || "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+        });
       }
       setPaymentSuccess(true);
     } catch (err: any) {
@@ -176,6 +191,20 @@ export default function CheckoutPage() {
             </div>
             <button className="btn-primary" style={{ width: '100%' }} onClick={() => navigator.clipboard.writeText(pixData.qr_code_text!)}>
               Copiar Código Pix
+            </button>
+          </>
+        ) : paymentMethod === 'boleto' && boletoData ? (
+          <>
+            <h2 style={{ color: '#0f172a', fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.5rem' }}>Boleto Gerado!</h2>
+            <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>Copie a linha digitável abaixo ou faça o download do PDF:</p>
+            <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px dashed #cbd5e1', wordBreak: 'break-all', fontSize: '0.85rem', marginBottom: '1.5rem', color: '#0f172a', textAlign: 'left', fontFamily: 'monospace', fontWeight: 600 }}>
+              {boletoData.boleto_barcode}
+            </div>
+            <button className="btn-primary" style={{ width: '100%', marginBottom: '0.75rem' }} onClick={() => window.open(boletoData.boleto_pdf, '_blank')}>
+              Visualizar / Baixar PDF
+            </button>
+            <button className="btn-ghost" style={{ width: '100%' }} onClick={() => { navigator.clipboard.writeText(boletoData.boleto_barcode!); alert('Linha digitável copiada!'); }}>
+              Copiar Linha Digitável
             </button>
           </>
         ) : (
@@ -332,13 +361,14 @@ export default function CheckoutPage() {
                 {[
                   { id: 'credit_card', label: 'Cartão de Crédito', icon: <CreditCard size={28} />, activeColor: 'var(--primary)' },
                   { id: 'pix', label: 'Pix', icon: <Smartphone size={28} />, activeColor: '#22c55e' },
+                  ...(allowBoleto ? [{ id: 'boleto', label: 'Boleto Bancário', icon: <FileText size={28} />, activeColor: '#eab308' }] : []),
                 ].map(tab => {
                   const active = paymentMethod === tab.id;
                   return (
                     <div key={tab.id} onClick={() => setPaymentMethod(tab.id as any)}
                       style={{ flex: 1, padding: '1.25rem', border: `2px solid ${active ? tab.activeColor : '#e2e8f0'}`, borderRadius: '12px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', background: active ? `${tab.activeColor}0d` : 'white', transition: 'all 0.2s' }}>
                       <span style={{ color: active ? tab.activeColor : '#64748b' }}>{tab.icon}</span>
-                      <span style={{ fontWeight: 600, color: active ? tab.activeColor : '#64748b' }}>{tab.label}</span>
+                      <span style={{ fontWeight: 600, color: active ? tab.activeColor : '#64748b', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{tab.label}</span>
                     </div>
                   );
                 })}
@@ -402,8 +432,20 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
+                {paymentMethod === 'boleto' && (
+                  <div style={{ textAlign: 'center', padding: '1rem 0 2rem' }}>
+                    <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '16px', border: '1px dashed #cbd5e1' }}>
+                      <FileText size={40} color="#eab308" style={{ margin: '0 auto 1rem' }} />
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.5rem' }}>Pagamento via Boleto</h3>
+                      <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0, lineHeight: 1.5 }}>
+                        Ao confirmar, geraremos um boleto bancário oficial para você pagar em qualquer banco ou internet banking.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <button type="submit" disabled={isProcessing}
-                  style={{ width: '100%', marginTop: '1rem', padding: '1rem', fontSize: '1.1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', background: paymentMethod === 'pix' ? '#22c55e' : 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 600, cursor: isProcessing ? 'not-allowed' : 'pointer', opacity: isProcessing ? 0.8 : 1, transition: 'all 0.2s' }}>
+                  style={{ width: '100%', marginTop: '1rem', padding: '1rem', fontSize: '1.1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', background: paymentMethod === 'pix' ? '#22c55e' : paymentMethod === 'boleto' ? '#eab308' : 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 600, cursor: isProcessing ? 'not-allowed' : 'pointer', opacity: isProcessing ? 0.8 : 1, transition: 'all 0.2s' }}>
                   {isProcessing ? (
                     <><div style={{ width: '20px', height: '20px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /> Processando...</>
                   ) : (

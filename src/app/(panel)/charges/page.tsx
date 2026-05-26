@@ -30,7 +30,7 @@ export default function ChargesPage() {
 
   // form state
   const [cartItems, setCartItems] = useState([{ id: Date.now(), name: '', unitPrice: 0, quantity: 1 }]);
-  const [chargeInfo, setChargeInfo] = useState({ name: '', dueDate: '', customerName: '', customerEmail: '', billingType: 'unica' as 'unica'|'recorrente', frequency: 'mensal', hasLimit: false, limitCount: 12, hasTrial: false, trialDays: 7 });
+  const [chargeInfo, setChargeInfo] = useState({ name: '', dueDate: '', customerName: '', customerEmail: '', billingType: 'unica' as 'unica'|'recorrente', frequency: 'mensal', hasLimit: false, limitCount: 12, hasTrial: false, trialDays: 7, allowBoleto: true });
 
   const totalValue = useMemo(() => cartItems.reduce((a, i) => a + (i.unitPrice||0)*(i.quantity||0), 0), [cartItems]);
 
@@ -72,7 +72,7 @@ export default function ChargesPage() {
 
   const openModal = () => {
     setCartItems([{ id: Date.now(), name: '', unitPrice: 0, quantity: 1 }]);
-    setChargeInfo({ name: '', dueDate: '', customerName: '', customerEmail: '', billingType: 'unica', frequency: 'mensal', hasLimit: false, limitCount: 12, hasTrial: false, trialDays: 7 });
+    setChargeInfo({ name: '', dueDate: '', customerName: '', customerEmail: '', billingType: 'unica', frequency: 'mensal', hasLimit: false, limitCount: 12, hasTrial: false, trialDays: 7, allowBoleto: true });
     setIsModalOpen(true);
   };
 
@@ -80,6 +80,7 @@ export default function ChargesPage() {
     if (!chargeInfo.name) { alert('Informe o nome/descrição.'); return; }
     setIsSaving(true);
     try {
+      let createdToken = '';
       if (chargeInfo.billingType === 'unica') {
         // Tentando payload achatado e com números (sem wrapper "charge")
         // E voltando para DD/MM/YYYY que é comum em gateways BR
@@ -103,7 +104,9 @@ export default function ChargesPage() {
           }
         };
         
-        await chargesService.create(payload);
+        const res = await chargesService.create(payload);
+        const data = (res as any)?.charge || (res as any)?.data || res;
+        createdToken = data?.token || data?.id || '';
       } else {
         const planPayload: CreatePlanPayload = {
           name: chargeInfo.name,
@@ -111,8 +114,15 @@ export default function ChargesPage() {
           periodicity: frequencyToPeriodicity[chargeInfo.frequency] ?? 1,
           public: true,
         };
-        await plansService.create(planPayload);
+        const res = await plansService.create(planPayload);
+        const data = (res as any)?.plan || (res as any)?.data || res;
+        createdToken = data?.token || data?.id || '';
       }
+
+      if (createdToken) {
+        localStorage.setItem(`allow_boleto_${createdToken}`, chargeInfo.allowBoleto ? 'true' : 'false');
+      }
+
       await load();
       setIsModalOpen(false);
     } catch (e: any) { alert(e.message || 'Erro ao salvar.'); }
@@ -123,7 +133,7 @@ export default function ChargesPage() {
 
   const checkoutUrl = (r: Row) => {
     if (r.type === 'avulsa') return (r.raw as ApiCharge).checkout_url || (typeof window !== 'undefined' ? `${window.location.origin}/checkout/${r.token}` : `/checkout/${r.token}`);
-    return `${typeof window !== 'undefined' ? window.location.origin : ''}/checkout/plan/${r.token}`;
+    return `${typeof window !== 'undefined' ? window.location.origin : ''}/checkout/${r.token}`;
   };
 
   return (
@@ -211,13 +221,19 @@ export default function ChargesPage() {
               {/* Billing type toggle */}
               <div className="form-group">
                 <label>Tipo de Cobrança</label>
-                <div style={{ display:'flex', gap:'1.5rem' }}>
+                <div style={{ display:'flex', gap:'1.5rem', marginBottom:'1rem' }}>
                   {[['unica','Única'],['recorrente','Recorrente']].map(([v,l]) => (
                     <label key={v} style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer', fontWeight:500 }}>
                       <input type="radio" name="btype" value={v} checked={chargeInfo.billingType === v} onChange={() => setChargeInfo({...chargeInfo, billingType: v as any})} style={{ accentColor:'var(--primary)' }}/>
                       {l}
                     </label>
                   ))}
+                </div>
+                <div style={{ display:'flex', alignItems:'center', marginTop:'0.5rem' }}>
+                  <label style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer', fontWeight:500, margin: 0 }}>
+                    <input type="checkbox" checked={chargeInfo.allowBoleto} onChange={e => setChargeInfo({...chargeInfo, allowBoleto: e.target.checked})} style={{ accentColor:'var(--primary)', width:'16px', height:'16px' }}/>
+                    Oferecer pagamento via Boleto Bancário no checkout
+                  </label>
                 </div>
               </div>
 
