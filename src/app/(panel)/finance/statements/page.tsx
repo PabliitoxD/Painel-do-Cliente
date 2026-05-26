@@ -20,7 +20,7 @@ import { translateStatus, formatCurrency, getStatusPillClass } from '@/utils/for
 
 export default function StatementsPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [timeRange, setTimeRange] = useState('Últimos 30 dias');
+  const [timeRange, setTimeRange] = useState('Últimos 7 dias');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [isTimeMenuOpen, setIsTimeMenuOpen] = useState(false);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
@@ -102,7 +102,7 @@ export default function StatementsPage() {
 
   // Cálculos de métricas baseados nos dados filtrados ou na API de resumo
   const metrics = useMemo(() => {
-    if (apiSummary && statusFilter === 'Todos' && searchQuery === '' && timeRange === 'Últimos 30 dias') {
+    if (apiSummary && statusFilter === 'Todos' && searchQuery === '' && timeRange === 'Últimos 7 dias') {
       return {
         inflows: apiSummary.total || 0,
         outflows: 0, // A API de resumo geralmente não traz saídas separadas aqui
@@ -218,12 +218,12 @@ export default function StatementsPage() {
             <button 
               className="btn-ghost" 
               onClick={() => setIsTimeMenuOpen(!isTimeMenuOpen)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.8rem 1.2rem', borderRadius: '12px', background: 'var(--background)' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.8rem 1.2rem', borderRadius: '12px', background: isTimeMenuOpen ? 'var(--surface-hover)' : 'var(--background)' }}
             >
               <Calendar size={18} /> {timeRange} <ChevronDown size={14} />
             </button>
             {isTimeMenuOpen && (
-              <div className="filter-menu glass-panel animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 100, width: '250px', padding: '0.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <div className="filter-menu animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 100, width: '250px', padding: '0.5rem', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--primary)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
                 {timeOptions.map(opt => (
                   <button 
                     key={opt}
@@ -282,12 +282,12 @@ export default function StatementsPage() {
             <button 
               className="btn-ghost" 
               onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.8rem 1.2rem', borderRadius: '12px', background: 'var(--background)' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.8rem 1.2rem', borderRadius: '12px', background: isStatusMenuOpen ? 'var(--surface-hover)' : 'var(--background)' }}
             >
               <Filter size={18} /> {statusFilter === 'Todos' ? 'Status' : statusFilter} <ChevronDown size={14} />
             </button>
             {isStatusMenuOpen && (
-              <div className="filter-menu glass-panel animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 100, width: '200px', padding: '0.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <div className="filter-menu animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 100, width: '200px', padding: '0.5rem', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--primary)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
                 {statusOptions.map(opt => (
                   <button 
                     key={opt}
@@ -302,10 +302,11 @@ export default function StatementsPage() {
             )}
           </div>
 
-          {(statusFilter !== 'Todos' || searchQuery !== '' || timeRange !== 'Últimos 30 dias') && (
+          {(statusFilter !== 'Todos' || searchQuery !== '' || timeRange !== 'Últimos 7 dias') && (
             <button 
-              onClick={() => { setStatusFilter('Todos'); setSearchQuery(''); setTimeRange('Últimos 30 dias'); }}
-              style={{ padding: '0.5rem', color: 'var(--danger)', opacity: 0.8 }}
+              onClick={() => { setStatusFilter('Todos'); setSearchQuery(''); setTimeRange('Últimos 7 dias'); }}
+              style={{ padding: '0.5rem', color: 'var(--danger)', opacity: 0.8, cursor: 'pointer', background: 'transparent', border: 'none' }}
+              title="Limpar filtros"
             >
               <X size={18} />
             </button>
