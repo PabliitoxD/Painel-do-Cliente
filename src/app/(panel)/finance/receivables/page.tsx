@@ -54,12 +54,26 @@ export default function ReceivablesPage() {
       // Trata a Agenda
       const schedulesData = schedulesRes?.data || schedulesRes || [];
       if (Array.isArray(schedulesData)) {
-        setSchedules(schedulesData.map((s: any) => ({
-          date: s.date || (s.scheduled_for ? new Date(s.scheduled_for).toLocaleDateString('pt-BR') : 'N/A'),
-          amount: s.amount || s.value || 0,
-          count: s.count || s.transactions_count || 1,
-          status: s.status || 'PENDENTE'
-        })));
+        setSchedules(schedulesData.map((s: any) => {
+          let dateObj = s.scheduled_for || s.date || s.created_at;
+          let dateStr = 'N/A';
+          if (dateObj) {
+            const d = new Date(dateObj);
+            if (!isNaN(d.getTime())) {
+              dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(',', ' -');
+            } else {
+              dateStr = dateObj; // fallback to string
+            }
+          }
+          return {
+            id: s.id || s.token || s.transaction_id || `TR-${Math.floor(Math.random()*10000)}`,
+            date: dateStr,
+            rawDate: dateObj,
+            amount: s.amount || s.value || s.net_amount || 0,
+            count: s.count || s.transactions_count || 1,
+            status: s.status || 'PENDENTE'
+          };
+        }));
       }
     }).catch(err => {
       console.error("Erro ao carregar dados de recebíveis:", err);
@@ -71,6 +85,29 @@ export default function ReceivablesPage() {
 
   const formatCurrency = (val: number) => {
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
+  const getFilteredWaitingSchedules = () => {
+    let list = schedules.filter(s => {
+      const isReleased = s.status.toLowerCase() === 'released' || s.status.toLowerCase() === 'paid' || s.status.toLowerCase() === 'liberado' || s.status.toLowerCase() === 'aprovado' || getStatusPillClass(s.status) === 'aprovada';
+      return !isReleased;
+    });
+
+    if (consultDateRange.start || consultDateRange.end) {
+      list = list.filter(s => {
+        const sDateStr = s.rawDate || s.date || '';
+        let sDate = new Date(sDateStr);
+        if (isNaN(sDate.getTime()) && typeof sDateStr === 'string' && sDateStr.includes('/')) {
+           const parts = sDateStr.split(' - ')[0].split('/');
+           sDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T12:00:00`);
+        }
+        if (isNaN(sDate.getTime())) return true;
+        if (consultDateRange.start && sDate < new Date(`${consultDateRange.start}T00:00:00`)) return false;
+        if (consultDateRange.end && sDate > new Date(`${consultDateRange.end}T23:59:59`)) return false;
+        return true;
+      });
+    }
+    return list;
   };
 
   return (
@@ -160,21 +197,21 @@ export default function ReceivablesPage() {
                   }}>
                     <div>
                       <p style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.3rem' }}>
-                        {isReleased ? 'Valor Liberado' : `Disponível em: ${day.date}`}
+                        ID: {day.id}
                       </p>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>{day.count} vendas processadas</p>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>Transação</p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <p style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '0.2rem' }}>
                         {formatCurrency(day.amount)}
                       </p>
                       <span style={{ 
-                        fontSize: '0.7rem', 
+                        fontSize: '0.75rem', 
                         letterSpacing: '0.5px',
                         color: isReleased ? 'var(--success)' : 'var(--warning)',
                         fontWeight: 800
                       }}>
-                        {isReleased ? 'Disponível' : 'Aguardando'}
+                        {isReleased ? 'LIBERADO' : day.date}
                       </span>
                     </div>
                   </div>
@@ -239,13 +276,13 @@ export default function ReceivablesPage() {
             >
               <X size={20} />
             </button>
-            <h2 style={{ marginBottom: '1.5rem', fontSize: '1.4rem' }}>Consultar Recebimentos</h2>
+            <h2 style={{ marginBottom: '1.5rem', fontSize: '1.4rem' }}>Valores Aguardando Liberação</h2>
             
             <p className="text-muted" style={{ marginBottom: '1.5rem', fontSize: '0.9rem', lineHeight: 1.5 }}>
-              Filtre o período desejado para visualizar e exportar o relatório de recebimentos.
+              Filtre o período desejado para visualizar e exportar o relatório de valores aguardando liberação.
             </p>
 
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
               <div style={{ flex: 1 }}>
                 <label className="text-muted" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>Data Inicial</label>
                 <input 
@@ -265,39 +302,70 @@ export default function ReceivablesPage() {
                 />
               </div>
             </div>
+
+            <div style={{ maxHeight: '250px', overflowY: 'auto', marginBottom: '1.5rem', background: 'var(--background)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+              {(() => {
+                const filtered = getFilteredWaitingSchedules();
+                
+                if (filtered.length === 0) {
+                  return <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-dim)' }}>Nenhum valor aguardando liberação encontrado.</div>;
+                }
+
+                return (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                    <thead style={{ position: 'sticky', top: 0, background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
+                      <tr>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-dim)' }}>ID</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-dim)' }}>Previsão</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'right', color: 'var(--text-dim)' }}>Valor</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'center', color: 'var(--text-dim)' }}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((item, idx) => {
+                        return (
+                          <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                            <td style={{ padding: '0.75rem', color: 'var(--text-main)' }}>{item.id}</td>
+                            <td style={{ padding: '0.75rem', color: 'var(--text-main)' }}>{item.date}</td>
+                            <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 600, color: 'var(--text-main)' }}>{formatCurrency(item.amount)}</td>
+                            <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                               <span style={{ color: 'var(--warning)', fontWeight: 600, fontSize: '0.75rem' }}>
+                                  AGUARDANDO
+                               </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                );
+              })()}
+            </div>
             
             <button 
               className="btn-primary" 
               style={{ width: '100%', padding: '1rem', fontWeight: 600 }} 
               onClick={() => {
-                let filtered = schedules;
-                if (consultDateRange.start || consultDateRange.end) {
-                  filtered = schedules.filter(s => {
-                    const sDateStr = s.date || '';
-                    const sDate = sDateStr.includes('/') ? new Date(sDateStr.split('/').reverse().join('-') + 'T12:00:00') : new Date(sDateStr);
-                    if (isNaN(sDate.getTime())) return true;
-                    if (consultDateRange.start && sDate < new Date(`${consultDateRange.start}T00:00:00`)) return false;
-                    if (consultDateRange.end && sDate > new Date(`${consultDateRange.end}T23:59:59`)) return false;
-                    return true;
-                  });
-                }
+                const filtered = getFilteredWaitingSchedules();
                 
                 if (filtered.length === 0) {
-                  alert('Nenhum dado encontrado para esse período.');
+                  alert('Nenhum dado encontrado para exportar.');
                   return;
                 }
 
-                const headers = ['Data', 'Vendas Processadas', 'Valor Total', 'Status'];
+                const headers = ['ID Transacao', 'Previsao Liberacao', 'Valor Total', 'Status'];
                 const csvContent = [
                   headers.join(','),
-                  ...filtered.map(item => `${item.date},${item.count},${item.amount},${item.status}`)
+                  ...filtered.map(item => {
+                    return `${item.id},${item.date},${item.amount},AGUARDANDO`
+                  })
                 ].join('\n');
                 
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.setAttribute('download', `recebimentos_${new Date().toISOString().slice(0,10)}.csv`);
+                link.setAttribute('download', `valores_aguardando_${new Date().toISOString().slice(0,10)}.csv`);
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);

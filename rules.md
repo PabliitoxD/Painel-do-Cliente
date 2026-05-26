@@ -21,6 +21,9 @@ Mantenha os padrões de design definidos:
 - Uso de variáveis de CSS (`globals.css`).
 - Efeitos de profundidade (3D/Shadows) em elementos fixos.
 - Micro-animações e estados de hover consistentes.
+- **Padrão de Data e Hora**: Sempre apresentar na configuração `DD/MM/AAAA - HH:MM` (ex: `26/05/2026 - 13:30`).
+- **Valores Monetários**: Sempre formatar em Real (BRL) (ex: `R$ 1.500,00`).
+
 
 ## 5. Documentação de Código
 Sempre adicione comentários explicativos no código, especialmente em componentes complexos, funções de lógica de negócio e arquivos de estilo. Isso facilita a colaboração e a manutenção futura por outros desenvolvedores.
