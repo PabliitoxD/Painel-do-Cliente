@@ -98,7 +98,7 @@ export default function StatementsPage() {
 
       return matchesSearch && matchesStatus && matchesTime;
     });
-  }, [searchQuery, timeRange, statusFilter]);
+  }, [statementsData, searchQuery, timeRange, statusFilter]);
 
   // Cálculos de métricas baseados nos dados filtrados ou na API de resumo
   const metrics = useMemo(() => {
