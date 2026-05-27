@@ -325,7 +325,7 @@ export default function DashboardHome() {
 
           <div className="stat-card">
             <div className="stat-top">
-              <span className="stat-title">Quantidade de vendas</span>
+              <span className="stat-title">Quantidade de transações</span>
               <div className="stat-icon-wrapper"><Clock size={24} /></div>
             </div>
             <div className="stat-value">{stats.quantidade}</div>
