@@ -2,7 +2,7 @@
 
 import { useNotifications, Notification } from '@/context/NotificationContext';
 import { 
-  CheckCircle2, DollarSign, AlertTriangle, RefreshCw, X, Trash2, CheckSquare 
+  CheckCircle2, DollarSign, AlertTriangle, RefreshCw, X, Trash2, CheckSquare, Check 
 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -158,7 +158,19 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
                 <div className="notif-content">
                   <div className="notif-title-row">
                     <span className="notif-title">{notif.title}</span>
-                    {!notif.read && <span className="notif-dot" />}
+                    {!notif.read && (
+                      <button 
+                        className="notif-single-read-btn" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markAsRead(notif.id);
+                        }}
+                        title="Marcar como lida"
+                      >
+                        <span className="notif-dot-icon"><Check size={12} /></span>
+                        <span className="notif-dot-glow" />
+                      </button>
+                    )}
                   </div>
                   <p className="notif-message">{notif.message}</p>
                   {notif.amount !== undefined && (
@@ -323,12 +335,49 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
           color: white;
         }
 
-        .notif-dot {
+        .notif-single-read-btn {
+          background: transparent;
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          position: relative;
+          width: 16px;
+          height: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: transform 0.2s;
+        }
+        .notif-single-read-btn:hover {
+          transform: scale(1.15);
+        }
+
+        .notif-dot-glow {
           width: 8px;
           height: 8px;
           border-radius: 50%;
           background: var(--primary);
           box-shadow: 0 0 8px var(--primary-glow);
+          transition: all 0.2s;
+        }
+
+        .notif-dot-icon {
+          opacity: 0;
+          color: var(--primary);
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: absolute;
+        }
+
+        .notif-single-read-btn:hover .notif-dot-glow {
+          opacity: 0;
+          transform: scale(0);
+        }
+
+        .notif-single-read-btn:hover .notif-dot-icon {
+          opacity: 1;
         }
 
         .notif-message {
