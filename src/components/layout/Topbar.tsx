@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Settings, Sun, Moon, Power, ChevronLeft, Menu, X } from 'lucide-react';
+import { Bell, Sun, Moon, Power, ChevronLeft, Menu, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -29,10 +29,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <span className="badge">3</span>
         </button>
         
-        <button className="icon-btn" onClick={() => router.push('/dashboard/settings')}>
-          <Settings size={18} />
-        </button>
-
         <button className="icon-btn" onClick={toggleTheme}>
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
