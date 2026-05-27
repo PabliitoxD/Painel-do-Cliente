@@ -3,6 +3,9 @@
 import { Bell, Sun, Moon, Power, ChevronLeft, Menu, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useNotifications } from '@/context/NotificationContext';
+import { NotificationDropdown } from './NotificationDropdown';
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -10,10 +13,12 @@ interface TopbarProps {
 
 export function Topbar({ onMenuClick }: TopbarProps) {
   const { logout, theme, toggleTheme } = useAuth();
+  const { unreadCount } = useNotifications();
   const router = useRouter();
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
 
   return (
-    <header className="topbar">
+    <header className="topbar" style={{ position: 'relative' }}>
       <div className="topbar-left">
         <button className="menu-toggle-btn" onClick={onMenuClick}>
           <Menu size={24} />
@@ -24,10 +29,14 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       </div>
 
       <div className="topbar-actions">
-        <button className="icon-btn" onClick={() => alert('Notificações: Em breve...')}>
+        <button className="icon-btn" onClick={() => setIsNotifOpen(!isNotifOpen)}>
           <Bell size={18} />
-          <span className="badge">3</span>
+          {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
         </button>
+
+        {isNotifOpen && (
+          <NotificationDropdown onClose={() => setIsNotifOpen(false)} />
+        )}
         
         <button className="icon-btn" onClick={toggleTheme}>
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
