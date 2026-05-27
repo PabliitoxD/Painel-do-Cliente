@@ -133,7 +133,7 @@ export default function RegisterPage() {
         <div className="login-header" style={{ marginTop: '3rem' }}>
           <img src="https://tronnus.com/wp-content/uploads/2026/01/tronnus-png-001.png" alt="Tronnus" className="login-logo" style={{ marginBottom: '1.2rem', height: '45px' }} />
           <h1 className="gradient-text" style={{ fontSize: '2.5rem', marginBottom: '0.5rem', fontWeight: 800 }}>Crie a sua conta Tronnus</h1>
-          <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem' }}>Leva menos de 2 minutos.</p>
+          <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem' }}>Processo rápido e estruturado para ativação da operação</p>
         </div>
 
         <div className="steps-tracker-premium">
