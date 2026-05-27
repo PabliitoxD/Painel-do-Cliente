@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Sun, Moon, Power, ChevronLeft, Menu, X } from 'lucide-react';
+import { Bell, Sun, Moon, Power, Menu, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -18,13 +18,10 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
   return (
-    <header className="topbar" style={{ position: 'relative' }}>
+    <header className="topbar">
       <div className="topbar-left">
         <button className="menu-toggle-btn" onClick={onMenuClick}>
           <Menu size={24} />
-        </button>
-        <button className="back-btn" onClick={() => router.back()}>
-          <ChevronLeft size={20} />
         </button>
       </div>
 
