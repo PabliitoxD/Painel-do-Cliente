@@ -2,17 +2,19 @@
 
 import { useNotifications, Notification } from '@/context/NotificationContext';
 import { 
-  CheckCircle2, DollarSign, AlertTriangle, RefreshCw, X, Trash2, CheckSquare 
+  CheckCircle2, DollarSign, AlertTriangle, RefreshCw, X, Trash2, CheckSquare, Check 
 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface NotificationDropdownProps {
   onClose: () => void;
 }
 
 export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
-  const { notifications, markAsRead, markAllAsRead, clearAll } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotifications();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -28,6 +30,27 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
 
   const formatCurrency = (val: number) => {
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
+  const handleNotifClick = (notif: Notification) => {
+    markAsRead(notif.id);
+    
+    // Direcionar para a tela correspondente com base no status da notificação
+    switch (notif.type) {
+      case 'withdrawal_approved':
+        router.push('/finance/withdrawals/history');
+        break;
+      case 'sale_approved':
+        router.push('/sales/approved');
+        break;
+      case 'chargeback':
+        router.push('/sales/chargebacks');
+        break;
+      case 'sale_refunded':
+        router.push('/sales/reversals');
+        break;
+    }
+    onClose();
   };
 
   const getIconAndColor = (type: Notification['type']) => {
@@ -59,12 +82,33 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
     }
   };
 
+  // Filtra as notificações limitando às 3 últimas ocorrências de cada status
+  const getFilteredNotifications = () => {
+    const types: Notification['type'][] = ['withdrawal_approved', 'sale_approved', 'chargeback', 'sale_refunded'];
+    const allowedIds = new Set<string>();
+    
+    types.forEach(t => {
+      notifications
+        .filter(n => n.type === t)
+        .slice(0, 3)
+        .forEach(n => allowedIds.add(n.id));
+    });
+    
+    return notifications.filter(n => allowedIds.has(n.id));
+  };
+
+  const displayedNotifications = getFilteredNotifications();
+
   return (
     <div className="notification-dropdown glass-panel animate-fade-in" ref={dropdownRef}>
       <div className="notif-header">
         <div>
           <h3>Notificações</h3>
-          <span className="notif-badge-count">{notifications.filter(n => !n.read).length} não lidas</span>
+          <div className="notif-sub-header">
+            <span className="notif-badge-count">{unreadCount} não lidas</span>
+            <span className="notif-separator">•</span>
+            <span className="notif-total-count">{notifications.length} total</span>
+          </div>
         </div>
         <div className="header-actions">
           {notifications.length > 0 && (
@@ -92,18 +136,18 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
       </div>
 
       <div className="notif-list">
-        {notifications.length === 0 ? (
+        {displayedNotifications.length === 0 ? (
           <div className="notif-empty">
             <p>Você não tem nenhuma notificação.</p>
           </div>
         ) : (
-          notifications.map(notif => {
+          displayedNotifications.map(notif => {
             const config = getIconAndColor(notif.type);
             return (
               <div 
                 key={notif.id} 
                 className={`notif-item ${notif.read ? 'read' : 'unread'}`}
-                onClick={() => markAsRead(notif.id)}
+                onClick={() => handleNotifClick(notif)}
               >
                 <div 
                   className="notif-icon-wrapper" 
@@ -114,7 +158,19 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
                 <div className="notif-content">
                   <div className="notif-title-row">
                     <span className="notif-title">{notif.title}</span>
-                    {!notif.read && <span className="notif-dot" />}
+                    {!notif.read && (
+                      <button 
+                        className="notif-single-read-btn" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markAsRead(notif.id);
+                        }}
+                        title="Marcar como lida"
+                      >
+                        <span className="notif-dot-icon"><Check size={12} /></span>
+                        <span className="notif-dot-glow" />
+                      </button>
+                    )}
                   </div>
                   <p className="notif-message">{notif.message}</p>
                   {notif.amount !== undefined && (
@@ -163,10 +219,22 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
           color: white;
         }
 
-        .notif-badge-count {
+        .notif-sub-header {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          margin-top: 0.2rem;
+        }
+
+        .notif-badge-count, .notif-total-count {
           font-size: 0.8rem;
           color: var(--text-dim);
           font-weight: 600;
+        }
+
+        .notif-separator {
+          font-size: 0.8rem;
+          color: rgba(255, 255, 255, 0.2);
         }
 
         .header-actions {
@@ -267,12 +335,49 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
           color: white;
         }
 
-        .notif-dot {
+        .notif-single-read-btn {
+          background: transparent;
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          position: relative;
+          width: 16px;
+          height: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: transform 0.2s;
+        }
+        .notif-single-read-btn:hover {
+          transform: scale(1.15);
+        }
+
+        .notif-dot-glow {
           width: 8px;
           height: 8px;
           border-radius: 50%;
           background: var(--primary);
           box-shadow: 0 0 8px var(--primary-glow);
+          transition: all 0.2s;
+        }
+
+        .notif-dot-icon {
+          opacity: 0;
+          color: var(--primary);
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: absolute;
+        }
+
+        .notif-single-read-btn:hover .notif-dot-glow {
+          opacity: 0;
+          transform: scale(0);
+        }
+
+        .notif-single-read-btn:hover .notif-dot-icon {
+          opacity: 1;
         }
 
         .notif-message {
