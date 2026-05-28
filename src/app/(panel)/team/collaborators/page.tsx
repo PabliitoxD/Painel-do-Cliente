@@ -266,7 +266,7 @@ export default function CollaboratorsPage() {
                 <button type="button" className="btn-ghost" onClick={handleCloseModal} style={{ padding: '0.4rem', borderRadius: '8px' }}><X size={20} /></button>
               </div>
               
-              <div className="modal-body">
+              <div className="modal-body" style={{ flex: 1, overflowY: 'auto' }}>
                 <div className="form-group">
                   <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', marginBottom: '0.5rem', display: 'block' }}>Nome Completo</label>
                   <input 
@@ -367,7 +367,9 @@ export default function CollaboratorsPage() {
           width: 100%;
           box-shadow: var(--shadow-lg);
           border: 1px solid var(--border);
-          margin-top: 2rem;
+          max-height: 90vh;
+          display: flex;
+          flex-direction: column;
         }
         .modal-header {
           display: flex;

@@ -293,7 +293,7 @@ export default function ProfilesPage() {
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>{editingProfile ? 'Editar Perfil' : 'Novo Perfil'}</h2>
                 <button type="button" className="btn-ghost" onClick={handleCloseModal} style={{ padding: '0.4rem', borderRadius: '8px' }}><X size={20} /></button>
               </div>
-              <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
+              <div className="modal-body" style={{ flex: 1, overflowY: 'auto', paddingRight: '0.5rem' }}>
                 <div className="form-group mb-6">
                   <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', marginBottom: '0.5rem', display: 'block' }}>Nome do Perfil</label>
                   <input 
@@ -390,7 +390,9 @@ export default function ProfilesPage() {
           width: 100%;
           box-shadow: var(--shadow-lg);
           border: 1px solid var(--border);
-          margin-top: 2rem;
+          max-height: 90vh;
+          display: flex;
+          flex-direction: column;
         }
         .modal-header {
           display: flex;
