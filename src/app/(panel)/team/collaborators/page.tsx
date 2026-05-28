@@ -257,9 +257,10 @@ export default function CollaboratorsPage() {
             </tbody>
           </table>
         </div>
+      </div>
 
-        {isModalOpen && (
-          <div className="modal-overlay" onClick={handleCloseModal}>
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={handleCloseModal}>
             <form className="modal-content" onClick={e => e.stopPropagation()} onSubmit={handleSaveCollab} style={{ maxWidth: '500px', width: '95%' }}>
               <div className="modal-header">
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>{editingCollab ? 'Editar Colaborador' : 'Novo Colaborador'}</h2>
@@ -343,7 +344,6 @@ export default function CollaboratorsPage() {
             </form>
           </div>
         )}
-      </div>
 
       <style jsx>{`
         .modal-overlay {

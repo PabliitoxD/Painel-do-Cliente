@@ -285,9 +285,10 @@ export default function ProfilesPage() {
             </tbody>
           </table>
         </div>
+      </div>
 
-        {isModalOpen && (
-          <div className="modal-overlay" onClick={handleCloseModal}>
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={handleCloseModal}>
             <form className="modal-content" onClick={e => e.stopPropagation()} onSubmit={handleSaveProfile} style={{ maxWidth: '800px', width: '95%' }}>
               <div className="modal-header">
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>{editingProfile ? 'Editar Perfil' : 'Novo Perfil'}</h2>
@@ -366,7 +367,6 @@ export default function ProfilesPage() {
             </form>
           </div>
         )}
-      </div>
 
       <style jsx>{`
         .modal-overlay {
