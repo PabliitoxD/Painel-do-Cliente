@@ -378,10 +378,11 @@ export default function ProfilesPage() {
           background: rgba(0, 0, 0, 0.6);
           backdrop-filter: blur(4px);
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: center;
           z-index: 1000;
-          padding: 1rem;
+          padding: 2rem 1rem;
+          overflow-y: auto;
         }
         .modal-content {
           background: var(--surface);
@@ -390,6 +391,8 @@ export default function ProfilesPage() {
           width: 100%;
           box-shadow: var(--shadow-lg);
           border: 1px solid var(--border);
+          margin-top: auto;
+          margin-bottom: auto;
         }
         .modal-header {
           display: flex;
