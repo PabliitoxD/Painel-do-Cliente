@@ -317,9 +317,6 @@ export default function DashboardHome() {
             <div className="stat-value">{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.faturamento)}</div>
             <div className="stat-footer">
               <span className="stat-trend trend-up">—</span>
-              <button className="saque-btn" onClick={() => router.push('/finance/withdrawals/requests')}>
-                Solicitar saque
-              </button>
             </div>
           </div>
 

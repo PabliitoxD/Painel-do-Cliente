@@ -58,17 +58,31 @@ function LoginContent() {
     const token = searchParams.get('token');
     const company_token = searchParams.get('company_token');
     if (token && company_token) {
+      // Security check: has this browser/device initiated the login flow?
+      const loginInitiated = localStorage.getItem('tronnus_login_initiated') === 'true';
+      if (!loginInitiated) {
+        setError('Compartilhamento de link de acesso detectado. Por motivos de segurança, sua sessão foi encerrada e é necessário fazer o login manualmente.');
+        // Clean URL parameters to prevent auto-login loops
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      }
+
       loginWithOneId(token, company_token).catch(err => {
         setError(err.message || 'Falha ao logar com OneID');
       });
     }
     if (searchParams.get('session') === 'expired') {
-      setError('Sua sessão expirou. Faça login novamente.');
+      setError('Sua sessão expirou devido a uma mudança de navegador ou dispositivo. Faça login novamente.');
+      // Clean query params to be clean
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [searchParams, loginWithOneId]);
 
   const handleOneIdClick = async () => {
     setError('');
+    
+    // Indica que esta máquina iniciou o login legítimo
+    localStorage.setItem('tronnus_login_initiated', 'true');
 
     // Verifica se o SDK carregou corretamente
     const getTokenAuth = (window as any).getTokenAuth;
