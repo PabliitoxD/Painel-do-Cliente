@@ -1,26 +1,158 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Search, Plus, Edit2, Trash2, Users2, Mail, Shield, X } from 'lucide-react';
 
-// Mock data (Empty until real API is provided)
-const MOCK_PROFILES: any[] = [];
-const MOCK_COLLABORATORS: any[] = [];
+interface Profile {
+  id: string;
+  name: string;
+  isDefault: boolean;
+}
+
+interface Collaborator {
+  id: string;
+  name: string;
+  email: string;
+  profileId: string;
+  status: 'Ativo' | 'Inativo';
+  lastLogin: string;
+}
+
+const DEFAULT_COLLABORATORS: Collaborator[] = [
+  { id: '1', name: 'João Silva', email: 'joao@tronnus.com', profileId: '1', status: 'Ativo', lastLogin: '28/05/2026 - 11:30' },
+  { id: '2', name: 'Maria Souza', email: 'maria@tronnus.com', profileId: '3', status: 'Ativo', lastLogin: '27/05/2026 - 14:15' },
+];
 
 export default function CollaboratorsPage() {
-  const [collaborators, setCollaborators] = useState(MOCK_COLLABORATORS);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCollab, setEditingCollab] = useState<any>(null);
+  const [editingCollab, setEditingCollab] = useState<Collaborator | null>(null);
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const handleOpenModal = (collab: any = null) => {
+  // Form states
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [profileId, setProfileId] = useState('');
+  const [status, setStatus] = useState<'Ativo' | 'Inativo'>('Ativo');
+  const [password, setPassword] = useState('');
+
+  // Load collaborators and profiles on mount
+  useEffect(() => {
+    // 1. Profiles
+    const storedProfiles = localStorage.getItem('tronnus_profiles');
+    let loadedProfiles: Profile[] = [];
+    if (storedProfiles) {
+      try {
+        loadedProfiles = JSON.parse(storedProfiles);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    setProfiles(loadedProfiles);
+
+    // 2. Collaborators
+    const storedCollabs = localStorage.getItem('tronnus_collaborators');
+    if (storedCollabs) {
+      try {
+        setCollaborators(JSON.parse(storedCollabs));
+      } catch (e) {
+        setCollaborators(DEFAULT_COLLABORATORS);
+        localStorage.setItem('tronnus_collaborators', JSON.stringify(DEFAULT_COLLABORATORS));
+      }
+    } else {
+      setCollaborators(DEFAULT_COLLABORATORS);
+      localStorage.setItem('tronnus_collaborators', JSON.stringify(DEFAULT_COLLABORATORS));
+    }
+  }, []);
+
+  const handleOpenModal = (collab: Collaborator | null = null) => {
     setEditingCollab(collab);
+    if (collab) {
+      setName(collab.name);
+      setEmail(collab.email);
+      setProfileId(collab.profileId);
+      setStatus(collab.status);
+      setPassword('');
+    } else {
+      setName('');
+      setEmail('');
+      setProfileId(profiles[0]?.id || '');
+      setStatus('Ativo');
+      setPassword('');
+    }
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setEditingCollab(null);
     setIsModalOpen(false);
+  };
+
+  const handleSaveCollab = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !email.trim() || !profileId) {
+      alert("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    let updated: Collaborator[];
+
+    if (editingCollab) {
+      // Edit
+      updated = collaborators.map(c => {
+        if (c.id === editingCollab.id) {
+          return {
+            ...c,
+            name: name.trim(),
+            email: email.trim(),
+            profileId,
+            status
+          };
+        }
+        return c;
+      });
+    } else {
+      // Create new
+      const newCollab: Collaborator = {
+        id: String(Date.now()),
+        name: name.trim(),
+        email: email.trim(),
+        profileId,
+        status,
+        lastLogin: 'Nunca'
+      };
+      updated = [...collaborators, newCollab];
+    }
+
+    setCollaborators(updated);
+    localStorage.setItem('tronnus_collaborators', JSON.stringify(updated));
+    handleCloseModal();
+  };
+
+  const handleDeleteCollab = (id: string, name: string) => {
+    if (!confirm(`Tem certeza que deseja remover o acesso do colaborador "${name}"?`)) return;
+
+    const updated = collaborators.filter(c => c.id !== id);
+    setCollaborators(updated);
+    localStorage.setItem('tronnus_collaborators', JSON.stringify(updated));
+  };
+
+  // Filtered list
+  const filteredCollaborators = useMemo(() => {
+    return collaborators.filter(c => 
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [collaborators, searchQuery]);
+
+  // Helper to find profile name
+  const getProfileName = (pId: string) => {
+    const prof = profiles.find(p => p.id === pId);
+    return prof ? prof.name : 'Desconhecido';
   };
 
   return (
@@ -33,7 +165,12 @@ export default function CollaboratorsPage() {
             </h1>
             <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>Gerencie as pessoas que têm acesso ao painel</p>
           </div>
-          <button className="btn-primary" onClick={() => handleOpenModal()} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button 
+            className="btn-primary" 
+            onClick={() => handleOpenModal()} 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            disabled={profiles.length === 0}
+          >
             <Plus size={18} /> Novo Colaborador
           </button>
         </div>
@@ -44,6 +181,8 @@ export default function CollaboratorsPage() {
             <input 
               type="text" 
               placeholder="Buscar por nome ou e-mail..." 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
               style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', color: 'var(--text-main)', fontSize: '0.95rem' }}
             />
           </div>
@@ -61,18 +200,18 @@ export default function CollaboratorsPage() {
               </tr>
             </thead>
             <tbody>
-              {collaborators.length === 0 ? (
+              {filteredCollaborators.length === 0 ? (
                 <tr>
                   <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-dim)' }}>
                     Nenhum colaborador encontrado.
                   </td>
                 </tr>
-              ) : collaborators.map(collab => (
+              ) : filteredCollaborators.map(collab => (
                 <tr key={collab.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--surface-hover)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'var(--primary)', fontSize: '0.9rem' }}>
-                        {collab.name.charAt(0)}
+                        {collab.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.95rem' }}>{collab.name}</div>
@@ -84,7 +223,7 @@ export default function CollaboratorsPage() {
                   </td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-main)', fontSize: '0.85rem' }}>
-                      <Shield size={14} className="text-primary" /> {collab.profileName}
+                      <Shield size={14} className="text-primary" /> {getProfileName(collab.profileId)}
                     </div>
                   </td>
                   <td>
@@ -95,10 +234,20 @@ export default function CollaboratorsPage() {
                   <td style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>{collab.lastLogin}</td>
                   <td style={{ textAlign: 'right' }}>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                      <button className="btn-ghost" onClick={() => handleOpenModal(collab)} title="Editar colaborador" style={{ padding: '0.4rem', borderRadius: '8px' }}>
+                      <button 
+                        className="btn-ghost" 
+                        onClick={() => handleOpenModal(collab)} 
+                        title="Editar colaborador" 
+                        style={{ padding: '0.4rem', borderRadius: '8px' }}
+                      >
                         <Edit2 size={16} />
                       </button>
-                      <button className="btn-ghost" title="Remover colaborador" style={{ padding: '0.4rem', borderRadius: '8px', color: 'var(--danger)', borderColor: 'rgba(203, 86, 86, 0.2)' }}>
+                      <button 
+                        className="btn-ghost" 
+                        onClick={() => handleDeleteCollab(collab.id, collab.name)}
+                        title="Remover colaborador" 
+                        style={{ padding: '0.4rem', borderRadius: '8px', color: 'var(--danger)', borderColor: 'rgba(203, 86, 86, 0.2)' }}
+                      >
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -111,10 +260,10 @@ export default function CollaboratorsPage() {
 
         {isModalOpen && (
           <div className="modal-overlay" onClick={handleCloseModal}>
-            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px', width: '95%' }}>
+            <form className="modal-content" onClick={e => e.stopPropagation()} onSubmit={handleSaveCollab} style={{ maxWidth: '500px', width: '95%' }}>
               <div className="modal-header">
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>{editingCollab ? 'Editar Colaborador' : 'Novo Colaborador'}</h2>
-                <button className="btn-ghost" onClick={handleCloseModal} style={{ padding: '0.4rem', borderRadius: '8px' }}><X size={20} /></button>
+                <button type="button" className="btn-ghost" onClick={handleCloseModal} style={{ padding: '0.4rem', borderRadius: '8px' }}><X size={20} /></button>
               </div>
               
               <div className="modal-body">
@@ -124,7 +273,9 @@ export default function CollaboratorsPage() {
                     type="text" 
                     className="form-control" 
                     placeholder="Ex: João da Silva" 
-                    defaultValue={editingCollab?.name || ''} 
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    required
                   />
                 </div>
 
@@ -134,17 +285,37 @@ export default function CollaboratorsPage() {
                     type="email" 
                     className="form-control" 
                     placeholder="joao@exemplo.com" 
-                    defaultValue={editingCollab?.email || ''} 
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
                   />
                 </div>
 
                 <div className="form-group">
                   <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', marginBottom: '0.5rem', display: 'block' }}>Perfil de Acesso</label>
-                  <select className="form-control" defaultValue={editingCollab?.profileId || ''}>
+                  <select 
+                    className="form-control" 
+                    value={profileId}
+                    onChange={e => setProfileId(e.target.value)}
+                    required
+                  >
                     <option value="" disabled>Selecione um perfil...</option>
-                    {MOCK_PROFILES.map(profile => (
+                    {profiles.map(profile => (
                       <option key={profile.id} value={profile.id}>{profile.name}</option>
                     ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label style={{ fontSize: '0.9rem', color: 'var(--text-dim)', marginBottom: '0.5rem', display: 'block' }}>Status</label>
+                  <select 
+                    className="form-control" 
+                    value={status}
+                    onChange={e => setStatus(e.target.value as 'Ativo' | 'Inativo')}
+                    required
+                  >
+                    <option value="Ativo">Ativo</option>
+                    <option value="Inativo">Inativo</option>
                   </select>
                 </div>
 
@@ -155,18 +326,21 @@ export default function CollaboratorsPage() {
                       type="password" 
                       className="form-control" 
                       placeholder="••••••••" 
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      required
                     />
                   </div>
                 )}
               </div>
 
               <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
-                <button className="btn-ghost" onClick={handleCloseModal}>Cancelar</button>
-                <button className="btn-primary" onClick={handleCloseModal} disabled={MOCK_PROFILES.length === 0}>
+                <button type="button" className="btn-ghost" onClick={handleCloseModal}>Cancelar</button>
+                <button type="submit" className="btn-primary" disabled={profiles.length === 0}>
                   Salvar Colaborador
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         )}
       </div>

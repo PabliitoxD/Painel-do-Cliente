@@ -251,3 +251,10 @@ Os serviços estão organizados em `src/services/api/`:
 - Dados sensíveis do usuário (token JWT) ficam em `localStorage` com a chave `tronnus_token`.
 - Em caso de erro `401`, redirecionar para `/login` e limpar o token.
 - Sempre trate erros de API com `try/catch` e exiba mensagens amigáveis ao usuário.
+
+---
+
+## 10. Manutenção do Inventário de Menus e Funcionalidades
+
+Sempre que um novo menu, funcionalidade, tela ou endpoint de API for alterado, criado ou implementado no painel do cliente, o arquivo local `inventory_report.md` na raiz do projeto **deve ser obrigatoriamente atualizado** ao final do dia de trabalho para refletir de maneira exata o status real de integração daquela funcionalidade (se está funcional, simulado/mockado ou em produção) e quais endpoints da API ele está consumindo. Isso garante que a rastreabilidade técnica do progresso do projeto seja mantida atualizada para toda a equipe.
+
