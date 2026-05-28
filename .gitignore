@@ -94,3 +94,8 @@ Desktop.ini
 # ─── Logs ────────────────────────────────────────────────────────────────────
 logs/
 *.log
+
+# ─── Documentation / Reports ─────────────────────────────────────────────────
+# Ignore the inventory report generated at the end of the day
+inventory_report.md
+
