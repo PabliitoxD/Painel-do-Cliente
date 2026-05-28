@@ -45,6 +45,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const storedUser = localStorage.getItem('tronnus_user');
       const isMockSession = localStorage.getItem('tronnus_mock_session') === 'true';
 
+      // Security layer: browser/device fingerprint validation
+      if (storedToken) {
+        const storedFingerprint = localStorage.getItem('tronnus_device_fingerprint');
+        const currentFingerprint = `${navigator.userAgent}|${window.screen.width}x${window.screen.height}|${navigator.language}`;
+        
+        if (storedFingerprint && storedFingerprint !== currentFingerprint) {
+          // Device or browser change detected! Force logoff
+          localStorage.removeItem('tronnus_user');
+          localStorage.removeItem('tronnus_token');
+          localStorage.removeItem('tronnus_mock_session');
+          localStorage.removeItem('tronnus_device_fingerprint');
+          localStorage.removeItem('tronnus_login_initiated');
+          setUser(null);
+          setIsLoading(false);
+          router.push('/login?session=expired');
+          return;
+        }
+      }
+
       if (storedToken && storedUser) {
         // Usa dados em cache — a validação real acontece nas chamadas de API
         setUser(JSON.parse(storedUser));
@@ -70,6 +89,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      const fingerprint = `${navigator.userAgent}|${window.screen.width}x${window.screen.height}|${navigator.language}`;
+      localStorage.setItem('tronnus_device_fingerprint', fingerprint);
+      localStorage.setItem('tronnus_login_initiated', 'true');
+    }
+  }, [user]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -193,6 +220,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('tronnus_user');
     localStorage.removeItem('tronnus_token');
     localStorage.removeItem('tronnus_mock_session');
+    localStorage.removeItem('tronnus_device_fingerprint');
+    localStorage.removeItem('tronnus_login_initiated');
     router.push('/login');
   };
 
