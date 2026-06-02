@@ -216,7 +216,7 @@ export default function DashboardHome() {
         created_at_lt,
       })
         .then(res => {
-          const data = res.data || res.orders || res || [];
+          const data = res.data?.orders || res.orders || res.data || res || [];
           const allOrdersFetched = Array.isArray(data) ? data : [];
           setAllOrders(allOrdersFetched);
           setTransactions(allOrdersFetched.slice(0, 5));
@@ -454,11 +454,14 @@ export default function DashboardHome() {
                         return null;
                       })()}
                     </td>
-                    <td>{t.client || t.customer_name || 'N/A'}</td>
-                    <td>{t.date || (t.created_at ? new Date(t.created_at).toLocaleString() : 'N/A')}</td>
+                    <td>{t.client || t.customer_name || t.buyer?.name || t.customerName || 'N/A'}</td>
+                    <td>{t.date || (t.created_at || t.createdAt ? new Date(t.created_at || t.createdAt).toLocaleString() : 'N/A')}</td>
                     <td>
                       <div className="valor-text">{t.value || formatCurrency(t.amount || 0)}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>{translateMethod(t.payment?.method || t.payment_method || t.method)}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>{(() => {
+                          const lastPay = t.payments?.length ? t.payments[t.payments.length - 1] : null;
+                          return lastPay?.payment_method?.description || translateMethod(lastPay?.payment_method?.method || t.payment_method || t.method);
+                        })()}</div>
                     </td>
                     <td>
                       <span className={`status-pill ${getStatusPillClass(t.status)}`}>

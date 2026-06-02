@@ -12,8 +12,8 @@ export const NAV_ITEMS: NavItem[] = [
   salesMenu,
   { label: 'Recorrência', href: '/recurring', icon: RefreshCcw },
   { label: 'Cobranças', href: '/charges', icon: Receipt },
-  { label: 'Recebedores', href: '/receivers', icon: Users },
-  teamMenu,
+  // { label: 'Recebedores', href: '/receivers', icon: Users },
+  // teamMenu,
   settingsMenu,
   { label: 'Suporte', href: '/support', icon: HelpCircle },
 ];

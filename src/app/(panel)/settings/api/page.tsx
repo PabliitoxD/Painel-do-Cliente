@@ -2,15 +2,34 @@
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Key, BookOpen, Copy, CheckCircle2, RotateCcw, Eye, EyeOff, Terminal, ExternalLink } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { fetchApi } from '@/services/api/client';
 
 export default function ApiSettingsPage() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [showLiveKey, setShowLiveKey] = useState(false);
-  const [showTestKey, setShowTestKey] = useState(false);
+  const [showKey1, setShowKey1] = useState(false);
+  const [showKey2, setShowKey2] = useState(false);
+  const [sellerKey, setSellerKey] = useState('');
+  const [showConfirmReset, setShowConfirmReset] = useState(false);
 
-  const LIVE_KEY = "live_prod_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-  const TEST_KEY = "test_sandbox_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+  const SELLER_TOKEN = typeof window !== 'undefined' ? localStorage.getItem('tronnus_seller_token') || '' : '';
+
+  useEffect(() => {
+    fetchApi<any>('/accounts/show_seller_key')
+      .then(res => setSellerKey(res?.sellerKey || res?.seller_key || ''))
+      .catch(() => setSellerKey(''));
+  }, []);
+
+  const handleResetSellerKey = async () => {
+    try {
+      const res = await fetchApi<any>('/accounts/reset_seller_key');
+      setSellerKey(res?.sellerKey || res?.seller_key || '');
+    } catch {
+      // erro silencioso
+    } finally {
+      setShowConfirmReset(false);
+    }
+  };
 
   const handleCopy = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -26,82 +45,75 @@ export default function ApiSettingsPage() {
             <h1>Integração via API</h1>
             <p className="text-muted">Gerencie suas chaves de API e acesse a documentação para desenvolvedores</p>
           </div>
-          <button className="btn-primary" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <a href="https://documenter.getpostman.com/view/11000226/TzRPhoDe" target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
             <BookOpen size={18} /> Documentação Completa <ExternalLink size={14} />
-          </button>
+          </a>
         </div>
 
         <div className="settings-grid">
-          {/* Coluna Esquerda: Chaves de API */}
+          {/* Coluna Esquerda: Chaves de Integração */}
           <div className="keys-section">
-            <div className="settings-panel card glass-panel" style={{ marginBottom: '1.5rem' }}>
-              <div className="panel-header">
-                <div className="header-title">
-                  <Key size={20} className="text-primary" />
-                  <h2>Chaves de Produção</h2>
-                </div>
-                <span className="status-badge live">Ambiente Real</span>
-              </div>
-              <p className="text-muted" style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                Utilize esta chave para transações reais. <strong>Nunca compartilhe</strong> ou exponha esta chave no código frontend.
-              </p>
-              
-              <div className="key-box">
-                <div className="key-input-wrapper">
-                  <input 
-                    type={showLiveKey ? "text" : "password"} 
-                    value={LIVE_KEY} 
-                    readOnly 
-                    className="key-input"
-                  />
-                  <button className="btn-icon" onClick={() => setShowLiveKey(!showLiveKey)}>
-                    {showLiveKey ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-                <div className="key-actions">
-                  <button className="btn-secondary" onClick={() => handleCopy(LIVE_KEY, 'live')}>
-                    {copiedKey === 'live' ? <CheckCircle2 size={18} className="text-success" /> : <Copy size={18} />}
-                    {copiedKey === 'live' ? 'Copiado!' : 'Copiar'}
-                  </button>
-                  <button className="btn-ghost text-danger">
-                    <RotateCcw size={18} /> Substituir
-                  </button>
-                </div>
-              </div>
-            </div>
-
             <div className="settings-panel card glass-panel">
               <div className="panel-header">
                 <div className="header-title">
-                  <Key size={20} className="text-muted" />
-                  <h2>Chaves de Teste (Sandbox)</h2>
+                  <Key size={20} className="text-primary" />
+                  <h2>Chaves de integração</h2>
                 </div>
-                <span className="status-badge test">Ambiente de Teste</span>
               </div>
               <p className="text-muted" style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                Utilize esta chave para testar sua integração. Transações criadas com esta chave não movem dinheiro real.
+                <strong>Nunca compartilhe</strong> ou exponha suas chaves no código frontend.
               </p>
-              
-              <div className="key-box">
-                <div className="key-input-wrapper">
-                  <input 
-                    type={showTestKey ? "text" : "password"} 
-                    value={TEST_KEY} 
-                    readOnly 
-                    className="key-input"
-                  />
-                  <button className="btn-icon" onClick={() => setShowTestKey(!showTestKey)}>
-                    {showTestKey ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {/* Seller Key */}
+                <div>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'block' }}>Seller Key</label>
+                  <div className="key-box">
+                    <div className="key-input-wrapper">
+                      <input
+                        type={showKey1 ? "text" : "password"}
+                        value={sellerKey}
+                        readOnly
+                        className="key-input"
+                      />
+                      <button className="btn-icon" onClick={() => setShowKey1(!showKey1)}>
+                        {showKey1 ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                    <div className="key-actions">
+                      <button className="btn-secondary" onClick={() => handleCopy(sellerKey, 'api')}>
+                        {copiedKey === 'api' ? <CheckCircle2 size={18} className="text-success" /> : <Copy size={18} />}
+                        {copiedKey === 'api' ? 'Copiado!' : 'Copiar'}
+                      </button>
+                      <button className="btn-ghost text-danger" onClick={() => setShowConfirmReset(true)}>
+                        <RotateCcw size={18} /> Substituir
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="key-actions">
-                  <button className="btn-secondary" onClick={() => handleCopy(TEST_KEY, 'test')}>
-                    {copiedKey === 'test' ? <CheckCircle2 size={18} className="text-success" /> : <Copy size={18} />}
-                    {copiedKey === 'test' ? 'Copiado!' : 'Copiar'}
-                  </button>
-                  <button className="btn-ghost text-danger">
-                    <RotateCcw size={18} /> Substituir
-                  </button>
+
+                {/* Seller Token */}
+                <div>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'block' }}>Seller Token</label>
+                  <div className="key-box">
+                    <div className="key-input-wrapper">
+                      <input
+                        type={showKey2 ? "text" : "password"}
+                        value={SELLER_TOKEN}
+                        readOnly
+                        className="key-input"
+                      />
+                      <button className="btn-icon" onClick={() => setShowKey2(!showKey2)}>
+                        {showKey2 ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                    <div className="key-actions">
+                      <button className="btn-secondary" onClick={() => handleCopy(SELLER_TOKEN, 'secret')}>
+                        {copiedKey === 'secret' ? <CheckCircle2 size={18} className="text-success" /> : <Copy size={18} />}
+                        {copiedKey === 'secret' ? 'Copiado!' : 'Copiar'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -148,20 +160,33 @@ export default function ApiSettingsPage() {
                 <h3>Recursos Úteis</h3>
                 <ul>
                   <li>
-                    <a href="#"><BookOpen size={16} /> Referência da API</a>
+                    <a href="https://app.superfin.com.br/documentation" target="_blank" rel="noopener noreferrer"><BookOpen size={16} /> Referência da API</a>
                   </li>
                   <li>
-                    <a href="#"><ExternalLink size={16} /> Coleção Postman</a>
+                    <a href="https://documenter.getpostman.com/view/11000226/TzRPhoDe" target="_blank" rel="noopener noreferrer"><ExternalLink size={16} /> Coleção Postman</a>
                   </li>
-                  <li>
+                  {/* <li>
                     <a href="#"><ExternalLink size={16} /> Bibliotecas Oficiais (SDKs)</a>
-                  </li>
+                  </li> */}
                 </ul>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {showConfirmReset && (
+        <div className="confirm-overlay" onClick={() => setShowConfirmReset(false)}>
+          <div className="confirm-modal" onClick={e => e.stopPropagation()}>
+            <h3>Substituir Seller Key?</h3>
+            <p>Essa ação é irreversível. A chave atual será invalidada e uma nova será gerada.</p>
+            <div className="confirm-actions">
+              <button className="btn-secondary" onClick={() => setShowConfirmReset(false)}>Cancelar</button>
+              <button className="btn-danger" onClick={handleResetSellerKey}>Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .page-header {
@@ -422,6 +447,64 @@ export default function ApiSettingsPage() {
           .key-actions {
             flex-direction: column;
           }
+        }
+
+        .confirm-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+
+        .confirm-modal {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 2rem;
+          max-width: 420px;
+          width: 90%;
+        }
+
+        .confirm-modal h3 {
+          font-size: 1.15rem;
+          margin-bottom: 0.75rem;
+        }
+
+        .confirm-modal p {
+          color: var(--text-muted);
+          font-size: 0.9rem;
+          margin-bottom: 1.5rem;
+          line-height: 1.5;
+        }
+
+        .confirm-actions {
+          display: flex;
+          gap: 1rem;
+          justify-content: flex-end;
+        }
+
+        .btn-danger {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: rgba(239, 68, 68, 0.15);
+          border: 1px solid rgba(239, 68, 68, 0.3);
+          color: #ef4444;
+          padding: 0.6rem 1.2rem;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: all 0.2s;
+        }
+
+        .btn-danger:hover {
+          background: rgba(239, 68, 68, 0.25);
         }
       `}</style>
     </DashboardLayout>
