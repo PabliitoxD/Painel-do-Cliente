@@ -252,6 +252,12 @@ Os serviços estão organizados em `src/services/api/`:
 - Em caso de erro `401`, redirecionar para `/login` e limpar o token.
 - Sempre trate erros de API com `try/catch` e exiba mensagens amigáveis ao usuário.
 
+### 9.8 Proibição de Mocks Silenciosos e Integração 100% Real
+
+- **Proibição Absoluta de Mocks nas APIs:** É estritamente proibido o uso de `Promise.resolve` ou dados estáticos de mock na camada de serviços da API (arquivos em `src/services/api/`) para substituir endpoints reais, a menos que haja um pedido explícito por escrito do usuário.
+- **Validação de Produção:** Toda funcionalidade que for dada como pronta ou integrada deve estar se comunicando 100% com o backend da Superfin ou o respectivo ambiente configurado de ponta a ponta. 
+- **Bypass sob Consentimento:** Qualquer bypass temporário ou fallback para fins de teste no desenvolvimento deve ser reportado e aprovado explicitamente em chat/reunião de alinhamento antes do merge.
+
 ---
 
 ## 10. Manutenção do Inventário de Menus e Funcionalidades
