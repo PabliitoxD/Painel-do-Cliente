@@ -7,7 +7,8 @@ export default function ApprovedSalesPage() {
     <SalesList 
       title="Transações Aprovadas" 
       description="Lista de transações concluídas com sucesso."
-      statuses={['approved', 'completed', 'paid']} 
+      statuses={['paid']}
+      apiStatuses={['PAID']}
       viewType="approved"
     />
   );

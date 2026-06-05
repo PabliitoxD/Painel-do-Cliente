@@ -27,7 +27,7 @@ export default function WithdrawalHistoryPage() {
     setError(null);
     try {
       const res = await api.withdrawals.list();
-      const dataRes = Array.isArray(res) ? res : (res.data || res.withdrawals || []);
+      const dataRes = res?.withdraws || res?.data?.withdraws || res?.withdrawals || res?.data || (Array.isArray(res) ? res : []);
       setHistory(Array.isArray(dataRes) ? dataRes : []);
     } catch (err: any) {
       console.warn("Erro ao buscar histórico de saques (silenciado):", err);
@@ -101,7 +101,7 @@ export default function WithdrawalHistoryPage() {
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <History size={16} className="text-muted" />
-                        {new Date(item.created_at || item.date).toLocaleString('pt-BR')}
+                        {new Date(item.created_at || item.createdAt || item.date).toLocaleString('pt-BR')}
                       </div>
                     </td>
                     <td style={{ fontWeight: 600 }}>{formatCurrency(amount)}</td>
@@ -160,7 +160,7 @@ export default function WithdrawalHistoryPage() {
                   </div>
                 </div>
               )}
-              {(() => {
+              {/* {(() => {
                 const justification = selectedDetails.justificativa || selectedDetails.justification || selectedDetails.reason || selectedDetails.refusal_reason || selectedDetails.notes || '';
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}>
@@ -170,7 +170,7 @@ export default function WithdrawalHistoryPage() {
                     </div>
                   </div>
                 );
-              })()}
+              })()} */}
             </div>
           </div>
         </div>

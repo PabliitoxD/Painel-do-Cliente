@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { api } from '@/services/api';
 import { 
@@ -21,15 +22,16 @@ interface SalesListProps {
   title: string;
   description: string;
   statuses: string[];
+  apiStatuses?: string[];
   viewType?: 'approved' | 'not-completed' | 'waiting' | 'all';
 }
 
-export function SalesList({ title, description, statuses, viewType = 'all' }: SalesListProps) {
+export function SalesList({ title, description, statuses, apiStatuses, viewType = 'all' }: SalesListProps) {
   const [ordersData, setOrdersData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [timeRange, setTimeRange] = useState('Últimos 30 dias');
+  const [timeRange, setTimeRange] = useState('Todos');
   const [isTimeMenuOpen, setIsTimeMenuOpen] = useState(false);
   const [showCustomDate, setShowCustomDate] = useState(false);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -38,47 +40,38 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
   const [isMethodMenuOpen, setIsMethodMenuOpen] = useState(false);
   const methodOptions = ['Todos', 'Cartão de Crédito', 'Pix', 'Boleto'];
 
+  const detailsRouter = useRouter();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('geral');
 
-  const timeOptions = ['Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Esse mês', 'Personalizado'];
+  const timeOptions = ['Todos', 'Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Esse mês', 'Personalizado'];
 
   useEffect(() => {
     setIsLoading(true);
-    api.transactions.listOrders()
-      .then(res => {
-        const data = Array.isArray(res.data) ? res.data : Array.isArray(res) ? res : [];
-        const filteredByStatus = data.filter((item: any) => {
-          const s = (item.status || '').toLowerCase();
-          const methodLow = (item.payment_method || item.method || '').toLowerCase();
-          
-          let matchesView = true;
-
-          if (viewType === 'approved') {
-            if (methodLow.includes('transfer') || methodLow.includes('system') || methodLow.includes('bancária')) {
-              matchesView = false;
-            }
-          } else if (viewType === 'not-completed') {
-            const isCard = methodLow.includes('credit') || methodLow.includes('cart');
-            if (!isCard) matchesView = false;
-          } else if (viewType === 'waiting') {
-            const isPixOrBoleto = methodLow.includes('pix') || methodLow.includes('boleto') || methodLow.includes('bank_slip');
-            if (!isPixOrBoleto) matchesView = false;
-          }
-
-          const matchesStatus = statuses.includes(s) || (statuses.length === 1 && statuses[0] === 'all');
-
-          return matchesStatus && matchesView;
-        });
-        setOrdersData(filteredByStatus);
-      })
-      .catch(err => {
-        console.error("Erro ao buscar vendas:", err);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [statuses, viewType]);
+    const statusList = apiStatuses || statuses;
+    // Faz uma request por status e junta os resultados
+    Promise.all(
+      statusList.map(status =>
+        api.transactions.listOrders({ status: status.toUpperCase() })
+          .then(res => {
+            const data = res?.orders || res?.data?.orders || (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
+            return Array.isArray(data) ? data : [];
+          })
+          .catch(() => [])
+      )
+    ).then(results => {
+      // Junta tudo e remove duplicatas por token
+      const all = results.flat();
+      const unique = all.filter((item, idx) => all.findIndex(o => o.token === item.token) === idx);
+      setOrdersData(unique);
+    })
+    .catch(err => {
+      console.error("[SalesList] Erro ao buscar vendas:", err);
+    })
+    .finally(() => {
+      setIsLoading(false);
+    });
+  }, [statuses, apiStatuses, viewType]);
 
   // Filtragem (Busca + Data)
   const filteredData = useMemo(() => {
@@ -86,10 +79,12 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
       const itemDate = item.created_at ? new Date(item.created_at) : new Date(item.date || Date.now());
       const now = new Date();
       
-      const matchesSearch = 
-        (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) || 
+      const matchesSearch = searchQuery === '' ||
+        (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (item.client && item.client.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (item.buyer?.name && item.buyer.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (item.customer?.name && item.customer.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (item.products?.[0]?.name && item.products[0].name.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (item.token && item.token.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (item.id && item.id.toString().includes(searchQuery));
 
@@ -114,7 +109,8 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
 
       let matchesMethod = true;
       if (paymentMethodFilter !== 'Todos') {
-        const methodLow = (item.payment_method || item.method || '').toLowerCase();
+        const lp = item.payments?.length ? item.payments[item.payments.length - 1] : null;
+        const methodLow = (lp?.payment_method?.description || lp?.payment_method?.method || item.payment_method || item.method || '').toString().toLowerCase();
         if (paymentMethodFilter === 'Cartão de Crédito') {
           matchesMethod = methodLow.includes('credit') || methodLow.includes('cart');
         } else if (paymentMethodFilter === 'Pix') {
@@ -276,7 +272,7 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
 
           {(searchQuery !== '' || timeRange !== 'Últimos 30 dias' || paymentMethodFilter !== 'Todos') && (
             <button 
-              onClick={() => { setSearchQuery(''); setTimeRange('Últimos 30 dias'); setShowCustomDate(false); setPaymentMethodFilter('Todos'); }}
+              onClick={() => { setSearchQuery(''); setTimeRange('Todos'); setShowCustomDate(false); setPaymentMethodFilter('Todos'); }}
               style={{ padding: '0.5rem', color: 'var(--danger)', opacity: 0.8, background: 'none', border: 'none', cursor: 'pointer' }}
             >
               <X size={18} />
@@ -308,12 +304,13 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
                 </tr>
               ) : filteredData.length > 0 ? (
                 filteredData.map((item, i) => {
-                  const actualMethod = item.payment?.method || item.payment_method || item.method || '';
-                  const methodLow = actualMethod.toLowerCase();
+                  const lastPayRender = item.payments?.length ? item.payments[item.payments.length - 1] : null;
+                  const actualMethod = lastPayRender?.payment_method?.description || lastPayRender?.payment_method?.method || item.payment?.method || item.payment_method || item.method || '';
+                  const methodLow = String(actualMethod).toLowerCase();
                   return (
                     <tr key={item.id || i}>
                       <td className="id-text" style={{ fontSize: '0.8rem' }}>
-                        {item.token || item.id}
+                        <span title={item.token || item.id} style={{ cursor: 'default' }}>{(item.token || item.id || '').slice(0, 12)}...</span>
                         {(item.recurrence || item.subscription || item.is_recurrence || methodLow.includes('recurrence') || methodLow.includes('subscription')) && (
                           <div style={{ marginTop: '4px' }}>
                             <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: 'rgba(0, 193, 180, 0.15)', color: '#00c1b4', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 600, border: '1px solid rgba(0, 193, 180, 0.3)' }}>
@@ -329,8 +326,8 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
                           </div>
                         )}
                       </td>
-                      <td style={{ fontWeight: 600 }}>{item.client || item.customer?.name || 'Cliente'}</td>
-                      <td className="text-muted">{item.product || item.description || 'Produto'}</td>
+                      <td style={{ fontWeight: 600 }}>{item.client || item.buyer?.name || item.customer?.name || 'Cliente'}</td>
+                      <td className="text-muted">{item.product || item.products?.[0]?.name || item.description || 'Produto'}</td>
                       <td className="text-muted">{new Date(item.created_at || item.date || Date.now()).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                       <td className="valor-text">{formatCurrency(item.amount || item.value || 0)}</td>
                       <td>
@@ -346,9 +343,9 @@ export function SalesList({ title, description, statuses, viewType = 'all' }: Sa
                         </span>
                       </td>
                       <td>
-                        <button 
-                          className="btn-ghost" 
-                          onClick={() => { setSelectedOrder(item); setActiveTab('geral'); }}
+                        <button
+                          className="btn-ghost"
+                          onClick={() => detailsRouter.push(`/sales/${item.token || item.id}`)}
                           style={{ padding: '0.4rem', borderRadius: '8px' }}
                           title="Detalhes da Venda"
                         >

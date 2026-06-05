@@ -7,7 +7,8 @@ export default function WaitingSalesPage() {
     <SalesList 
       title="Transações Pendentes" 
       description="Transações aguardando pagamento do cliente."
-      statuses={['pending', 'waiting', 'pendente', 'aguardando']} 
+      statuses={['waiting_payment']}
+      apiStatuses={['WAITING_PAYMENT']}
       viewType="waiting"
     />
   );

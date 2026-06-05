@@ -7,7 +7,8 @@ export default function ChargebacksPage() {
     <SalesList 
       title="Chargebacks" 
       description="Transações contestadas pelos clientes nos cartões de crédito."
-      statuses={['chargeback', 'disputed']} 
+      statuses={['chargeback']}
+      apiStatuses={['CHARGEBACK']}
     />
   );
 }

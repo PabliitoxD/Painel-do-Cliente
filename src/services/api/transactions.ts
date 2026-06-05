@@ -15,8 +15,7 @@ export const transactionsService = {
    * Consult a specific transaction by token
    */
   getOrderByToken: async (token: string): Promise<any> => {
-    // return fetchApi<any>(`/orders/${token}`);
-    return Promise.resolve({ id: '1', token, status: 'PAID', amount: 150 });
+    return fetchApi<any>(`/payments/${token}`);
   },
 
   /**
@@ -31,10 +30,9 @@ export const transactionsService = {
    * Create a new transaction
    */
   createOrder: async (payload: any): Promise<any> => {
-    // return fetchApi<any>('/orders', {
-    //   method: 'POST',
-    //   body: JSON.stringify(payload),
-    // });
-    return Promise.resolve({ id: '2', status: 'CREATED', amount: payload?.amount || 100 });
+    return fetchApi<any>('/orders', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
 };

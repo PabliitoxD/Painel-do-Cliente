@@ -52,7 +52,7 @@ export default function SupportPage() {
               </div>
             </div> */}
 
-            < href="https://wa.me/5511916095527" target="_blank" rel="noopener noreferrer" className="contact-method">
+            <a href="https://wa.me/5511916095527" target="_blank" rel="noopener noreferrer" className="contact-method">
               <div className="contact-icon-wrapper phone-icon">
                 <PhoneCall size={24} />
               </div>

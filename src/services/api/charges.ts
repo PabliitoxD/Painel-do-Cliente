@@ -217,134 +217,79 @@ function buildQs(params?: Record<string, any>): string {
 // ── One-time charges ──────────────────────────────────────────────────────────
 export const chargesService = {
   list: async (params?: ChargesListParams): Promise<ChargesListResponse> => {
-    // return fetchApi<ChargesListResponse>(`/charges${buildQs(params)}`);
-    return Promise.resolve({
-      charges: [
-        { id: '1', token: 'tok_1', code: 'CHG-001', description: 'Consultoria Financeira', price: 500, status: 'PAID', expiration_date: new Date(Date.now() + 86400000*5).toISOString(), payer_name: 'Marcos Almeida', payer_email: 'marcos@example.com', checkout_url: 'https://checkout.tronnus.com/c/tok_1' },
-        { id: '2', token: 'tok_2', code: 'CHG-002', description: 'E-book Guia Definitivo', price: 49.90, status: 'NOT_PAID', expiration_date: new Date(Date.now() + 86400000*2).toISOString(), payer_name: 'Juliana Costa', payer_email: 'juliana@example.com', checkout_url: 'https://checkout.tronnus.com/c/tok_2' },
-        { id: '3', token: 'tok_3', code: 'CHG-003', description: 'Mentoria em Grupo', price: 1200, status: 'EXPIRED', expiration_date: new Date(Date.now() - 86400000*2).toISOString(), payer_name: 'Roberto Dias', payer_email: 'roberto@example.com', checkout_url: 'https://checkout.tronnus.com/c/tok_3' }
-      ],
-      meta: { current_page: 1, per_page: 10, total_count: 3 }
-    });
+    return fetchApi<ChargesListResponse>(`/charges${buildQs(params)}`);
   },
 
   get: async (token: string): Promise<ChargeDetailResponse> => {
-    // return fetchApi<ChargeDetailResponse>(`/charges/${token}`);
-    return Promise.resolve({
-      charge: { id: '1', token, code: 'CHG-001', description: 'Mock Charge 1', price: 100, status: 'PAID', expiration_date: '10/10/2026', payer_name: 'John Doe', payer_email: 'john@example.com' }
-    });
+    return fetchApi<ChargeDetailResponse>(`/charges/${token}`);
   },
 
   create: async (payload: CreateChargePayload): Promise<ChargeDetailResponse> => {
-    // return fetchApi<ChargeDetailResponse>('/charges', { method: 'POST', body: JSON.stringify(payload) });
-    return Promise.resolve({
-      charge: { id: 'new', token: 'tok_new_mocked', code: 'CHG-NEW', description: payload.charge.description || 'Nova Cobrança', price: Number(payload.charge.products[0]?.price) || 100, status: 'NOT_PAID', expiration_date: payload.charge.expiration_date || '10/10/2026', payer_name: payload.charge.payer_name, payer_email: payload.charge.payer_email, checkout_url: '/checkout/tok_new_mocked' }
-    });
+    return fetchApi<ChargeDetailResponse>('/charges', { method: 'POST', body: JSON.stringify(payload) });
   },
 
   processPayment: async (payload: ProcessPaymentPayload): Promise<any> => {
-    // return fetchApi<any>('/payments', { method: 'POST', body: JSON.stringify(payload) });
-    return Promise.resolve({ status: 'success', message: 'Payment processed successfully (Mock)' });
+    return fetchApi<any>('/payments', { method: 'POST', body: JSON.stringify(payload) });
   },
 };
 
 // ── Plans ─────────────────────────────────────────────────────────────────────
 export const plansService = {
   list: async (params?: { page?: number; per_page?: number }): Promise<PlansListResponse> => {
-    // return fetchApi<PlansListResponse>(`/subscription/plans${buildQs(params)}`);
-    return Promise.resolve({
-      plans: [{ id: '1', token: 'plan_tok_1', name: 'Plano Básico', price: 50, periodicity: 1, public: true, status: 'active', created_at: new Date().toISOString() }],
-      meta: { current_page: 1, per_page: 10, total_count: 1 }
-    });
+    return fetchApi<PlansListResponse>(`/subscription/plans${buildQs(params)}`);
   },
 
   get: async (token: string): Promise<PlanDetailResponse> => {
-    // return fetchApi<PlanDetailResponse>(`/subscription/plans/${token}`);
-    return Promise.resolve({
-      plan: { id: '1', token, name: 'Plano Básico', price: 50, periodicity: 1, public: true, status: 'active', created_at: new Date().toISOString() }
-    });
+    return fetchApi<PlanDetailResponse>(`/subscription/plans/${token}`);
   },
 
   create: async (payload: CreatePlanPayload): Promise<PlanDetailResponse> => {
-    // return fetchApi<PlanDetailResponse>('/subscription/plans', { method: 'POST', body: JSON.stringify(payload) });
-    return Promise.resolve({
-      plan: { id: 'new_plan', token: 'new_plan_tok', name: payload.name, price: Number(payload.price), periodicity: payload.periodicity, public: payload.public || true, status: 'active', created_at: new Date().toISOString() }
-    });
+    return fetchApi<PlanDetailResponse>('/subscription/plans', { method: 'POST', body: JSON.stringify(payload) });
   },
 
   update: async (token: string, payload: Partial<CreatePlanPayload>): Promise<PlanDetailResponse> => {
-    // return fetchApi<PlanDetailResponse>(`/subscription/plans/${token}`, { method: 'PUT', body: JSON.stringify(payload) });
-    return Promise.resolve({
-      plan: { id: '1', token, name: payload.name || 'Plano Básico', price: Number(payload.price || 50), periodicity: payload.periodicity || 1, public: payload.public !== false, status: 'active', created_at: new Date().toISOString() }
-    });
+    return fetchApi<PlanDetailResponse>(`/subscription/plans/${token}`, { method: 'PUT', body: JSON.stringify(payload) });
   },
 };
 
 // ── Subscriptions ─────────────────────────────────────────────────────────────
 export const subscriptionsService = {
   list: async (params?: { page?: number; per_page?: number }): Promise<SubscriptionsListResponse> => {
-    // return fetchApi<SubscriptionsListResponse>(`/subscription/subscriptions${buildQs(params)}`);
-    return Promise.resolve({
-      subscriptions: [
-        { id: 'sub_1', token: 'sub_tok_1', code: 'REC-001', status: 'active', customer: { id: 'cust_1', name: 'João Carlos', email: 'jc@example.com' }, expiration_day: 5, created_at: new Date(Date.now() - 86400000 * 30).toISOString(), next_billing_date: new Date(Date.now() + 86400000 * 5).toISOString(), plan: { id: 'plan_1', token: 'ptok', name: 'Plano Pro', price: 90, periodicity: 1, public: true, status: 'active' } },
-        { id: 'sub_2', token: 'sub_tok_2', code: 'REC-002', status: 'active', customer: { id: 'cust_2', name: 'Maria Silva', email: 'maria@example.com' }, expiration_day: 15, created_at: new Date(Date.now() - 86400000 * 60).toISOString(), next_billing_date: new Date(Date.now() + 86400000 * 15).toISOString(), plan: { id: 'plan_1', token: 'ptok', name: 'Plano Pro', price: 90, periodicity: 1, public: true, status: 'active' } },
-        { id: 'sub_3', token: 'sub_tok_3', code: 'REC-003', status: 'cancelled', customer: { id: 'cust_3', name: 'Pedro Alves', email: 'pedro@example.com' }, expiration_day: 10, created_at: new Date(Date.now() - 86400000 * 90).toISOString(), next_billing_date: new Date(Date.now() - 86400000 * 5).toISOString(), plan: { id: 'plan_1', token: 'ptok', name: 'Plano Básico', price: 50, periodicity: 1, public: true, status: 'active' } },
-        { id: 'sub_4', token: 'sub_tok_4', code: 'REC-004', status: 'active', customer: { id: 'cust_4', name: 'Ana Souza', email: 'ana@example.com' }, expiration_day: 20, created_at: new Date(Date.now() - 86400000 * 15).toISOString(), next_billing_date: new Date(Date.now() + 86400000 * 20).toISOString(), plan: { id: 'plan_1', token: 'ptok', name: 'Plano Premium', price: 150, periodicity: 1, public: true, status: 'active' } }
-      ],
-      meta: { current_page: 1, per_page: 10, total_count: 4 }
-    });
+    return fetchApi<SubscriptionsListResponse>(`/subscription/subscriptions${buildQs(params)}`);
   },
 
   get: async (token: string): Promise<SubscriptionDetailResponse> => {
-    // return fetchApi<SubscriptionDetailResponse>(`/subscription/subscriptions/${token}`);
-    return Promise.resolve({
-      subscription: { id: '1', token, status: 'active', customer: { id: 'cust_1', name: 'John Doe', email: 'john@example.com' }, expiration_day: 10, created_at: new Date().toISOString(), next_billing_date: new Date().toISOString() }
-    });
+    return fetchApi<SubscriptionDetailResponse>(`/subscription/subscriptions/${token}`);
   },
 
   create: async (payload: CreateSubscriptionPayload): Promise<SubscriptionDetailResponse> => {
-    // return fetchApi<SubscriptionDetailResponse>('/subscription/subscriptions', { method: 'POST', body: JSON.stringify(payload) });
-    return Promise.resolve({
-      subscription: { id: 'new_sub', token: 'new_sub_tok', status: 'active', customer: { id: 'cust_new', name: payload.subscription.customer.name, email: payload.subscription.customer.email }, expiration_day: 1, created_at: new Date().toISOString(), next_billing_date: new Date().toISOString() }
-    });
+    return fetchApi<SubscriptionDetailResponse>('/subscription/subscriptions', { method: 'POST', body: JSON.stringify(payload) });
   },
 
   cancel: async (token: string): Promise<any> => {
-    // return fetchApi<any>(`/subscription/subscriptions/cancel/${token}`, { method: 'PUT' });
-    return Promise.resolve({ status: 'cancelled' });
+    return fetchApi<any>(`/subscription/subscriptions/cancel/${token}`, { method: 'PUT' });
   },
 
-  /** POST /payments/full — first-time subscription payment with card */
   processFirstPayment: async (payload: ProcessSubscriptionPaymentPayload): Promise<any> => {
-    // return fetchApi<any>('/payments/full', { method: 'POST', body: JSON.stringify(payload) });
-    return Promise.resolve({ status: 'success', message: 'Subscription payment processed successfully (Mock)' });
+    return fetchApi<any>('/payments/full', { method: 'POST', body: JSON.stringify(payload) });
   },
 };
 
 // ── Invoices ──────────────────────────────────────────────────────────────────
 export const invoicesService = {
   list: async (params?: { page?: number; per_page?: number; status?: string }): Promise<InvoicesListResponse> => {
-    // return fetchApi<InvoicesListResponse>(`/subscription/invoices${buildQs(params)}`);
-    return Promise.resolve({
-      invoices: [{ id: '1', token: 'inv_tok_1', status: 'paid', price: 50, created_at: new Date().toISOString() }],
-      meta: { current_page: 1, per_page: 10, total_count: 1 }
-    });
+    return fetchApi<InvoicesListResponse>(`/subscription/invoices${buildQs(params)}`);
   },
 
   get: async (token: string): Promise<{ invoice: ApiInvoice }> => {
-    // return fetchApi<{ invoice: ApiInvoice }>(`/subscription/invoices/${token}`);
-    return Promise.resolve({
-      invoice: { id: '1', token, status: 'paid', price: 50, created_at: new Date().toISOString() }
-    });
+    return fetchApi<{ invoice: ApiInvoice }>(`/subscription/invoices/${token}`);
   },
 
-  /** POST /payments/pay — pay an existing invoice */
   pay: async (invoiceToken: string, customer: SubscriptionCustomer, payment: any): Promise<any> => {
-    // return fetchApi<any>('/payments/pay', {
-    //   method: 'POST',
-    //   body: JSON.stringify({ order_type: 'invoice', token: invoiceToken, customer, payment }),
-    // });
-    return Promise.resolve({ status: 'success', message: 'Invoice paid successfully (Mock)' });
+    return fetchApi<any>('/payments/pay', {
+      method: 'POST',
+      body: JSON.stringify({ order_type: 'invoice', token: invoiceToken, customer, payment }),
+    });
   },
 };
 

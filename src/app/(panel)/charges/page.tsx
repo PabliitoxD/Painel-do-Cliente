@@ -64,7 +64,7 @@ export default function ChargesPage() {
     setIsLoading(true); setError(null);
     try {
       if (tab === 'avulsa') {
-        const res: any = await chargesService.list({ per_page: 50 });
+        const res: any = await chargesService.list({ page: 1, per_page: 10 });
         const list = res.charges || res.data || res.items || (Array.isArray(res) ? res : []);
         
         let localCharges: any[] = [];
@@ -106,7 +106,7 @@ export default function ChargesPage() {
 
         setRows(combined);
       } else {
-        const res: any = await plansService.list({ per_page: 50 });
+        const res: any = await plansService.list({ page: 1, per_page: 10 });
         const list = res.plans || res.data || res.items || (Array.isArray(res) ? res : []);
         
         let localPlans: any[] = [];
@@ -288,14 +288,14 @@ export default function ChargesPage() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+        {/* <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
           {(['avulsa','recorrente'] as TabType[]).map(t => (
             <button key={t} onClick={() => setTab(t)} className={tab === t ? 'btn-primary' : 'btn-ghost'}
               style={{ padding: '0.6rem 1.5rem', borderRadius: '10px', fontWeight: 600, fontSize: '0.95rem', border: '1px solid var(--border)', cursor: 'pointer' }}>
               {t === 'avulsa' ? 'Avulsa' : 'Recorrente'}
             </button>
           ))}
-        </div>
+        </div> */}
 
         {/* Filters */}
         <div className="card" style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', padding: '1rem', flexWrap: 'wrap' }}>
@@ -327,7 +327,6 @@ export default function ChargesPage() {
         <div className="table-card">
           <table className="transactions-table">
             <thead><tr>
-              <th>Código</th>
               <th>{tab === 'avulsa' ? 'Descrição' : 'Plano'}</th>
               <th>{tab === 'avulsa' ? 'Vencimento' : 'Frequência'}</th>
               <th>Valor</th>
@@ -336,15 +335,14 @@ export default function ChargesPage() {
             </tr></thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={6} style={{ textAlign:'center', padding:'2rem', color:'var(--text-dim)' }}>
+                <tr><td colSpan={5} style={{ textAlign:'center', padding:'2rem', color:'var(--text-dim)' }}>
                   <div style={{ margin:'0 auto 1rem', width:'24px', height:'24px', border:'3px solid var(--border)', borderTopColor:'var(--primary)', borderRadius:'50%', animation:'spin 1s linear infinite' }}/>
                   Carregando...
                 </td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign:'center', padding:'2rem', color:'var(--text-dim)' }}>Nenhum registro encontrado.</td></tr>
+                <tr><td colSpan={5} style={{ textAlign:'center', padding:'2rem', color:'var(--text-dim)' }}>Nenhum registro encontrado.</td></tr>
               ) : filtered.map(r => (
                 <tr key={r.token}>
-                  <td style={{ fontWeight:600, color:'var(--primary)' }}>{r.code || (r.token ? r.token.slice(0,8) : '—')}</td>
                   <td style={{ fontWeight:600, color:'var(--text-main)' }}>{r.label}</td>
                   <td style={{ color:'var(--text-dim)' }}>{r.extra || '—'}</td>
                   <td style={{ fontWeight:600 }}>{formatCurrency(r.value)}</td>

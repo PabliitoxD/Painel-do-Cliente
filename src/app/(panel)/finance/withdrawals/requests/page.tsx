@@ -39,12 +39,12 @@ export default function WithdrawalRequestsPage() {
       const summaryData = summary?.data || summary;
       let rawAvail = 0;
       if (summaryData) {
-        rawAvail = summaryData.released || summaryData.available || 0;
+        rawAvail = summaryData.balance || summaryData.released || summaryData.available || 0;
         setRawAvailableBalance(rawAvail);
-        setTotalBalance(summaryData.total || summaryData.amount || 0);
+        setTotalBalance(summaryData.balance_control_to_receive ?? summaryData.balanceControlToReceive ?? summaryData.total ?? 0);
       }
 
-      const historyData = Array.isArray(history) ? history : (history.data || history.withdrawals || []);
+      const historyData = history?.withdraws || history?.data?.withdraws || history?.withdrawals || history?.data || (Array.isArray(history) ? history : []);
       // Mostra saques pendentes ou solicitados na tela de solicitações
       const pending = historyData.filter((w: any) => 
         ['pending', 'pendente', 'waiting', 'aguardando', 'requested', 'solicitado'].includes((w.status || '').toLowerCase())
@@ -140,23 +140,21 @@ export default function WithdrawalRequestsPage() {
             <div>
               <span className="stat-title">Disponível para Saque</span>
               <div className="stat-value" style={{ fontSize: '2.2rem', color: 'var(--success)' }}>
-                {isLoading ? '...' : formatCurrency(availableBalance)}
+                {isLoading ? '...' : formatCurrency(rawAvailableBalance)}
               </div>
             </div>
             <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                 <span>Mínimo: R$ 50,00</span>
-                <span>Saldo em conta: {formatCurrency(rawAvailableBalance)}</span>
-                {pendingTotal > 0 && <span style={{ color: 'var(--warning)' }}>Retido em análise: {formatCurrency(pendingTotal)}</span>}
               </div>
               <button 
                 className="btn-primary" 
                 style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                 onClick={() => {
-                  setWithdrawAmount(availableBalance >= 50 ? availableBalance.toFixed(2) : '');
+                  setWithdrawAmount(rawAvailableBalance >= 50 ? rawAvailableBalance.toFixed(2) : '');
                   setIsModalOpen(true);
                 }}
-                disabled={isLoading || availableBalance < 50}
+                disabled={isLoading || rawAvailableBalance < 50}
               >
                 <ArrowUpCircle size={16} /> Novo Saque
               </button>
@@ -165,12 +163,12 @@ export default function WithdrawalRequestsPage() {
           
           <div className="stat-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <span className="stat-title">Saldo Total (Recebíveis)</span>
+              <span className="stat-title">Recebíveis Futuros</span>
               <div className="stat-value" style={{ fontSize: '2.2rem' }}>
                 {isLoading ? '...' : formatCurrency(totalBalance)}
               </div>
             </div>
-            <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '1.5rem' }}>Inclui valores pendentes de liberação</p>
+            <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '1.5rem' }}>Aguardando pagamento</p>
           </div>
 
           <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', background: 'rgba(255, 177, 86, 0.05)', borderColor: 'rgba(255, 177, 86, 0.2)' }}>
@@ -180,13 +178,13 @@ export default function WithdrawalRequestsPage() {
             <div>
               <h3 style={{ fontSize: '0.95rem', marginBottom: '0.25rem' }}>Informação Importante</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', maxWidth: '400px', lineHeight: 1.5 }}>
-                Os saques são processados exclusivamente via PIX para a chave cadastrada na sua conta. O prazo médio de compensação é de até 2 horas.
+                Os saques são processados exclusivamente via PIX para a chave cadastrada na sua conta. {/* O prazo médio de compensação é de até 2 horas. */}
               </p>
             </div>
           </div>
         </div>
 
-        <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', fontWeight: 600 }}>Solicitações Pendentes</h2>
+        {/* <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', fontWeight: 600 }}>Solicitações Pendentes</h2>
         <div className="table-card">
           <table className="transactions-table">
             <thead>
@@ -225,8 +223,8 @@ export default function WithdrawalRequestsPage() {
                   </td>
                   <td className="text-muted">Processando...</td>
                   <td>
-                    <button 
-                      className="btn-ghost" 
+                    <button
+                      className="btn-ghost"
                       style={{ color: 'var(--danger)', fontSize: '0.8rem' }}
                       onClick={() => handleCancelWithdrawal(item.id)}
                     >
@@ -237,7 +235,7 @@ export default function WithdrawalRequestsPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </div> */}
       </div>
 
       {isModalOpen && (
@@ -273,21 +271,21 @@ export default function WithdrawalRequestsPage() {
 
             {(() => {
               const amt = parseFloat(withdrawAmount) || 0;
-              const fee = withdrawalFee;
-              const net = Math.max(0, amt - fee);
+              // const fee = withdrawalFee;
+              // const net = Math.max(0, amt - fee);
               return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '1.2rem', borderRadius: '12px', fontSize: '0.9rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
                     <span className="text-muted">Valor Solicitado</span>
                     <strong>{formatCurrency(amt)}</strong>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+                  {/* <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
                     <span className="text-muted">Taxa de Saque</span>
                     <strong style={{ color: 'var(--danger)' }}>- {formatCurrency(fee)}</strong>
-                  </div>
+                  </div> */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.25rem' }}>
-                    <span style={{ fontWeight: 600 }}>Valor Líquido a Receber</span>
-                    <strong style={{ color: 'var(--success)', fontSize: '1.1rem' }}>{formatCurrency(amt >= fee ? net : 0)}</strong>
+                    <span style={{ fontWeight: 600 }}>Valor a Receber</span>
+                    <strong style={{ color: 'var(--success)', fontSize: '1.1rem' }}>{formatCurrency(amt)}</strong>
                   </div>
                 </div>
               );

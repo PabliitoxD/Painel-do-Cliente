@@ -40,41 +40,40 @@ export default function ReceivablesPage() {
       api.receivableSchedules.getSummary().catch(() => null),
       api.receivableSchedules.listSchedules().catch(() => null)
     ]).then(([summaryRes, schedulesRes]) => {
-      // Trata o Resumo (Pode vir direto ou dentro de .data)
+      // Trata o Resumo da conta (/accounts/resume)
       const summaryData = summaryRes?.data || summaryRes;
       if (summaryData && typeof summaryData === 'object') {
         setSummary({
-          total: summaryData.total ?? summaryData.amount ?? 0,
-          released: summaryData.released ?? summaryData.available ?? summaryData.amount_released ?? 0,
-          waiting: summaryData.waiting ?? summaryData.pending ?? summaryData.amount_waiting ?? 0,
-          blocked: summaryData.blocked ?? summaryData.retained ?? summaryData.amount_blocked ?? 0
+          total: summaryData.balance_control_to_receive ?? summaryData.balanceControlToReceive ?? 0,
+          released: summaryData.balance ?? 0,
+          waiting: summaryData.balance_control_to_receive ?? summaryData.balanceControlToReceive ?? 0,
+          blocked: 0
         });
       }
 
-      // Trata a Agenda
-      const schedulesData = schedulesRes?.data || schedulesRes || [];
-      if (Array.isArray(schedulesData)) {
-        setSchedules(schedulesData.map((s: any) => {
-          let dateObj = s.scheduled_for || s.date || s.created_at;
-          let dateStr = 'N/A';
-          if (dateObj) {
-            const d = new Date(dateObj);
-            if (!isNaN(d.getTime())) {
-              dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(',', ' -');
-            } else {
-              dateStr = dateObj; // fallback to string
-            }
+      // Trata a Agenda (/balance_controls)
+      const balanceControls = schedulesRes?.data?.balanceControls || schedulesRes?.data?.balance_controls || schedulesRes?.balanceControls || schedulesRes?.balance_controls || schedulesRes?.data || [];
+      const schedulesData = Array.isArray(balanceControls) ? balanceControls : [];
+      setSchedules(schedulesData.map((s: any) => {
+        const dateObj = s.payment_date || s.paymentDate || s.date || s.created_at;
+        let dateStr = 'N/A';
+        if (dateObj) {
+          const d = new Date(dateObj);
+          if (!isNaN(d.getTime())) {
+            dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          } else {
+            dateStr = dateObj;
           }
-          return {
-            id: s.id || s.token || s.transaction_id || `TR-${Math.floor(Math.random()*10000)}`,
-            date: dateStr,
-            rawDate: dateObj,
-            amount: s.amount || s.value || s.net_amount || 0,
-            count: s.count || s.transactions_count || 1,
-            status: s.status || 'PENDENTE'
-          };
-        }));
-      }
+        }
+        return {
+          id: s.order_token || s.orderToken || s.token || s.id || '—',
+          date: dateStr,
+          rawDate: dateObj,
+          amount: s.amount || 0,
+          split: s.split || '—',
+          status: s.status || 'WAITING_PAYMENT'
+        };
+      }));
     }).catch(err => {
       console.error("Erro ao carregar dados de recebíveis:", err);
     }).finally(() => {
@@ -119,48 +118,35 @@ export default function ReceivablesPage() {
             <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.25rem' }}>Recebíveis</h1>
             <p className="text-muted" style={{ fontSize: '0.95rem' }}>Gestão de valores futuros e liquidez</p>
           </div>
-          <button 
-            className="btn-ghost" 
+          {/* <button
+            className="btn-ghost"
             onClick={() => setIsSimulationOpen(true)}
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.7rem 1.2rem', borderRadius: '12px' }}
           >
             <Calendar size={18} /> Antecipar Valores
-          </button>
+          </button> */}
         </div>
 
         {/* Estatísticas Principais (Valor Total, Liberado, Aguardando, Bloqueado) */}
-        <div className="stats-grid grid-2" style={{ marginBottom: '2.5rem' }}>
-          {/* Card: Valor Total */}
-          <div className="stat-card receivable-card card-blue">
-            <div className="stat-top">
-              <span className="stat-title">Valor Total</span>
-              <TrendingUp size={24} className="stat-icon-dim" />
-            </div>
-            <div className="stat-value-large">{isLoading ? '...' : formatCurrency(summary.total)}</div>
-            <p className="stat-desc">Soma de todos os valores</p>
-            <div className="card-indicator"></div>
-          </div>
-
-          {/* Card: Valor Liberado */}
+        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '2.5rem' }}>
+          {/* Card: Saldo */}
           <div className="stat-card receivable-card card-green">
             <div className="stat-top">
-              <span className="stat-title">Valor Liberado</span>
+              <span className="stat-title">Saldo</span>
               <Unlock size={24} className="stat-icon-dim" />
             </div>
             <div className="stat-value-large">{isLoading ? '...' : formatCurrency(summary.released)}</div>
-            <p className="stat-desc" style={{ color: 'var(--success)', opacity: 0.8 }}>Disponível para saque imediato</p>
-            <div className="card-indicator"></div>
+            <p className="stat-desc" style={{ color: 'var(--success)', opacity: 0.8 }}>Saldo disponível para saque</p>
           </div>
 
-          {/* Card: Aguardando Liberação */}
-          <div className="stat-card receivable-card card-yellow">
+          {/* Card: Recebíveis Futuros */}
+          <div className="stat-card receivable-card card-gray">
             <div className="stat-top">
-              <span className="stat-title">Aguardando Liberação</span>
+              <span className="stat-title">Recebíveis Futuros</span>
               <Clock size={24} className="stat-icon-dim" />
             </div>
             <div className="stat-value-large">{isLoading ? '...' : formatCurrency(summary.waiting)}</div>
-            <p className="stat-desc" style={{ color: 'var(--warning)', opacity: 0.8 }}>Em processamento (D+30)</p>
-            <div className="card-indicator"></div>
+            <p className="stat-desc">Aguardando pagamento</p>
           </div>
 
           {/* Card: Valor Bloqueado */}
@@ -170,8 +156,7 @@ export default function ReceivablesPage() {
               <Lock size={24} className="stat-icon-dim" />
             </div>
             <div className="stat-value-large">{isLoading ? '...' : formatCurrency(summary.blocked)}</div>
-            <p className="stat-desc" style={{ color: 'var(--danger)', opacity: 0.8 }}>Retenção de segurança / Chargeback</p>
-            <div className="card-indicator"></div>
+            <p className="stat-desc" style={{ color: 'var(--danger)', opacity: 0.8 }}>Retenção de segurança</p>
           </div>
         </div>
 
@@ -186,11 +171,12 @@ export default function ReceivablesPage() {
               ) : schedules.length === 0 ? (
                 <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-dim)' }}>Nenhum recebível agendado.</div>
               ) : schedules.slice(0, 5).map((day, i) => {
-                const isReleased = day.status.toLowerCase() === 'released' || day.status.toLowerCase() === 'paid' || day.status.toLowerCase() === 'liberado' || day.status.toLowerCase() === 'aprovado' || getStatusPillClass(day.status) === 'aprovada';
+                const statusColor = day.status === 'PAID' ? 'var(--success)' : day.status === 'CANCELED' ? 'var(--danger)' : 'var(--warning)';
+                const statusLabel = day.status === 'PAID' ? 'Pago' : day.status === 'CANCELED' ? 'Cancelado' : 'Aguardando Pagamento';
                 return (
-                  <div key={i} className="agenda-item" style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <div key={i} className="agenda-item" style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '1.5rem 0',
                     borderBottom: i === Math.min(schedules.length, 5) - 1 ? 'none' : '1px solid var(--border)',
@@ -199,19 +185,19 @@ export default function ReceivablesPage() {
                       <p style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.3rem' }}>
                         ID: {day.id}
                       </p>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>Transação</p>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>Previsão: {day.date}</p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <p style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '0.2rem' }}>
                         {formatCurrency(day.amount)}
                       </p>
-                      <span style={{ 
-                        fontSize: '0.75rem', 
+                      <span style={{
+                        fontSize: '0.75rem',
                         letterSpacing: '0.5px',
-                        color: isReleased ? 'var(--success)' : 'var(--warning)',
+                        color: statusColor,
                         fontWeight: 800
                       }}>
-                        {isReleased ? 'LIBERADO' : day.date}
+                        {statusLabel}
                       </span>
                     </div>
                   </div>
@@ -456,8 +442,12 @@ export default function ReceivablesPage() {
           background: linear-gradient(to right, rgba(255, 177, 86, 0.45), var(--surface)); 
           border-color: rgba(255, 177, 86, 0.6);
         }
-        .card-red { 
-          background: linear-gradient(to right, rgba(203, 86, 86, 0.45), var(--surface)); 
+        .card-gray {
+          background: linear-gradient(to right, rgba(140, 150, 160, 0.35), var(--surface));
+          border-color: rgba(140, 150, 160, 0.5);
+        }
+        .card-red {
+          background: linear-gradient(to right, rgba(203, 86, 86, 0.45), var(--surface));
           border-color: rgba(203, 86, 86, 0.6);
         }
         

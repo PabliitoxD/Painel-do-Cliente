@@ -7,7 +7,8 @@ export default function ReversalsPage() {
     <SalesList 
       title="Estornos" 
       description="Transações devolvidas para os clientes."
-      statuses={['refunded', 'estornado']} 
+      statuses={['canceled']}
+      apiStatuses={['CANCELED']}
     />
   );
 }

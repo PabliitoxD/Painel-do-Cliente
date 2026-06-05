@@ -31,26 +31,18 @@ export default function StatementsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const timeOptions = ['Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Esse mês', 'Personalizado'];
-  const statusOptions = ['Todos', 'aprovado', 'processado', 'estornado', 'bloqueado'];
+  const statusOptions = ['Todos', 'entrada', 'saída'];
 
   useEffect(() => {
-    import('@/services/api').then(({ api }) => {
+    import('@/services/api/client').then(({ fetchApi }) => {
       setIsLoading(true);
-      Promise.all([
-        api.transactions.listOrders().catch(() => ({ data: [] })),
-        api.receivableSchedules.getSummary().catch(() => null)
-      ]).then(([ordersRes, summaryRes]) => {
-          // Trata Vendas
-          const data = ordersRes.data || ordersRes.orders || ordersRes || [];
-          setStatementsData(Array.isArray(data) ? data : []);
-
-          // Trata Saldo (Se houver resumo da API, usamos ele para as métricas principais)
-          if (summaryRes) {
-            setApiSummary(summaryRes);
-          }
+      fetchApi('/account_statements')
+        .then((res: any) => {
+          const items = res?.account_statements || res?.data?.account_statements || (Array.isArray(res) ? res : []);
+          setStatementsData(items);
         })
         .catch(err => {
-          console.error("Erro ao buscar dados financeiros:", err);
+          console.error("[Statements] Erro ao buscar extrato:", err);
         })
         .finally(() => {
           setIsLoading(false);
@@ -58,23 +50,24 @@ export default function StatementsPage() {
     });
   }, []);
 
-  const [apiSummary, setApiSummary] = useState<any>(null);
-
   // Lógica de filtragem
   const filteredData = useMemo(() => {
     return statementsData.filter(item => {
-      const itemDate = new Date(item.date || item.created_at || item.transaction?.registration_date || Date.now());
+      const itemDate = new Date(item.created_at || Date.now());
       const now = new Date();
-      
-      // Filtro de Texto
-      const desc = item.description || item.product || item.items?.[0]?.name || 'Venda';
-      const idStr = String(item.id || item.token || item.transaction?.code || '');
-      const matchesSearch = desc.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           idStr.includes(searchQuery);
 
-      // Filtro de Status
-      const itemStatus = item.status?.code || item.status || 'aprovado';
-      const matchesStatus = statusFilter === 'Todos' || itemStatus === statusFilter;
+      // Filtro de Texto
+      const type = item.transaction_type === 'INPUT' ? 'Entrada' : 'Saída';
+      const orderId = item.order_id || item.id || '';
+      const matchesSearch = searchQuery === '' ||
+        type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.account?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Filtro de Status (tipo)
+      const matchesStatus = statusFilter === 'Todos' ||
+        (statusFilter === 'entrada' && item.transaction_type === 'INPUT') ||
+        (statusFilter === 'saída' && item.transaction_type === 'OUTPUT');
 
       // Filtro de Tempo
       let matchesTime = true;
@@ -100,29 +93,19 @@ export default function StatementsPage() {
     });
   }, [statementsData, searchQuery, timeRange, statusFilter]);
 
-  // Cálculos de métricas baseados nos dados filtrados ou na API de resumo
+  // Cálculos de métricas baseados nos dados filtrados
   const metrics = useMemo(() => {
-    if (apiSummary && statusFilter === 'Todos' && searchQuery === '' && timeRange === 'Últimos 7 dias') {
-      return {
-        inflows: apiSummary.total || 0,
-        outflows: 0, // A API de resumo geralmente não traz saídas separadas aqui
-        balance: apiSummary.released || apiSummary.available || 0,
-        waiting: apiSummary.waiting || apiSummary.pending || 0
-      };
-    }
+    const inflows = filteredData
+      .filter(item => item.transaction_type === 'INPUT')
+      .reduce((acc, item) => acc + parseFloat(item.amount || 0), 0);
+    const outflows = filteredData
+      .filter(item => item.transaction_type === 'OUTPUT')
+      .reduce((acc, item) => acc + parseFloat(item.amount || 0), 0);
+    // Último saldo disponível (account_amount do item mais recente)
+    const lastBalance = filteredData.length > 0 ? parseFloat(filteredData[0].account_amount || 0) : 0;
 
-    const inflows = filteredData.reduce((acc, item) => {
-      const val = parseFloat(item.value || item.amount || item.transaction?.total || 0);
-      return val >= 0 ? acc + val : acc;
-    }, 0);
-    const outflows = filteredData.reduce((acc, item) => {
-      const val = parseFloat(item.value || item.amount || item.transaction?.total || 0);
-      return val < 0 ? acc + val : acc;
-    }, 0);
-    const balance = inflows + outflows;
-
-    return { inflows, outflows, balance, waiting: 0 };
-  }, [filteredData, apiSummary, statusFilter, searchQuery, timeRange]);
+    return { inflows, outflows, balance: lastBalance };
+  }, [filteredData]);
 
   const formatCurrency = (val: number) => {
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -170,33 +153,33 @@ export default function StatementsPage() {
         <div className="stats-grid grid-3" style={{ marginBottom: '2rem' }}>
           <div className="stat-card">
             <div className="stat-top">
-              <span className="stat-title">Saldo Disponível</span>
+              <span className="stat-title">Saldo Atual</span>
               <Wallet size={20} style={{ color: 'var(--success)' }} />
             </div>
             <div className="stat-value" style={{ fontSize: '2.2rem', color: 'var(--success)' }}>
-              {isLoading ? '...' : formatCurrency(apiSummary?.released || apiSummary?.available || metrics.balance)}
+              {isLoading ? '...' : formatCurrency(metrics.balance)}
             </div>
-            <p className="text-muted" style={{ fontSize: '0.8rem' }}>Liberado para saque</p>
+            <p className="text-muted" style={{ fontSize: '0.8rem' }}>Último saldo registrado</p>
           </div>
           <div className="stat-card">
             <div className="stat-top">
-              <span className="stat-title">A Receber</span>
-              <ArrowUpRight size={20} style={{ color: 'var(--warning)' }} />
+              <span className="stat-title">Total Entradas</span>
+              <ArrowUpRight size={20} style={{ color: 'var(--primary)' }} />
             </div>
-            <div className="stat-value" style={{ fontSize: '2.2rem', color: 'var(--warning)' }}>
-              {isLoading ? '...' : formatCurrency(apiSummary?.waiting || apiSummary?.pending || metrics.inflows)}
+            <div className="stat-value" style={{ fontSize: '2.2rem', color: 'var(--primary)' }}>
+              {isLoading ? '...' : formatCurrency(metrics.inflows)}
             </div>
-            <p className="text-muted" style={{ fontSize: '0.8rem' }}>Previsão de recebimentos</p>
+            <p className="text-muted" style={{ fontSize: '0.8rem' }}>No período selecionado</p>
           </div>
           <div className="stat-card">
             <div className="stat-top">
-              <span className="stat-title">Saldo Bloqueado</span>
+              <span className="stat-title">Total Saídas</span>
               <ArrowDownLeft size={20} style={{ color: 'var(--danger)' }} />
             </div>
             <div className="stat-value" style={{ fontSize: '2.2rem', color: 'var(--danger)' }}>
-              {isLoading ? '...' : formatCurrency(apiSummary?.blocked || apiSummary?.retained || 0)}
+              {isLoading ? '...' : formatCurrency(metrics.outflows)}
             </div>
-            <p className="text-muted" style={{ fontSize: '0.8rem' }}>Retenções de segurança</p>
+            <p className="text-muted" style={{ fontSize: '0.8rem' }}>No período selecionado</p>
           </div>
         </div>
 
@@ -322,50 +305,50 @@ export default function StatementsPage() {
                 <th>Data</th>
                 <th>Descrição</th>
                 <th>Valor</th>
-                <th>Status</th>
+                <th>Saldo</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-dim)' }}>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-dim)' }}>
                     Carregando extrato...
                   </td>
                 </tr>
-              ) : filteredData.length > 0 ? filteredData.map((item) => (
-                <tr key={item.id || Math.random()}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ 
-                        width: '32px', 
-                        height: '32px', 
-                        borderRadius: '8px', 
-                        background: parseFloat(item.value || item.amount || item.transaction?.total || 0) >= 0 ? 'rgba(49, 120, 44, 0.1)' : 'rgba(203, 86, 86, 0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: parseFloat(item.value || item.amount || item.transaction?.total || 0) >= 0 ? 'var(--success)' : 'var(--danger)'
-                      }}>
-                        {item.type === 'Venda' ? <ArrowUpRight size={16} /> : 
-                         item.type === 'Saque' ? <Wallet size={16} /> : <ArrowDownLeft size={16} />}
+              ) : filteredData.length > 0 ? filteredData.map((item) => {
+                const isInput = item.transaction_type === 'INPUT';
+                return (
+                  <tr key={item.id || Math.random()}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '8px',
+                          background: isInput ? 'rgba(49, 120, 44, 0.1)' : 'rgba(203, 86, 86, 0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: isInput ? 'var(--success)' : 'var(--danger)'
+                        }}>
+                          {isInput ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}
+                        </div>
+                        <span style={{ fontWeight: 500 }}>{isInput ? 'Entrada' : 'Saída'}</span>
                       </div>
-                      <span style={{ fontWeight: 500 }}>{item.type || 'Venda'}</span>
-                    </div>
-                  </td>
-                  <td className="text-muted">{new Date(item.date || item.created_at || item.transaction?.registration_date || Date.now()).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-                  <td>{item.description || item.product || item.items?.[0]?.name || item.token || 'Transação'}</td>
-                  <td style={{ fontWeight: 600, color: parseFloat(item.value || item.amount || item.transaction?.total || 0) >= 0 ? 'var(--text-main)' : 'var(--danger)' }}>
-                    {formatCurrency(parseFloat(item.value || item.amount || item.transaction?.total || 0))}
-                  </td>
-                  <td>
-                    <span className={`status-pill ${getStatusPillClass(item.status?.code || item.status)}`}>
-                      {translateStatus(item.status?.code || item.status)}
-                    </span>
-                  </td>
-                </tr>
-              )) : (
+                    </td>
+                    <td className="text-muted">{new Date(item.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                    <td>{item.order_id || item.id}</td>
+                    <td style={{ fontWeight: 600, color: isInput ? 'var(--success)' : 'var(--danger)' }}>
+                      {isInput ? '+ ' : '- '}{formatCurrency(parseFloat(item.amount || 0))}
+                    </td>
+                    <td style={{ fontWeight: 500 }}>
+                      {item.account_amount != null ? formatCurrency(parseFloat(item.account_amount)) : '—'}
+                    </td>
+                  </tr>
+                );
+              }) : (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-dim)' }}>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-dim)' }}>
                     Nenhuma movimentação encontrada para os filtros selecionados.
                   </td>
                 </tr>

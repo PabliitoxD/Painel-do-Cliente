@@ -15,8 +15,9 @@ export const translateStatus = (status: string) => {
     case 'pending':
     case 'waiting_payment':
     case 'pendente':
-    case 'not_paid':
       return 'Aguardando pagamento';
+    case 'not_paid':
+      return 'Não concluído';
     case 'canceled':
     case 'cancelado':
     case 'cancelled':
@@ -65,7 +66,7 @@ export const getStatusPillClass = (status: string) => {
   if (['approved', 'paid', 'aprovada', 'pago', 'active', 'confirmed', 'concluido', 'concluído'].includes(s)) return 'aprovada';
   
   // Vermelho: recusada (para cancelados, estornados, negados e chargebacks)
-  if (['canceled', 'cancelado', 'cancelled', 'refunded', 'estornado', 'reembolsado', 'expired', 'expirado', 'suspended', 'denied', 'negado', 'reprovado', 'chargeback', 'in_chargeback'].includes(s)) return 'recusada';
+  if (['canceled', 'cancelado', 'cancelled', 'not_paid', 'refunded', 'estornado', 'reembolsado', 'expired', 'expirado', 'suspended', 'denied', 'negado', 'reprovado', 'chargeback', 'in_chargeback'].includes(s)) return 'recusada';
   
   // Amarelo: aguardando (para pendentes e solicitações)
   return 'aguardando';

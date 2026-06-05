@@ -67,8 +67,9 @@ export default function DashboardHome() {
     allOrders.forEach((t: any) => {
       const amount = parseFloat(t.amount || t.value || 0);
       const status = (t.status || '').toLowerCase();
-      const actualMethod = t.payment?.method || t.payment_method || t.method || '';
-      const method = actualMethod.toLowerCase();
+      const lastPay = t.payments?.length ? t.payments[t.payments.length - 1] : null;
+      const actualMethod = lastPay?.payment_method?.description || lastPay?.payment_method?.method || t.payment?.method || t.payment_method || t.method || '';
+      const method = String(actualMethod).toLowerCase();
 
       const isApproved = ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active'].includes(status);
 
@@ -227,7 +228,7 @@ export default function DashboardHome() {
   }, [selectedFilter, dateRange.start, dateRange.end]);
 
   const filters = ['Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Personalizado'];
-  const paymentMethods = ['Pix', 'Cartão', 'Boleto', 'Recorrência'];
+  const paymentMethods = ['Pix', 'Cartão', 'Boleto'];
 
   return (
     <DashboardLayout>
@@ -431,7 +432,7 @@ export default function DashboardHome() {
                 ) : transactions.map((t, i) => (
                   <tr key={i}>
                     <td className="id-text" style={{ fontSize: '0.8rem' }}>
-                      {t.id || t.token || 'N/A'}
+                      <a href={`/sales/${t.token || t.id}`} title={t.token || t.id} style={{ color: 'var(--primary)', textDecoration: 'none', cursor: 'pointer' }}>{(t.token || t.id || 'N/A').slice(0, 12)}...</a>
                       {(() => {
                         const actualMethod = t.payment?.method || t.payment_method || t.method || '';
                         const methodLow = actualMethod.toLowerCase();
@@ -477,7 +478,7 @@ export default function DashboardHome() {
           <div className="chart-card">
             <div className="card-header">
               <h2>Evolução do Faturamento</h2>
-              <button className="btn-ghost">Ver gráfico completo</button>
+              {/* <button className="btn-ghost">Ver gráfico completo</button> */}
             </div>
             <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
