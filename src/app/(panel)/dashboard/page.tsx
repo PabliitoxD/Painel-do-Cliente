@@ -6,6 +6,7 @@ import {
   DollarSign, 
   Clock, 
   TrendingUp, 
+  TrendingDown,
   XCircle, 
   RotateCcw, 
   AlertCircle,
@@ -25,7 +26,7 @@ import {
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import { translateStatus, translateMethod, getStatusPillClass, formatCurrency } from '@/utils/formatters';
-import '@/styles/dashboard.css';
+import { api } from '@/services/api';
 import '@/styles/dashboard.css';
 
 // Helper function to safely parse amount from raw numbers or formatted BRL currency strings
@@ -57,27 +58,51 @@ export default function DashboardHome() {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [transactions, setTransactions] = useState<any[]>([]);
   const [allOrders, setAllOrders] = useState<any[]>([]);
+  const [pastOrders, setPastOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [displayChartData, setDisplayChartData] = useState<any[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   const [stats, setStats] = useState({
     faturamento: 0,
+    faturamentoGrowth: 0,
     quantidade: 0,
+    quantidadeGrowth: 0,
     metodoSelecionado: 0,
     taxaConversao: 0,
     metodoTotal: 0,
     metodoAprovados: 0,
     estornos: 0,
+    estornosGrowth: 0,
     cancelamentos: 0,
+    cancelamentosGrowth: 0,
     chargebacks: 0,
+    chargebacksGrowth: 0,
   });
 
-  // Calcula os totais sempre que as transações da API ou o método de pagamento mudam
+  // 1. Carrega dados do Cache do Navegador na montagem (para renderização instantânea)
+  useEffect(() => {
+    setIsMounted(true);
+    
+    const cachedStats = sessionStorage.getItem('tronnus_dash_stats');
+    const cachedChart = sessionStorage.getItem('tronnus_dash_chart');
+    const cachedOrders = sessionStorage.getItem('tronnus_dash_orders');
+    
+    if (cachedStats && cachedChart && cachedOrders) {
+      try {
+        setStats(JSON.parse(cachedStats));
+        setDisplayChartData(JSON.parse(cachedChart));
+        const parsedOrders = JSON.parse(cachedOrders);
+        setAllOrders(parsedOrders);
+        setTransactions(parsedOrders.slice(0, 5));
+        setIsLoading(false); // Evita loaders se já possuir cache
+      } catch (e) {
+        sessionStorage.clear();
+      }
+    }
+  }, []);
+
+  // 2. Calcula as métricas principais do período atual vs período anterior sempre que os dados mudam
   useEffect(() => {
     let faturamento = 0;
     let quantidade = 0;
@@ -98,13 +123,11 @@ export default function DashboardHome() {
 
       const isApproved = ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active', 'confirmed', 'concluido', 'concluído'].includes(status);
 
-      // Faturamento (consideramos vendas concluídas/aprovadas) e Quantidade (total)
       if (isApproved) {
         faturamento += amount;
       }
       quantidade += 1;
       
-      // Filtrar por Método Selecionado
       const selectedMethodMap: Record<string, string[]> = {
         'Pix': ['pix'],
         'Cartão': ['credit_card', 'cartão', 'cartao', 'creditcard', 'credit'],
@@ -129,22 +152,61 @@ export default function DashboardHome() {
       if (status === 'chargeback') chargebacks++;
     });
 
+    // Período passado para cálculo do crescimento
+    let faturamentoPast = 0;
+    let quantidadePast = 0;
+    let estornosPast = 0;
+    let cancelamentosPast = 0;
+    let chargebacksPast = 0;
+
+    pastOrders.forEach((t: any) => {
+      if (!t) return;
+      const amount = parseAmount(t);
+      const status = (t.status?.code || t.status || '').toLowerCase();
+      const isApproved = ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active', 'confirmed', 'concluido', 'concluído'].includes(status);
+
+      if (isApproved) faturamentoPast += amount;
+      quantidadePast += 1;
+      
+      if (['refunded', 'estornado', 'reembolsado'].includes(status)) estornosPast++;
+      if (['canceled', 'cancelado', 'cancelled', 'failed'].includes(status)) cancelamentosPast++;
+      if (status === 'chargeback') chargebacksPast++;
+    });
+
     const taxaConversao = metodoSelecionadoTotal > 0 ? (metodoSelecionadoAprovados / metodoSelecionadoTotal) * 100 : 0;
 
-    setStats({
+    const calculateGrowth = (curr: number, past: number) => {
+      if (past === 0) return curr > 0 ? 100 : 0;
+      return ((curr - past) / past) * 100;
+    };
+
+    const computedStats = {
       faturamento,
+      faturamentoGrowth: calculateGrowth(faturamento, faturamentoPast),
       quantidade,
+      quantidadeGrowth: calculateGrowth(quantidade, quantidadePast),
       metodoSelecionado,
       taxaConversao,
       metodoTotal: metodoSelecionadoTotal,
       metodoAprovados: metodoSelecionadoAprovados,
       estornos,
+      estornosGrowth: calculateGrowth(estornos, estornosPast),
       cancelamentos,
-      chargebacks
-    });
-  }, [allOrders, selectedPaymentMethod]);
+      cancelamentosGrowth: calculateGrowth(cancelamentos, cancelamentosPast),
+      chargebacks,
+      chargebacksGrowth: calculateGrowth(chargebacks, chargebacksPast)
+    };
 
-  // Atualiza os dados do gráfico baseado nas transações carregadas
+    setStats(computedStats);
+
+    // Salva as estatísticas computadas no sessionStorage cache
+    if (allOrders.length > 0) {
+      sessionStorage.setItem('tronnus_dash_stats', JSON.stringify(computedStats));
+      sessionStorage.setItem('tronnus_dash_orders', JSON.stringify(allOrders));
+    }
+  }, [allOrders, pastOrders, selectedPaymentMethod]);
+
+  // 3. Atualiza os dados do gráfico baseado nas transações carregadas
   useEffect(() => {
     if (!allOrders || allOrders.length === 0) {
       setDisplayChartData([{ name: 'Sem dados', val: 0 }]);
@@ -157,16 +219,16 @@ export default function DashboardHome() {
       return ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active', 'confirmed', 'concluido', 'concluído'].includes(status);
     });
 
-
     if (validOrders.length === 0) {
       setDisplayChartData([{ name: 'Sem dados', val: 0 }]);
       return;
     }
 
+    let finalChartData = [];
     if (selectedFilter === 'Hoje') {
       const hours = [0, 0, 0, 0];
       validOrders.forEach((t: any) => {
-        const date = new Date(t.created_at);
+        const date = new Date(t.created_at || t.date);
         const hour = date.getHours();
         const amount = parseAmount(t);
         if (hour < 6) hours[0] += amount;
@@ -174,16 +236,16 @@ export default function DashboardHome() {
         else if (hour < 18) hours[2] += amount;
         else hours[3] += amount;
       });
-      setDisplayChartData([
+      finalChartData = [
         { name: '00-06h', val: hours[0] },
         { name: '06-12h', val: hours[1] },
         { name: '12-18h', val: hours[2] },
         { name: '18-24h', val: hours[3] }
-      ]);
+      ];
     } else {
       const dataMap: Record<string, number> = {};
       validOrders.forEach((t: any) => {
-        const date = new Date(t.created_at);
+        const date = new Date(t.created_at || t.date);
         const dateStr = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
         const amount = parseAmount(t);
         dataMap[dateStr] = (dataMap[dateStr] || 0) + amount;
@@ -196,80 +258,135 @@ export default function DashboardHome() {
         return dayA - dayB;
       });
 
-      let finalData = sortedDates.map(date => ({
+      finalChartData = sortedDates.map(date => ({
         name: date,
         val: dataMap[date]
       }));
+    }
 
-      setDisplayChartData(finalData);
+    setDisplayChartData(finalChartData);
+    if (allOrders.length > 0) {
+      sessionStorage.setItem('tronnus_dash_chart', JSON.stringify(finalChartData));
     }
   }, [allOrders, selectedFilter]);
 
-  // Atualiza os dados toda vez que o filtro muda
+  // 4. Efetua a busca real de dados na API (Período Atual + Anterior para comparativo)
   useEffect(() => {
-    setIsLoading(true);
-
-    // Calcular datas para a API
-    const today = new Date();
-    let created_at_gt: string | undefined;
-    let created_at_lt: string | undefined;
-    
-    if (selectedFilter === 'Hoje') {
-      created_at_gt = new Date(today.setHours(0,0,0,0)).toISOString();
-      created_at_lt = new Date(today.setHours(23,59,59,999)).toISOString();
-    } else if (selectedFilter === 'Últimos 7 dias') {
-      const past = new Date(today);
-      past.setDate(past.getDate() - 7);
-      created_at_gt = new Date(past.setHours(0,0,0,0)).toISOString();
-      created_at_lt = new Date(new Date().setHours(23,59,59,999)).toISOString();
-    } else if (selectedFilter === 'Este mês') {
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      created_at_gt = new Date(startOfMonth.setHours(0,0,0,0)).toISOString();
-      created_at_lt = new Date(new Date().setHours(23,59,59,999)).toISOString();
-    } else if (selectedFilter === 'Últimos 30 dias') {
-      const past = new Date(today);
-      past.setDate(past.getDate() - 30);
-      created_at_gt = new Date(past.setHours(0,0,0,0)).toISOString();
-      created_at_lt = new Date(new Date().setHours(23,59,59,999)).toISOString();
-    } else if (selectedFilter.startsWith('De ')) { // Personalizado
-      if (dateRange.start) {
-        created_at_gt = new Date(`${dateRange.start}T00:00:00`).toISOString();
-      }
-      if (dateRange.end) {
-        created_at_lt = new Date(`${dateRange.end}T23:59:59`).toISOString();
-      }
+    // Apenas ativa loader cheio na primeira carga (sem cache)
+    if (!sessionStorage.getItem('tronnus_dash_stats')) {
+      setIsLoading(true);
     }
 
-    // 2. Chamar a API buscando todas as transações do período filtrado
-    import('@/services/api').then(({ api }) => {
-      const apiFilters: any = { per_page: 200 };
-      if (created_at_gt) apiFilters.created_at_gt = created_at_gt;
-      if (created_at_lt) apiFilters.created_at_lt = created_at_lt;
+    const today = new Date();
+    let currentStart = new Date();
+    let currentEnd = new Date();
+    let pastStart = new Date();
+    let pastEnd = new Date();
 
-      api.transactions.listOrders(apiFilters)
-        .then(res => {
-          const data = res?.data?.orders || res?.orders || res?.data || (Array.isArray(res) ? res : []);
-          const allOrdersFetched = Array.isArray(data) ? data : [];
-          
-          // Filtra no frontend por datas de forma segura e consistente como fallback
-          const filtered = allOrdersFetched.filter((t: any) => {
-            if (!t) return false;
-            if (!t.created_at && !t.date) return true;
-            const date = new Date(t.created_at || t.date);
-            const gt = created_at_gt ? new Date(created_at_gt) : null;
-            const lt = created_at_lt ? new Date(created_at_lt) : null;
-            if (gt && date < gt) return false;
-            if (lt && date > lt) return false;
-            return true;
-          });
+    if (selectedFilter === 'Hoje') {
+      currentStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+      currentEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      
+      pastStart = new Date(currentStart);
+      pastStart.setDate(pastStart.getDate() - 1);
+      pastEnd = new Date(currentEnd);
+      pastEnd.setDate(pastEnd.getDate() - 1);
+    } else if (selectedFilter === 'Últimos 7 dias') {
+      currentStart = new Date(today);
+      currentStart.setDate(currentStart.getDate() - 7);
+      currentStart.setHours(0, 0, 0, 0);
+      currentEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      
+      pastStart = new Date(currentStart);
+      pastStart.setDate(pastStart.getDate() - 7);
+      pastEnd = new Date(currentStart);
+      pastEnd.setHours(23, 59, 59, 999);
+    } else if (selectedFilter === 'Este mês') {
+      currentStart = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0, 0);
+      currentEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      
+      pastStart = new Date(today.getFullYear(), today.getMonth() - 1, 1, 0, 0, 0, 0);
+      pastEnd = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate(), 23, 59, 59, 999);
+    } else if (selectedFilter === 'Últimos 30 dias') {
+      currentStart = new Date(today);
+      currentStart.setDate(currentStart.getDate() - 30);
+      currentStart.setHours(0, 0, 0, 0);
+      currentEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      
+      pastStart = new Date(currentStart);
+      pastStart.setDate(pastStart.getDate() - 30);
+      pastEnd = new Date(currentStart);
+      pastEnd.setHours(23, 59, 59, 999);
+    } else if (selectedFilter.startsWith('De ')) { // Personalizado
+      if (dateRange.start) {
+        currentStart = new Date(`${dateRange.start}T00:00:00`);
+      }
+      if (dateRange.end) {
+        currentEnd = new Date(`${dateRange.end}T23:59:59`);
+      }
+      const diffMs = currentEnd.getTime() - currentStart.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24)) || 1;
+      
+      pastStart = new Date(currentStart);
+      pastStart.setDate(pastStart.getDate() - diffDays);
+      pastEnd = new Date(currentStart);
+      pastEnd.setHours(23, 59, 59, 999);
+    }
 
-          setAllOrders(filtered);
-          setTransactions(filtered.slice(0, 5));
-        })
-        .catch(err => console.error("Erro ao buscar transações:", err))
-        .finally(() => setIsLoading(false));
-    });
+    // Buscamos na API o range completo (desde o início do período passado até agora)
+    const apiFilters: any = { 
+      per_page: 200,
+      created_at_gt: pastStart.toISOString(),
+      created_at_lt: currentEnd.toISOString()
+    };
+
+    api.transactions.listOrders(apiFilters)
+      .then(res => {
+        const data = res?.data?.orders || res?.orders || res?.data || (Array.isArray(res) ? res : []);
+        const allOrdersFetched = Array.isArray(data) ? data : [];
+        
+        // Particiona localmente
+        const currentFiltered = allOrdersFetched.filter((t: any) => {
+          if (!t) return false;
+          const date = new Date(t.created_at || t.date);
+          return date >= currentStart && date <= currentEnd;
+        });
+
+        const pastFiltered = allOrdersFetched.filter((t: any) => {
+          if (!t) return false;
+          const date = new Date(t.created_at || t.date);
+          return date >= pastStart && date <= pastEnd;
+        });
+
+        setAllOrders(currentFiltered);
+        setPastOrders(pastFiltered);
+        setTransactions(currentFiltered.slice(0, 5));
+      })
+      .catch(err => console.error("Erro ao buscar transações:", err))
+      .finally(() => setIsLoading(false));
   }, [selectedFilter, dateRange.start, dateRange.end]);
+
+  const renderTrend = (growth: number) => {
+    if (growth > 0) {
+      return (
+        <span className="stat-trend trend-up" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <TrendingUp size={14} /> +{growth.toFixed(1)}% vs. período anterior
+        </span>
+      );
+    } else if (growth < 0) {
+      return (
+        <span className="stat-trend trend-down" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <TrendingDown size={14} /> {growth.toFixed(1)}% vs. período anterior
+        </span>
+      );
+    } else {
+      return (
+        <span className="stat-trend" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>
+          0.0% vs. período anterior
+        </span>
+      );
+    }
+  };
 
   const filters = ['Hoje', 'Últimos 7 dias', 'Este mês', 'Últimos 30 dias', 'Personalizado'];
   const paymentMethods = ['Pix', 'Cartão', 'Boleto'];
@@ -354,26 +471,47 @@ export default function DashboardHome() {
 
         {/* Stats Grid */}
         <div className="stats-grid">
+          {/* Card: Faturamento */}
           <div className="stat-card">
             <div className="stat-top">
               <span className="stat-title">Faturamento total</span>
               <div className="stat-icon-wrapper"><DollarSign size={24} /></div>
             </div>
-            <div className="stat-value">{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.faturamento)}</div>
+            {isLoading ? (
+              <div className="skeleton skeleton-value" />
+            ) : (
+              <div className="stat-value">{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.faturamento)}</div>
+            )}
             <div className="stat-footer">
-              <span className="stat-trend trend-up">—</span>
+              {isLoading ? (
+                <div className="skeleton skeleton-title" style={{ width: '120px' }} />
+              ) : (
+                renderTrend(stats.faturamentoGrowth)
+              )}
             </div>
           </div>
 
+          {/* Card: Quantidade de Transações */}
           <div className="stat-card">
             <div className="stat-top">
               <span className="stat-title">Quantidade de transações</span>
               <div className="stat-icon-wrapper"><Clock size={24} /></div>
             </div>
-            <div className="stat-value">{stats.quantidade}</div>
-            <span className="stat-trend trend-up">—</span>
+            {isLoading ? (
+              <div className="skeleton skeleton-value" />
+            ) : (
+              <div className="stat-value">{stats.quantidade}</div>
+            )}
+            <div className="stat-footer">
+              {isLoading ? (
+                <div className="skeleton skeleton-title" style={{ width: '120px' }} />
+              ) : (
+                renderTrend(stats.quantidadeGrowth)
+              )}
+            </div>
           </div>
 
+          {/* Card: Método Selecionado */}
           <div className="stat-card">
             <div className="stat-top">
               <span className="stat-title">
@@ -383,7 +521,11 @@ export default function DashboardHome() {
               </span>
               <div className="stat-icon-wrapper"><TrendingUp size={24} /></div>
             </div>
-            <div className="stat-value">{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.metodoSelecionado)}</div>
+            {isLoading ? (
+              <div className="skeleton skeleton-value" />
+            ) : (
+              <div className="stat-value">{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.metodoSelecionado)}</div>
+            )}
             <div className="stat-footer" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.8rem', width: '100%' }}>
               <div style={{ width: '100%' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
@@ -419,31 +561,64 @@ export default function DashboardHome() {
             </div>
           </div>
 
+          {/* Card: Estornos */}
           <div className="stat-card">
             <div className="stat-top">
               <span className="stat-title">Estornos</span>
               <div className="stat-icon-wrapper"><RotateCcw size={24} /></div>
             </div>
-            <div className="stat-value">{stats.estornos}</div>
-            <span className="stat-trend trend-down">—</span>
+            {isLoading ? (
+              <div className="skeleton skeleton-value" />
+            ) : (
+              <div className="stat-value">{stats.estornos}</div>
+            )}
+            <div className="stat-footer">
+              {isLoading ? (
+                <div className="skeleton skeleton-title" style={{ width: '120px' }} />
+              ) : (
+                renderTrend(stats.estornosGrowth)
+              )}
+            </div>
           </div>
 
+          {/* Card: Cancelamentos */}
           <div className="stat-card">
             <div className="stat-top">
               <span className="stat-title">Cancelamentos</span>
               <div className="stat-icon-wrapper"><XCircle size={24} /></div>
             </div>
-            <div className="stat-value">{stats.cancelamentos}</div>
-            <span className="stat-trend trend-up">—</span>
+            {isLoading ? (
+              <div className="skeleton skeleton-value" />
+            ) : (
+              <div className="stat-value">{stats.cancelamentos}</div>
+            )}
+            <div className="stat-footer">
+              {isLoading ? (
+                <div className="skeleton skeleton-title" style={{ width: '120px' }} />
+              ) : (
+                renderTrend(stats.cancelamentosGrowth)
+              )}
+            </div>
           </div>
 
+          {/* Card: Chargeback */}
           <div className="stat-card">
             <div className="stat-top">
               <span className="stat-title">Chargeback</span>
               <div className="stat-icon-wrapper"><AlertCircle size={24} /></div>
             </div>
-            <div className="stat-value">{stats.chargebacks}</div>
-            <span className="stat-trend trend-down">—</span>
+            {isLoading ? (
+              <div className="skeleton skeleton-value" />
+            ) : (
+              <div className="stat-value">{stats.chargebacks}</div>
+            )}
+            <div className="stat-footer">
+              {isLoading ? (
+                <div className="skeleton skeleton-title" style={{ width: '120px' }} />
+              ) : (
+                renderTrend(stats.chargebacksGrowth)
+              )}
+            </div>
           </div>
         </div>
 
@@ -452,7 +627,7 @@ export default function DashboardHome() {
           <div className="table-card">
             <div className="card-header">
               <h2>Últimas transações</h2>
-              <button className="btn-ghost">Ver histórico</button>
+              <button className="btn-ghost" onClick={() => router.push('/sales/approved')}>Ver histórico</button>
             </div>
             <table className="transactions-table">
               <thead>
@@ -465,10 +640,16 @@ export default function DashboardHome() {
                 </tr>
               </thead>
               <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>Carregando transações...</td>
-                  </tr>
+                {isLoading && transactions.length === 0 ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i}>
+                      <td><div className="skeleton skeleton-text" style={{ width: '80px' }} /></td>
+                      <td><div className="skeleton skeleton-text" style={{ width: '120px' }} /></td>
+                      <td><div className="skeleton skeleton-text" style={{ width: '100px' }} /></td>
+                      <td><div className="skeleton skeleton-text" style={{ width: '70px' }} /></td>
+                      <td><div className="skeleton skeleton-text" style={{ width: '60px', height: '1.25rem', borderRadius: '20px' }} /></td>
+                    </tr>
+                  ))
                 ) : transactions.length === 0 ? (
                   <tr>
                     <td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>Nenhuma transação recente encontrada.</td>
@@ -522,10 +703,11 @@ export default function DashboardHome() {
           <div className="chart-card">
             <div className="card-header">
               <h2>Evolução do Faturamento</h2>
-              {/* <button className="btn-ghost">Ver gráfico completo</button> */}
             </div>
             <div style={{ width: '100%', height: 300 }}>
-              {isMounted && (
+              {isLoading && displayChartData.length === 0 ? (
+                <div className="skeleton" style={{ width: '100%', height: '100%', borderRadius: '12px' }} />
+              ) : isMounted && (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={displayChartData}>
                     <defs>
