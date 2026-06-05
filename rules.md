@@ -264,3 +264,11 @@ Os serviços estão organizados em `src/services/api/`:
 
 Sempre que um novo menu, funcionalidade, tela ou endpoint de API for alterado, criado ou implementado no painel do cliente, o arquivo local `inventory_report.md` na raiz do projeto **deve ser obrigatoriamente atualizado** ao final do dia de trabalho para refletir de maneira exata o status real de integração daquela funcionalidade (se está funcional, simulado/mockado ou em produção) e quais endpoints da API ele está consumindo. Isso garante que a rastreabilidade técnica do progresso do projeto seja mantida atualizada para toda a equipe.
 
+---
+
+## 11. Regras do Ambiente Sandbox
+Para garantir a máxima segurança e isolamento durante o desenvolvimento das tarefas, as seguintes regras devem ser rigorosamente seguidas:
+1. **Momento dos Commits:** O commit para a branch sandbox (`sandbox-panel`) só irá acontecer ao final de todas as alterações da tarefa ou sob solicitação expressa do usuário.
+2. **Nomeação e Detalhamento de Commits:** Todo commit deve seguir a regra de nomenclatura definida e conter explicações detalhadas e explícitas das alterações efetuadas.
+3. **Fluxo de Trabalho via TO DO (task.md):** Antes de iniciar qualquer modificação no código, criaremos sempre uma lista de tarefas (TO DO) detalhada no arquivo de acompanhamento. Só seguiremos adiante ou daremos o trabalho como finalizado após todos os itens do TO DO estarem concluídos e validados.
+
