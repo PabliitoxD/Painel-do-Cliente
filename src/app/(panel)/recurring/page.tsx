@@ -94,11 +94,11 @@ export default function RecurringPage() {
   };
 
   const getStatusStyle = (status: string) => {
-    const s = status.toLowerCase();
+    const s = (status || '').toLowerCase();
     if (s === 'active' || s === 'ativa') return { bg: 'rgba(49, 120, 44, 0.1)', color: 'var(--success)', label: 'Ativa' };
     if (s === 'overdue' || s === 'atrasada' || s === 'waiting_payment') return { bg: 'rgba(255, 177, 86, 0.1)', color: 'var(--warning)', label: 'Atrasada' };
     if (s === 'cancelled' || s === 'cancelada') return { bg: 'rgba(203, 86, 86, 0.1)', color: 'var(--danger)', label: 'Cancelada' };
-    return { bg: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-dim)', label: translateStatus(status) };
+    return { bg: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-dim)', label: translateStatus(status || '') };
   };
 
   return (
@@ -212,8 +212,8 @@ export default function RecurringPage() {
                 const freqLabel = periodicity === 1 ? 'Mensal' : periodicity === 3 ? 'Trimestral' : periodicity === 6 ? 'Semestral' : periodicity === 12 ? 'Anual' : 'Personalizada';
 
                 return (
-                  <tr key={item.token}>
-                    <td className="id-text" style={{ fontWeight: 600 }}>#{item.token.slice(0, 8)}</td>
+                  <tr key={item.token || item.id}>
+                    <td className="id-text" style={{ fontWeight: 600 }}>#{(item.token || item.id || '').slice(0, 8)}</td>
                     <td>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                         <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{item.plan?.name || 'Assinatura'}</span>
@@ -335,7 +335,7 @@ export default function RecurringPage() {
                     </div>
                     <div>
                       <p style={{ fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:'0.2rem' }}>ID da Assinatura</p>
-                      <p style={{ fontWeight:500, fontFamily:'monospace' }}>{selectedSubscription.token}</p>
+                      <p style={{ fontWeight:500, fontFamily:'monospace' }}>{selectedSubscription.token || selectedSubscription.id}</p>
                     </div>
                     <div>
                       <p style={{ fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:'0.2rem' }}>Ciclo (Recorrência)</p>
