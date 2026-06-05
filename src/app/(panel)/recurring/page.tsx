@@ -37,8 +37,9 @@ export default function RecurringPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.subscriptions.list({ per_page: 100 });
-      const data = res.subscriptions || [];
+      const res = (await api.subscriptions.list({ per_page: 100 })) as any;
+      const dataRes = res?.subscriptions || res?.data?.subscriptions || res?.data || (Array.isArray(res) ? res : []);
+      const data = Array.isArray(dataRes) ? dataRes : [];
       setSubscriptions(data);
 
       // Calcular estatísticas básicas
@@ -47,6 +48,7 @@ export default function RecurringPage() {
       let overdue = 0;
 
       data.forEach((sub: any) => {
+        if (!sub) return;
         const status = (sub.status || '').toLowerCase();
         const price = parseFloat(sub.price || sub.plan?.price || 0);
         
@@ -75,7 +77,8 @@ export default function RecurringPage() {
   // Filtragem dos dados
   const filteredData = useMemo(() => {
     return subscriptions.filter(item => {
-      const label = (item.customer?.name || item.plan?.name || item.token || '').toLowerCase();
+      if (!item) return false;
+      const label = (item.customer?.name || item.plan?.name || item.token || item.id || '').toLowerCase();
       const matchesSearch = label.includes(searchQuery.toLowerCase());
       
       const status = (item.status || '').toLowerCase();

@@ -86,32 +86,30 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           
           return (
             <div key={item.label} className="nav-group">
-              {item.href && !hasSubItems ? (
-                <Link 
-                  href={item.href} 
-                  onClick={onClose} 
-                  className={`sidebar-link ${isActive ? 'active' : ''}`}
-                >
-                  <Icon size={20} className="sidebar-icon" />
-                  {item.label}
-                </Link>
-              ) : (
-                <div 
-                  className={`sidebar-link ${isActive ? 'active' : ''}`}
-                  onClick={() => hasSubItems && toggleMenu(item.label)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <Icon size={20} className="sidebar-icon" />
-                  <span style={{ flex: 1 }}>{item.label}</span>
-                  {hasSubItems && (
-                    <ChevronDown 
-                      size={14} 
-                      className="chevron" 
-                      style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)' }} 
-                    />
-                  )}
-                </div>
-              )}
+              <div 
+                className={`sidebar-link ${isActive ? 'active' : ''}`}
+                onClick={() => hasSubItems && toggleMenu(item.label)}
+                style={{ cursor: 'pointer' }}
+              >
+                {item.href && !hasSubItems ? (
+                  <Link href={item.href} onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 'inherit', width: '100%', color: 'inherit' }}>
+                    <Icon size={20} className="sidebar-icon" />
+                    {item.label}
+                  </Link>
+                ) : (
+                  <>
+                    <Icon size={20} className="sidebar-icon" />
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                    {hasSubItems && (
+                      <ChevronDown 
+                        size={14} 
+                        className="chevron" 
+                        style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)' }} 
+                      />
+                    )}
+                  </>
+                )}
+              </div>
               
               {/* Renderização de Submenus (Nível 2) */}
               {hasSubItems && isExpanded && (
@@ -123,39 +121,37 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     
                     return (
                       <div key={sub.label} className="sub-nav-group">
-                        {sub.href && !subHasNested ? (
-                          <Link 
-                            href={sub.href} 
-                            onClick={onClose} 
-                            className={`sidebar-sublink ${subIsActive ? 'active' : ''}`}
-                          >
-                            {sub.label}
-                          </Link>
-                        ) : (
-                          <div 
-                            className={`sidebar-sublink ${subIsActive ? 'active' : ''}`}
-                            onClick={(e) => subHasNested && toggleSubMenu(sub.label, e)}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            <span style={{ flex: 1 }}>{sub.label}</span>
-                            {subHasNested && (
-                              <ChevronDown 
-                                size={12} 
-                                className="chevron" 
-                                style={{ transform: subIsExpanded ? 'rotate(180deg)' : 'rotate(0)' }} 
-                              />
-                            )}
-                          </div>
-                        )}
+                        <div 
+                          className={`sidebar-sublink ${subIsActive ? 'active' : ''}`}
+                          onClick={(e) => subHasNested && toggleSubMenu(sub.label, e)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {sub.href && !subHasNested ? (
+                            <Link href={sub.href} onClick={onClose} style={{ flex: 1, color: 'inherit' }}>
+                              {sub.label}
+                            </Link>
+                          ) : (
+                            <>
+                              <span style={{ flex: 1 }}>{sub.label}</span>
+                              {subHasNested && (
+                                <ChevronDown 
+                                  size={12} 
+                                  className="chevron" 
+                                  style={{ transform: subIsExpanded ? 'rotate(180deg)' : 'rotate(0)' }} 
+                                />
+                              )}
+                            </>
+                          )}
+                        </div>
                         
                         {/* Renderização de Submenus Aninhados (Nível 3) */}
                         {subHasNested && subIsExpanded && (
                           <div className="sidebar-sub-subnav">
                             {sub.subItems?.map((nested) => (
-                              <Link 
-                                key={nested.label}
-                                href={nested.href || '#'}
-                                onClick={onClose}
+                                <Link 
+                                  key={nested.label}
+                                  href={nested.href || '#'}
+                                  onClick={onClose}
                                 className={`sidebar-sub-sublink ${pathname === nested.href ? 'active' : ''}`}
                               >
                                 {nested.label}
