@@ -240,14 +240,18 @@ export default function DashboardHome() {
       }
     }
 
-    // 2. Chamar a API buscando todas as transações e filtrando no frontend
+    // 2. Chamar a API buscando todas as transações do período filtrado
     import('@/services/api').then(({ api }) => {
-      api.transactions.listOrders()
+      const apiFilters: any = { per_page: 200 };
+      if (created_at_gt) apiFilters.created_at_gt = created_at_gt;
+      if (created_at_lt) apiFilters.created_at_lt = created_at_lt;
+
+      api.transactions.listOrders(apiFilters)
         .then(res => {
           const data = res?.data?.orders || res?.orders || res?.data || (Array.isArray(res) ? res : []);
           const allOrdersFetched = Array.isArray(data) ? data : [];
           
-          // Filtra no frontend por datas de forma segura e consistente
+          // Filtra no frontend por datas de forma segura e consistente como fallback
           const filtered = allOrdersFetched.filter((t: any) => {
             if (!t) return false;
             if (!t.created_at && !t.date) return true;
