@@ -31,7 +31,7 @@ import '@/styles/dashboard.css';
 export default function DashboardHome() {
   const router = useRouter();
   const { user } = useAuth();
-  const [selectedFilter, setSelectedFilter] = useState('Últimos 7 dias');
+  const [selectedFilter, setSelectedFilter] = useState('Este mês');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Pix');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [showCustomDate, setShowCustomDate] = useState(false);
@@ -40,6 +40,11 @@ export default function DashboardHome() {
   const [allOrders, setAllOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [displayChartData, setDisplayChartData] = useState<any[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const [stats, setStats] = useState({
     faturamento: 0,
@@ -196,6 +201,10 @@ export default function DashboardHome() {
       past.setDate(past.getDate() - 7);
       created_at_gt = new Date(past.setHours(0,0,0,0)).toISOString();
       created_at_lt = new Date(new Date().setHours(23,59,59,999)).toISOString();
+    } else if (selectedFilter === 'Este mês') {
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      created_at_gt = new Date(startOfMonth.setHours(0,0,0,0)).toISOString();
+      created_at_lt = new Date(new Date().setHours(23,59,59,999)).toISOString();
     } else if (selectedFilter === 'Últimos 30 dias') {
       const past = new Date(today);
       past.setDate(past.getDate() - 30);
@@ -210,24 +219,34 @@ export default function DashboardHome() {
       }
     }
 
-    // 2. Chamar a API passando as datas como parâmetros
+    // 2. Chamar a API buscando todas as transações e filtrando no frontend
     import('@/services/api').then(({ api }) => {
-      api.transactions.listOrders({
-        created_at_gt,
-        created_at_lt,
-      })
+      api.transactions.listOrders()
         .then(res => {
-          const data = res.data?.orders || res.orders || res.data || res || [];
+          const data = res?.data?.orders || res?.orders || res?.data || (Array.isArray(res) ? res : []);
           const allOrdersFetched = Array.isArray(data) ? data : [];
-          setAllOrders(allOrdersFetched);
-          setTransactions(allOrdersFetched.slice(0, 5));
+          
+          // Filtra no frontend por datas de forma segura e consistente
+          const filtered = allOrdersFetched.filter((t: any) => {
+            if (!t) return false;
+            if (!t.created_at && !t.date) return true;
+            const date = new Date(t.created_at || t.date);
+            const gt = created_at_gt ? new Date(created_at_gt) : null;
+            const lt = created_at_lt ? new Date(created_at_lt) : null;
+            if (gt && date < gt) return false;
+            if (lt && date > lt) return false;
+            return true;
+          });
+
+          setAllOrders(filtered);
+          setTransactions(filtered.slice(0, 5));
         })
         .catch(err => console.error("Erro ao buscar transações:", err))
         .finally(() => setIsLoading(false));
     });
   }, [selectedFilter, dateRange.start, dateRange.end]);
 
-  const filters = ['Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Personalizado'];
+  const filters = ['Hoje', 'Últimos 7 dias', 'Este mês', 'Últimos 30 dias', 'Personalizado'];
   const paymentMethods = ['Pix', 'Cartão', 'Boleto'];
 
   return (
@@ -302,7 +321,7 @@ export default function DashboardHome() {
               </div>
             )}
           </div>
-          <button className="clear-filters" onClick={() => setSelectedFilter('Últimos 7 dias')}>
+          <button className="clear-filters" onClick={() => setSelectedFilter('Este mês')}>
             <XCircle size={14} /> Limpar filtros
           </button>
           <RotateCcw size={16} className="text-muted" style={{ cursor: 'pointer' }} />
@@ -481,42 +500,44 @@ export default function DashboardHome() {
               {/* <button className="btn-ghost">Ver gráfico completo</button> */}
             </div>
             <div style={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={displayChartData}>
-                  <defs>
-                    <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#65839a" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#65839a" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1b2932" />
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#8a949e', fontSize: 11, fontWeight: 500 }} 
-                    dy={10}
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#8a949e', fontSize: 11, fontWeight: 500 }} 
-                    tickFormatter={(val) => val >= 1000 ? `R$ ${(val/1000).toFixed(1)}k` : `R$ ${val}`}
-                  />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#111a1f', border: '1px solid #1b2932', borderRadius: '10px' }}
-                    itemStyle={{ color: '#fff' }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="val" 
-                    stroke="#65839a" 
-                    strokeWidth={3}
-                    fillOpacity={1} 
-                    fill="url(#colorVal)" 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {isMounted && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={displayChartData}>
+                    <defs>
+                      <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#65839a" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#65839a" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1b2932" />
+                    <XAxis 
+                      dataKey="name" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#8a949e', fontSize: 11, fontWeight: 500 }} 
+                      dy={10}
+                    />
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#8a949e', fontSize: 11, fontWeight: 500 }} 
+                      tickFormatter={(val) => val >= 1000 ? `R$ ${(val/1000).toFixed(1)}k` : `R$ ${val}`}
+                    />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#111a1f', border: '1px solid #1b2932', borderRadius: '10px' }}
+                      itemStyle={{ color: '#fff' }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="val" 
+                      stroke="#65839a" 
+                      strokeWidth={3}
+                      fillOpacity={1} 
+                      fill="url(#colorVal)" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
         </div>

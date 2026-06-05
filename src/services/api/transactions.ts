@@ -22,7 +22,15 @@ export const transactionsService = {
    * List transactions with optional filters
    */
   listOrders: async (filters?: OrderFilters): Promise<any> => {
-    const query = filters ? new URLSearchParams(filters as any).toString() : '';
+    const q = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') {
+          q.append(k, String(v));
+        }
+      });
+    }
+    const query = q.toString();
     return fetchApi<any>(`/orders${query ? `?${query}` : ''}`);
   },
 
