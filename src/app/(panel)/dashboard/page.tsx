@@ -56,6 +56,10 @@ export default function DashboardHome() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [showCustomDate, setShowCustomDate] = useState(false);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  
+  const [dbOrders, setDbOrders] = useState<any[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
   const [transactions, setTransactions] = useState<any[]>([]);
   const [allOrders, setAllOrders] = useState<any[]>([]);
   const [pastOrders, setPastOrders] = useState<any[]>([]);
@@ -95,6 +99,7 @@ export default function DashboardHome() {
         const parsedOrders = JSON.parse(cachedOrders);
         setAllOrders(parsedOrders);
         setTransactions(parsedOrders.slice(0, 5));
+        setDbOrders(parsedOrders);
         setIsLoading(false); // Evita loaders se já possuir cache
       } catch (e) {
         sessionStorage.clear();
@@ -102,7 +107,99 @@ export default function DashboardHome() {
     }
   }, []);
 
-  // 2. Calcula as métricas principais do período atual vs período anterior sempre que os dados mudam
+  // 2. Busca na API apenas uma vez na carga de montagem ou quando solicitado manualmente
+  useEffect(() => {
+    // Apenas ativa loading cheio se não tiver nada em cache
+    if (!sessionStorage.getItem('tronnus_dash_stats')) {
+      setIsLoading(true);
+    }
+    
+    api.transactions.listOrders({ per_page: 250 })
+      .then(res => {
+        const data = res?.data?.orders || res?.orders || res?.data || (Array.isArray(res) ? res : []);
+        const allOrdersFetched = Array.isArray(data) ? data : [];
+        setDbOrders(allOrdersFetched);
+      })
+      .catch(err => console.error("Erro ao buscar transações:", err))
+      .finally(() => setIsLoading(false));
+  }, [refreshTrigger]);
+
+  // 3. Atualiza e filtra os dados localmente sem requisições de rede lentas adicionais
+  useEffect(() => {
+    const today = new Date();
+    let currentStart = new Date();
+    let currentEnd = new Date();
+    let pastStart = new Date();
+    let pastEnd = new Date();
+
+    if (selectedFilter === 'Hoje') {
+      currentStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+      currentEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      
+      pastStart = new Date(currentStart);
+      pastStart.setDate(pastStart.getDate() - 1);
+      pastEnd = new Date(currentEnd);
+      pastEnd.setDate(pastEnd.getDate() - 1);
+    } else if (selectedFilter === 'Últimos 7 dias') {
+      currentStart = new Date(today);
+      currentStart.setDate(currentStart.getDate() - 7);
+      currentStart.setHours(0, 0, 0, 0);
+      currentEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      
+      pastStart = new Date(currentStart);
+      pastStart.setDate(pastStart.getDate() - 7);
+      pastEnd = new Date(currentStart);
+      pastEnd.setHours(23, 59, 59, 999);
+    } else if (selectedFilter === 'Este mês') {
+      currentStart = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0, 0);
+      currentEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      
+      pastStart = new Date(today.getFullYear(), today.getMonth() - 1, 1, 0, 0, 0, 0);
+      pastEnd = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate(), 23, 59, 59, 999);
+    } else if (selectedFilter === 'Últimos 30 dias') {
+      currentStart = new Date(today);
+      currentStart.setDate(currentStart.getDate() - 30);
+      currentStart.setHours(0, 0, 0, 0);
+      currentEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      
+      pastStart = new Date(currentStart);
+      pastStart.setDate(pastStart.getDate() - 30);
+      pastEnd = new Date(currentStart);
+      pastEnd.setHours(23, 59, 59, 999);
+    } else if (selectedFilter.startsWith('De ')) { // Personalizado
+      if (dateRange.start) {
+        currentStart = new Date(`${dateRange.start}T00:00:00`);
+      }
+      if (dateRange.end) {
+        currentEnd = new Date(`${dateRange.end}T23:59:59`);
+      }
+      const diffMs = currentEnd.getTime() - currentStart.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24)) || 1;
+      
+      pastStart = new Date(currentStart);
+      pastStart.setDate(pastStart.getDate() - diffDays);
+      pastEnd = new Date(currentStart);
+      pastEnd.setHours(23, 59, 59, 999);
+    }
+
+    const currentFiltered = dbOrders.filter((t: any) => {
+      if (!t) return false;
+      const date = new Date(t.created_at || t.date);
+      return date >= currentStart && date <= currentEnd;
+    });
+
+    const pastFiltered = dbOrders.filter((t: any) => {
+      if (!t) return false;
+      const date = new Date(t.created_at || t.date);
+      return date >= pastStart && date <= pastEnd;
+    });
+
+    setAllOrders(currentFiltered);
+    setPastOrders(pastFiltered);
+    setTransactions(currentFiltered.slice(0, 5));
+  }, [dbOrders, selectedFilter, dateRange.start, dateRange.end]);
+
+  // 4. Calcula as métricas principais do período atual vs período anterior
   useEffect(() => {
     let faturamento = 0;
     let quantidade = 0;
@@ -206,7 +303,7 @@ export default function DashboardHome() {
     }
   }, [allOrders, pastOrders, selectedPaymentMethod]);
 
-  // 3. Atualiza os dados do gráfico baseado nas transações carregadas
+  // 5. Atualiza os dados do gráfico baseado nas transações carregadas
   useEffect(() => {
     if (!allOrders || allOrders.length === 0) {
       setDisplayChartData([{ name: 'Sem dados', val: 0 }]);
@@ -269,102 +366,6 @@ export default function DashboardHome() {
       sessionStorage.setItem('tronnus_dash_chart', JSON.stringify(finalChartData));
     }
   }, [allOrders, selectedFilter]);
-
-  // 4. Efetua a busca real de dados na API (Período Atual + Anterior para comparativo)
-  useEffect(() => {
-    // Apenas ativa loader cheio na primeira carga (sem cache)
-    if (!sessionStorage.getItem('tronnus_dash_stats')) {
-      setIsLoading(true);
-    }
-
-    const today = new Date();
-    let currentStart = new Date();
-    let currentEnd = new Date();
-    let pastStart = new Date();
-    let pastEnd = new Date();
-
-    if (selectedFilter === 'Hoje') {
-      currentStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
-      currentEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-      
-      pastStart = new Date(currentStart);
-      pastStart.setDate(pastStart.getDate() - 1);
-      pastEnd = new Date(currentEnd);
-      pastEnd.setDate(pastEnd.getDate() - 1);
-    } else if (selectedFilter === 'Últimos 7 dias') {
-      currentStart = new Date(today);
-      currentStart.setDate(currentStart.getDate() - 7);
-      currentStart.setHours(0, 0, 0, 0);
-      currentEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-      
-      pastStart = new Date(currentStart);
-      pastStart.setDate(pastStart.getDate() - 7);
-      pastEnd = new Date(currentStart);
-      pastEnd.setHours(23, 59, 59, 999);
-    } else if (selectedFilter === 'Este mês') {
-      currentStart = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0, 0);
-      currentEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-      
-      pastStart = new Date(today.getFullYear(), today.getMonth() - 1, 1, 0, 0, 0, 0);
-      pastEnd = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate(), 23, 59, 59, 999);
-    } else if (selectedFilter === 'Últimos 30 dias') {
-      currentStart = new Date(today);
-      currentStart.setDate(currentStart.getDate() - 30);
-      currentStart.setHours(0, 0, 0, 0);
-      currentEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-      
-      pastStart = new Date(currentStart);
-      pastStart.setDate(pastStart.getDate() - 30);
-      pastEnd = new Date(currentStart);
-      pastEnd.setHours(23, 59, 59, 999);
-    } else if (selectedFilter.startsWith('De ')) { // Personalizado
-      if (dateRange.start) {
-        currentStart = new Date(`${dateRange.start}T00:00:00`);
-      }
-      if (dateRange.end) {
-        currentEnd = new Date(`${dateRange.end}T23:59:59`);
-      }
-      const diffMs = currentEnd.getTime() - currentStart.getTime();
-      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24)) || 1;
-      
-      pastStart = new Date(currentStart);
-      pastStart.setDate(pastStart.getDate() - diffDays);
-      pastEnd = new Date(currentStart);
-      pastEnd.setHours(23, 59, 59, 999);
-    }
-
-    // Buscamos na API o range completo (desde o início do período passado até agora)
-    const apiFilters: any = { 
-      per_page: 1000,
-      created_at_gt: pastStart.toISOString(),
-      created_at_lt: currentEnd.toISOString()
-    };
-
-    api.transactions.listOrders(apiFilters)
-      .then(res => {
-        const data = res?.data?.orders || res?.orders || res?.data || (Array.isArray(res) ? res : []);
-        const allOrdersFetched = Array.isArray(data) ? data : [];
-        
-        // Particiona localmente
-        const currentFiltered = allOrdersFetched.filter((t: any) => {
-          if (!t) return false;
-          const date = new Date(t.created_at || t.date);
-          return date >= currentStart && date <= currentEnd;
-        });
-
-        const pastFiltered = allOrdersFetched.filter((t: any) => {
-          if (!t) return false;
-          const date = new Date(t.created_at || t.date);
-          return date >= pastStart && date <= pastEnd;
-        });
-
-        setAllOrders(currentFiltered);
-        setPastOrders(pastFiltered);
-        setTransactions(currentFiltered.slice(0, 5));
-      })
-      .catch(err => console.error("Erro ao buscar transações:", err))
-      .finally(() => setIsLoading(false));
-  }, [selectedFilter, dateRange.start, dateRange.end]);
 
   const renderTrend = (growth: number) => {
     if (growth > 0) {
@@ -472,7 +473,7 @@ export default function DashboardHome() {
           <button className="clear-filters" onClick={() => setSelectedFilter('Este mês')}>
             <XCircle size={14} /> Limpar filtros
           </button>
-          <RotateCcw size={16} className="text-muted" style={{ cursor: 'pointer' }} />
+          <RotateCcw size={16} className="text-muted" style={{ cursor: 'pointer' }} onClick={() => setRefreshTrigger(prev => prev + 1)} />
         </div>
 
         {/* Stats Grid */}
