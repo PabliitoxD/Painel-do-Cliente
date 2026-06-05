@@ -333,9 +333,11 @@ export default function DashboardHome() {
       pastEnd.setHours(23, 59, 59, 999);
     }
 
-    // Buscamos na API com paginação rápida e indexada, aplicando os filtros de data localmente para evitar lentidão
+    // Buscamos na API o range completo (desde o início do período passado até agora)
     const apiFilters: any = { 
-      per_page: 100
+      per_page: 1000,
+      created_at_gt: pastStart.toISOString(),
+      created_at_lt: currentEnd.toISOString()
     };
 
     api.transactions.listOrders(apiFilters)
