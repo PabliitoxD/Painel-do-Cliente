@@ -333,11 +333,9 @@ export default function DashboardHome() {
       pastEnd.setHours(23, 59, 59, 999);
     }
 
-    // Buscamos na API o range completo (desde o início do período passado até agora)
+    // Buscamos na API com paginação rápida e indexada, aplicando os filtros de data localmente para evitar lentidão
     const apiFilters: any = { 
-      per_page: 200,
-      created_at_gt: pastStart.toISOString(),
-      created_at_lt: currentEnd.toISOString()
+      per_page: 100
     };
 
     api.transactions.listOrders(apiFilters)
@@ -450,8 +448,14 @@ export default function DashboardHome() {
                       className="btn-primary"
                       style={{ padding: '0.5rem', fontSize: '0.85rem', width: '100%' }}
                       onClick={() => {
-                        const startFormatted = dateRange.start ? new Date(dateRange.start).toLocaleDateString('pt-BR') : '?';
-                        const endFormatted = dateRange.end ? new Date(dateRange.end).toLocaleDateString('pt-BR') : '?';
+                        const formatDateStr = (dStr: string) => {
+                          if (!dStr) return '?';
+                          const parts = dStr.split('-');
+                          if (parts.length !== 3) return dStr;
+                          return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        };
+                        const startFormatted = formatDateStr(dateRange.start);
+                        const endFormatted = formatDateStr(dateRange.end);
                         setSelectedFilter(`De ${startFormatted} até ${endFormatted}`);
                         setIsFilterOpen(false);
                       }}
