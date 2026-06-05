@@ -105,6 +105,7 @@ export default function StatementsPage() {
   }, [filteredData, page]);
 
   const hasMore = filteredData.length > page * perPage;
+  const totalPages = Math.ceil(filteredData.length / perPage) || 1;
 
   // Cálculos de métricas baseados nos dados filtrados
   const metrics = useMemo(() => {
@@ -371,26 +372,56 @@ export default function StatementsPage() {
         </div>
 
         {/* Paginação */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', padding: '1rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-          <button 
-            className="btn-ghost" 
-            disabled={page === 1 || isLoading} 
-            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: page === 1 ? 0.5 : 1, cursor: page === 1 ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)', color: 'white' }}
-          >
-            Anterior
-          </button>
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>
-            Página {page}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+            Página <strong>{page}</strong> de <strong>{totalPages}</strong>
           </span>
-          <button 
-            className="btn-ghost" 
-            disabled={!hasMore || isLoading} 
-            onClick={() => setPage(prev => prev + 1)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: !hasMore ? 0.5 : 1, cursor: !hasMore ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)', color: 'white' }}
-          >
-            Próximo
-          </button>
+          <div style={{ display: 'flex', gap: '0.25rem' }}>
+            <button 
+              disabled={page === 1 || isLoading} 
+              onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+              style={{ 
+                opacity: page === 1 ? 0.3 : 1, 
+                cursor: page === 1 ? 'not-allowed' : 'pointer', 
+                background: 'rgba(255,255,255,0.02)', 
+                padding: '0.35rem 0.6rem', 
+                borderRadius: '6px', 
+                border: '1px solid var(--border)', 
+                fontSize: '0.8rem', 
+                color: 'var(--text-main)', 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '28px',
+                height: '28px',
+                transition: 'all 0.2s'
+              }}
+            >
+              &lt;
+            </button>
+            <button 
+              disabled={page >= totalPages || isLoading} 
+              onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+              style={{ 
+                opacity: page >= totalPages ? 0.3 : 1, 
+                cursor: page >= totalPages ? 'not-allowed' : 'pointer', 
+                background: 'rgba(255,255,255,0.02)', 
+                padding: '0.35rem 0.6rem', 
+                borderRadius: '6px', 
+                border: '1px solid var(--border)', 
+                fontSize: '0.8rem', 
+                color: 'var(--text-main)', 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '28px',
+                height: '28px',
+                transition: 'all 0.2s'
+              }}
+            >
+              &gt;
+            </button>
+          </div>
         </div>
       </div>
 

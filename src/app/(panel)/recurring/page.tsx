@@ -40,11 +40,10 @@ export default function RecurringPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = (await api.subscriptions.list({ page, per_page: 50 })) as any;
+      const res = (await api.subscriptions.list({ per_page: 1000 })) as any;
       const dataRes = res?.subscriptions || res?.data?.subscriptions || res?.data || (Array.isArray(res) ? res : []);
       const data = Array.isArray(dataRes) ? dataRes : [];
       setSubscriptions(data);
-      setHasMore(data.length >= 50);
 
       // Calcular estatísticas básicas
       let active = 0;
@@ -76,7 +75,7 @@ export default function RecurringPage() {
 
   useEffect(() => {
     loadSubscriptions();
-  }, [page]);
+  }, []);
 
   useEffect(() => {
     setPage(1);
@@ -98,6 +97,13 @@ export default function RecurringPage() {
       return matchesSearch && matchesStatus;
     });
   }, [subscriptions, searchQuery, statusFilter]);
+
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * 50;
+    return filteredData.slice(start, start + 50);
+  }, [filteredData, page]);
+
+  const totalPages = Math.ceil(filteredData.length / 50) || 1;
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '—';
@@ -211,13 +217,13 @@ export default function RecurringPage() {
                     Carregando assinaturas...
                   </td>
                 </tr>
-              ) : filteredData.length === 0 ? (
+              ) : paginatedData.length === 0 ? (
                 <tr>
                   <td colSpan={8} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-dim)' }}>
                     Nenhuma assinatura encontrada.
                   </td>
                 </tr>
-              ) : filteredData.map((item) => {
+              ) : paginatedData.map((item) => {
                 const statusInfo = getStatusStyle(item.status);
                 const periodicity = item.plan?.periodicity || 1;
                 const freqLabel = periodicity === 1 ? 'Mensal' : periodicity === 3 ? 'Trimestral' : periodicity === 6 ? 'Semestral' : periodicity === 12 ? 'Anual' : 'Personalizada';
@@ -275,26 +281,56 @@ export default function RecurringPage() {
         </div>
 
         {/* Paginação */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', padding: '1rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-          <button 
-            className="btn-ghost" 
-            disabled={page === 1 || isLoading} 
-            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: page === 1 ? 0.5 : 1, cursor: page === 1 ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)' }}
-          >
-            Anterior
-          </button>
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>
-            Página {page}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+            Página <strong>{page}</strong> de <strong>{totalPages}</strong>
           </span>
-          <button 
-            className="btn-ghost" 
-            disabled={!hasMore || isLoading} 
-            onClick={() => setPage(prev => prev + 1)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: !hasMore ? 0.5 : 1, cursor: !hasMore ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)' }}
-          >
-            Próximo
-          </button>
+          <div style={{ display: 'flex', gap: '0.25rem' }}>
+            <button 
+              disabled={page === 1 || isLoading} 
+              onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+              style={{ 
+                opacity: page === 1 ? 0.3 : 1, 
+                cursor: page === 1 ? 'not-allowed' : 'pointer', 
+                background: 'rgba(255,255,255,0.02)', 
+                padding: '0.35rem 0.6rem', 
+                borderRadius: '6px', 
+                border: '1px solid var(--border)', 
+                fontSize: '0.8rem', 
+                color: 'var(--text-main)', 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '28px',
+                height: '28px',
+                transition: 'all 0.2s'
+              }}
+            >
+              &lt;
+            </button>
+            <button 
+              disabled={page >= totalPages || isLoading} 
+              onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+              style={{ 
+                opacity: page >= totalPages ? 0.3 : 1, 
+                cursor: page >= totalPages ? 'not-allowed' : 'pointer', 
+                background: 'rgba(255,255,255,0.02)', 
+                padding: '0.35rem 0.6rem', 
+                borderRadius: '6px', 
+                border: '1px solid var(--border)', 
+                fontSize: '0.8rem', 
+                color: 'var(--text-main)', 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '28px',
+                height: '28px',
+                transition: 'all 0.2s'
+              }}
+            >
+              &gt;
+            </button>
+          </div>
         </div>
 
         {/* MODAL DETALHES DA ASSINATURA */}

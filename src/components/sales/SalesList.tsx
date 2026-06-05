@@ -51,7 +51,7 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
 
   useEffect(() => {
     setPage(1);
-  }, [statuses, apiStatuses, viewType, timeRange, paymentMethodFilter]);
+  }, [statuses, apiStatuses, viewType, timeRange, paymentMethodFilter, searchQuery, dateRange]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -59,7 +59,7 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
     // Faz uma request por status e junta os resultados
     Promise.all(
       statusList.map(status =>
-        api.transactions.listOrders({ status: status.toUpperCase(), page, per_page: 50 })
+        api.transactions.listOrders({ status: status.toUpperCase(), per_page: 1000 })
           .then(res => {
             const data = res?.orders || res?.data?.orders || (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
             return Array.isArray(data) ? data : [];
@@ -71,7 +71,6 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
       const all = results.flat();
       const unique = all.filter((item, idx) => all.findIndex(o => o.token === item.token) === idx);
       setOrdersData(unique);
-      setHasMore(unique.length >= 50);
     })
     .catch(err => {
       console.error("[SalesList] Erro ao buscar vendas:", err);
@@ -79,7 +78,7 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
     .finally(() => {
       setIsLoading(false);
     });
-  }, [statuses, apiStatuses, viewType, page]);
+  }, [statuses, apiStatuses, viewType]);
 
   // Filtragem (Busca + Data)
   const filteredData = useMemo(() => {
@@ -131,6 +130,13 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
       return matchesSearch && matchesTime && matchesMethod;
     });
   }, [ordersData, searchQuery, timeRange, dateRange, paymentMethodFilter]);
+
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * 50;
+    return filteredData.slice(start, start + 50);
+  }, [filteredData, page]);
+
+  const totalPages = Math.ceil(filteredData.length / 50) || 1;
 
   const formatCurrency = (val: number) => fmtBrl(val);
 
@@ -310,8 +316,8 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
                     Carregando vendas...
                   </td>
                 </tr>
-              ) : filteredData.length > 0 ? (
-                filteredData.map((item, i) => {
+              ) : paginatedData.length > 0 ? (
+                paginatedData.map((item, i) => {
                   const lastPayRender = item.payments?.length ? item.payments[item.payments.length - 1] : null;
                   const actualMethod = lastPayRender?.payment_method?.description || lastPayRender?.payment_method?.method || item.payment?.method || item.payment_method || item.method || '';
                   const methodLow = String(actualMethod).toLowerCase();
@@ -375,26 +381,56 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
         </div>
 
         {/* Paginação */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', padding: '1rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-          <button 
-            className="btn-ghost" 
-            disabled={page === 1 || isLoading} 
-            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: page === 1 ? 0.5 : 1, cursor: page === 1 ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)' }}
-          >
-            Anterior
-          </button>
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>
-            Página {page}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+            Página <strong>{page}</strong> de <strong>{totalPages}</strong>
           </span>
-          <button 
-            className="btn-ghost" 
-            disabled={!hasMore || isLoading} 
-            onClick={() => setPage(prev => prev + 1)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: !hasMore ? 0.5 : 1, cursor: !hasMore ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)' }}
-          >
-            Próximo
-          </button>
+          <div style={{ display: 'flex', gap: '0.25rem' }}>
+            <button 
+              disabled={page === 1 || isLoading} 
+              onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+              style={{ 
+                opacity: page === 1 ? 0.3 : 1, 
+                cursor: page === 1 ? 'not-allowed' : 'pointer', 
+                background: 'rgba(255,255,255,0.02)', 
+                padding: '0.35rem 0.6rem', 
+                borderRadius: '6px', 
+                border: '1px solid var(--border)', 
+                fontSize: '0.8rem', 
+                color: 'var(--text-main)', 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '28px',
+                height: '28px',
+                transition: 'all 0.2s'
+              }}
+            >
+              &lt;
+            </button>
+            <button 
+              disabled={page >= totalPages || isLoading} 
+              onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+              style={{ 
+                opacity: page >= totalPages ? 0.3 : 1, 
+                cursor: page >= totalPages ? 'not-allowed' : 'pointer', 
+                background: 'rgba(255,255,255,0.02)', 
+                padding: '0.35rem 0.6rem', 
+                borderRadius: '6px', 
+                border: '1px solid var(--border)', 
+                fontSize: '0.8rem', 
+                color: 'var(--text-main)', 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '28px',
+                height: '28px',
+                transition: 'all 0.2s'
+              }}
+            >
+              &gt;
+            </button>
+          </div>
         </div>
       </div>
 

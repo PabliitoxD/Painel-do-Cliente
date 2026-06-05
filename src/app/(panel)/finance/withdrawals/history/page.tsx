@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { api } from '@/services/api';
 import { 
@@ -28,11 +28,10 @@ export default function WithdrawalHistoryPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.withdrawals.list({ page, per_page: 50 });
+      const res = await api.withdrawals.list({ per_page: 1000 });
       const dataRes = res?.withdraws || res?.data?.withdraws || res?.withdrawals || res?.data || (Array.isArray(res) ? res : []);
       const data = Array.isArray(dataRes) ? dataRes : [];
       setHistory(data);
-      setHasMore(data.length >= 50);
     } catch (err: any) {
       console.warn("Erro ao buscar histórico de saques (silenciado):", err);
       setHistory([]); // Garante que a lista fique vazia em vez de dar erro
@@ -43,7 +42,18 @@ export default function WithdrawalHistoryPage() {
 
   useEffect(() => {
     loadHistory();
-  }, [page]);
+  }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [history]);
+
+  const paginatedHistory = useMemo(() => {
+    const start = (page - 1) * 50;
+    return history.slice(start, start + 50);
+  }, [history, page]);
+
+  const totalPages = Math.ceil(history.length / 50) || 1;
 
   return (
     <DashboardLayout>
@@ -89,13 +99,13 @@ export default function WithdrawalHistoryPage() {
                     Carregando histórico...
                   </td>
                 </tr>
-              ) : history.length === 0 ? (
+              ) : paginatedHistory.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-dim)' }}>
                     Nenhum saque encontrado.
                   </td>
                 </tr>
-              ) : history.map((item, i) => {
+              ) : paginatedHistory.map((item, i) => {
                 const amount = parseFloat(item.amount || 0);
                 const fee = parseFloat(item.taxFee || item.fee || 0);
                 const net = amount - fee;
@@ -133,26 +143,56 @@ export default function WithdrawalHistoryPage() {
         </div>
 
         {/* Paginação */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', padding: '1rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-          <button 
-            className="btn-ghost" 
-            disabled={page === 1 || isLoading} 
-            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: page === 1 ? 0.5 : 1, cursor: page === 1 ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)', color: 'white' }}
-          >
-            Anterior
-          </button>
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>
-            Página {page}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+            Página <strong>{page}</strong> de <strong>{totalPages}</strong>
           </span>
-          <button 
-            className="btn-ghost" 
-            disabled={!hasMore || isLoading} 
-            onClick={() => setPage(prev => prev + 1)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: !hasMore ? 0.5 : 1, cursor: !hasMore ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)', color: 'white' }}
-          >
-            Próximo
-          </button>
+          <div style={{ display: 'flex', gap: '0.25rem' }}>
+            <button 
+              disabled={page === 1 || isLoading} 
+              onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+              style={{ 
+                opacity: page === 1 ? 0.3 : 1, 
+                cursor: page === 1 ? 'not-allowed' : 'pointer', 
+                background: 'rgba(255,255,255,0.02)', 
+                padding: '0.35rem 0.6rem', 
+                borderRadius: '6px', 
+                border: '1px solid var(--border)', 
+                fontSize: '0.8rem', 
+                color: 'var(--text-main)', 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '28px',
+                height: '28px',
+                transition: 'all 0.2s'
+              }}
+            >
+              &lt;
+            </button>
+            <button 
+              disabled={page >= totalPages || isLoading} 
+              onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+              style={{ 
+                opacity: page >= totalPages ? 0.3 : 1, 
+                cursor: page >= totalPages ? 'not-allowed' : 'pointer', 
+                background: 'rgba(255,255,255,0.02)', 
+                padding: '0.35rem 0.6rem', 
+                borderRadius: '6px', 
+                border: '1px solid var(--border)', 
+                fontSize: '0.8rem', 
+                color: 'var(--text-main)', 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '28px',
+                height: '28px',
+                transition: 'all 0.2s'
+              }}
+            >
+              &gt;
+            </button>
+          </div>
         </div>
       </div>
 

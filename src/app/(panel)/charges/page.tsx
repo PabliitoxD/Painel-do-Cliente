@@ -66,7 +66,7 @@ export default function ChargesPage() {
     setIsLoading(true); setError(null);
     try {
       if (tab === 'avulsa') {
-        const res: any = await chargesService.list({ page, per_page: 50 });
+        const res: any = await chargesService.list({ per_page: 1000 });
         const list = res.charges || res.data || res.items || (Array.isArray(res) ? res : []);
         
         let localCharges: any[] = [];
@@ -107,9 +107,8 @@ export default function ChargesPage() {
         });
 
         setRows(combined);
-        setHasMore(list.length >= 50);
       } else {
-        const res: any = await plansService.list({ page, per_page: 50 });
+        const res: any = await plansService.list({ per_page: 1000 });
         const list = res.plans || res.data || res.items || (Array.isArray(res) ? res : []);
         
         let localPlans: any[] = [];
@@ -150,11 +149,10 @@ export default function ChargesPage() {
         });
 
         setRows(combined);
-        setHasMore(list.length >= 50);
       }
     } catch (e: any) { setError(e.message || 'Erro ao carregar.'); }
     finally { setIsLoading(false); }
-  }, [tab, page]);
+  }, [tab]);
 
   useEffect(() => {
     setPage(1);
@@ -280,6 +278,13 @@ export default function ChargesPage() {
     });
   }, [rows, search, filterDate]);
 
+  const paginatedRows = useMemo(() => {
+    const start = (page - 1) * 50;
+    return filtered.slice(start, start + 50);
+  }, [filtered, page]);
+
+  const totalPages = Math.ceil(filtered.length / 50) || 1;
+
   const checkoutUrl = (r: Row) => {
     return `${typeof window !== 'undefined' ? window.location.origin : ''}/c/${r.token}`;
   };
@@ -347,9 +352,9 @@ export default function ChargesPage() {
                   <div style={{ margin:'0 auto 1rem', width:'24px', height:'24px', border:'3px solid var(--border)', borderTopColor:'var(--primary)', borderRadius:'50%', animation:'spin 1s linear infinite' }}/>
                   Carregando...
                 </td></tr>
-              ) : filtered.length === 0 ? (
+              ) : paginatedRows.length === 0 ? (
                 <tr><td colSpan={5} style={{ textAlign:'center', padding:'2rem', color:'var(--text-dim)' }}>Nenhum registro encontrado.</td></tr>
-              ) : filtered.map(r => (
+              ) : paginatedRows.map(r => (
                 <tr key={r.token}>
                   <td style={{ fontWeight:600, color:'var(--text-main)' }}>{r.label}</td>
                   <td style={{ color:'var(--text-dim)' }}>{r.extra || '—'}</td>
@@ -365,26 +370,56 @@ export default function ChargesPage() {
         </div>
 
         {/* Paginação */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', padding: '1rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-          <button 
-            className="btn-ghost" 
-            disabled={page === 1 || isLoading} 
-            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: page === 1 ? 0.5 : 1, cursor: page === 1 ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)', color: 'white' }}
-          >
-            Anterior
-          </button>
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>
-            Página {page}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+            Página <strong>{page}</strong> de <strong>{totalPages}</strong>
           </span>
-          <button 
-            className="btn-ghost" 
-            disabled={!hasMore || isLoading} 
-            onClick={() => setPage(prev => prev + 1)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: !hasMore ? 0.5 : 1, cursor: !hasMore ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)', color: 'white' }}
-          >
-            Próximo
-          </button>
+          <div style={{ display: 'flex', gap: '0.25rem' }}>
+            <button 
+              disabled={page === 1 || isLoading} 
+              onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+              style={{ 
+                opacity: page === 1 ? 0.3 : 1, 
+                cursor: page === 1 ? 'not-allowed' : 'pointer', 
+                background: 'rgba(255,255,255,0.02)', 
+                padding: '0.35rem 0.6rem', 
+                borderRadius: '6px', 
+                border: '1px solid var(--border)', 
+                fontSize: '0.8rem', 
+                color: 'var(--text-main)', 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '28px',
+                height: '28px',
+                transition: 'all 0.2s'
+              }}
+            >
+              &lt;
+            </button>
+            <button 
+              disabled={page >= totalPages || isLoading} 
+              onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+              style={{ 
+                opacity: page >= totalPages ? 0.3 : 1, 
+                cursor: page >= totalPages ? 'not-allowed' : 'pointer', 
+                background: 'rgba(255,255,255,0.02)', 
+                padding: '0.35rem 0.6rem', 
+                borderRadius: '6px', 
+                border: '1px solid var(--border)', 
+                fontSize: '0.8rem', 
+                color: 'var(--text-main)', 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '28px',
+                height: '28px',
+                transition: 'all 0.2s'
+              }}
+            >
+              &gt;
+            </button>
+          </div>
         </div>
 
         {/* Create Modal */}
