@@ -28,6 +28,25 @@ import { translateStatus, translateMethod, getStatusPillClass, formatCurrency } 
 import '@/styles/dashboard.css';
 import '@/styles/dashboard.css';
 
+// Helper function to safely parse amount from raw numbers or formatted BRL currency strings
+const parseAmount = (t: any): number => {
+  if (!t) return 0;
+  if (t.amount !== undefined && t.amount !== null && t.amount !== '') {
+    const parsed = parseFloat(String(t.amount));
+    if (!isNaN(parsed)) return parsed;
+  }
+  if (t.value !== undefined && t.value !== null && t.value !== '') {
+    if (typeof t.value === 'number') return t.value;
+    const cleaned = String(t.value)
+      .replace(/R\$\s?/, '')
+      .replace(/\./g, '')
+      .replace(',', '.');
+    const parsed = parseFloat(cleaned);
+    if (!isNaN(parsed)) return parsed;
+  }
+  return 0;
+};
+
 export default function DashboardHome() {
   const router = useRouter();
   const { user } = useAuth();
@@ -71,13 +90,13 @@ export default function DashboardHome() {
     
     allOrders.forEach((t: any) => {
       if (!t) return;
-      const amount = parseFloat(t.amount || t.value || 0);
+      const amount = parseAmount(t);
       const status = (t.status?.code || t.status || '').toLowerCase();
       const lastPay = t.payments?.length ? t.payments[t.payments.length - 1] : null;
       const actualMethod = lastPay?.payment_method?.description || lastPay?.payment_method?.method || t.payment?.method || t.payment_method || t.method || '';
       const method = String(actualMethod).toLowerCase();
 
-      const isApproved = ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active'].includes(status);
+      const isApproved = ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active', 'confirmed', 'concluido', 'concluído'].includes(status);
 
       // Faturamento (consideramos vendas concluídas/aprovadas) e Quantidade (total)
       if (isApproved) {
@@ -135,7 +154,7 @@ export default function DashboardHome() {
     const validOrders = allOrders.filter((t: any) => {
       if (!t) return false;
       const status = (t.status?.code || t.status || '').toLowerCase();
-      return ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active'].includes(status);
+      return ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active', 'confirmed', 'concluido', 'concluído'].includes(status);
     });
 
 
@@ -149,7 +168,7 @@ export default function DashboardHome() {
       validOrders.forEach((t: any) => {
         const date = new Date(t.created_at);
         const hour = date.getHours();
-        const amount = parseFloat(t.amount || t.value || 0);
+        const amount = parseAmount(t);
         if (hour < 6) hours[0] += amount;
         else if (hour < 12) hours[1] += amount;
         else if (hour < 18) hours[2] += amount;
@@ -166,7 +185,7 @@ export default function DashboardHome() {
       validOrders.forEach((t: any) => {
         const date = new Date(t.created_at);
         const dateStr = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-        const amount = parseFloat(t.amount || t.value || 0);
+        const amount = parseAmount(t);
         dataMap[dateStr] = (dataMap[dateStr] || 0) + amount;
       });
 
