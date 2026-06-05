@@ -53,7 +53,9 @@ export default function RecurringPage() {
       data.forEach((sub: any) => {
         if (!sub) return;
         const status = (sub.status || '').toLowerCase();
-        const price = parseFloat(sub.price || sub.plan?.price || 0);
+        const rawPrice = sub.price !== null && sub.price !== undefined ? sub.price : (sub.plan?.price !== null && sub.plan?.price !== undefined ? sub.plan.price : 0);
+        const parsedPrice = parseFloat(rawPrice);
+        const price = isNaN(parsedPrice) ? 0 : parsedPrice;
         
         if (status === 'active' || status === 'ativa') {
           active++;
@@ -107,7 +109,14 @@ export default function RecurringPage() {
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('pt-BR');
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('pt-BR');
+  };
+
+  const safeFloat = (val: any) => {
+    const parsed = parseFloat(val);
+    return isNaN(parsed) ? 0 : parsed;
   };
 
   const getStatusStyle = (status: string) => {
@@ -258,7 +267,7 @@ export default function RecurringPage() {
                         <span style={{ fontWeight: 500 }}>{formatDate(item.next_billing_date)}</span>
                       </div>
                     </td>
-                    <td style={{ fontWeight: 700, fontSize: '1rem' }}>{formatCurrency(parseFloat(item.price || item.plan?.price || 0))}</td>
+                    <td style={{ fontWeight: 700, fontSize: '1rem' }}>{formatCurrency(safeFloat(item.price || item.plan?.price || 0))}</td>
                     <td>
                       <span className="status-pill" style={{ 
                         background: statusInfo.bg, 
@@ -363,7 +372,7 @@ export default function RecurringPage() {
                   <div style={{ textAlign:'right' }}>
                     <p style={{ color:'var(--text-dim)', fontSize:'0.85rem', marginBottom:'0.25rem' }}>Valor Recorrente</p>
                     <p style={{ fontSize:'1.25rem', fontWeight:700, color:'var(--primary)' }}>
-                      {formatCurrency(parseFloat(selectedSubscription.price || selectedSubscription.plan?.price || 0))}
+                      {formatCurrency(safeFloat(selectedSubscription.price || selectedSubscription.plan?.price || 0))}
                     </p>
                   </div>
                 </div>
