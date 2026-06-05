@@ -6,6 +6,8 @@ export const formatCurrency = (value: number) => {
 export const translateStatus = (status: string) => {
   const s = status?.toLowerCase();
   switch (s) {
+    case 'processed':
+      return 'Pagamento Processado';
     case 'approved':
     case 'paid':
     case 'aprovada':
@@ -63,7 +65,7 @@ export const translateMethod = (method: string) => {
 export const getStatusPillClass = (status: string) => {
   const s = status?.toLowerCase();
   // Verde: aprovada
-  if (['approved', 'paid', 'aprovada', 'pago', 'active', 'confirmed', 'concluido', 'concluído'].includes(s)) return 'aprovada';
+  if (['approved', 'paid', 'aprovada', 'pago', 'active', 'confirmed', 'concluido', 'concluído', 'processed'].includes(s)) return 'aprovada';
   
   // Vermelho: recusada (para cancelados, estornados, negados e chargebacks)
   if (['canceled', 'cancelado', 'cancelled', 'not_paid', 'refunded', 'estornado', 'reembolsado', 'expired', 'expirado', 'suspended', 'denied', 'negado', 'reprovado', 'chargeback', 'in_chargeback'].includes(s)) return 'recusada';
