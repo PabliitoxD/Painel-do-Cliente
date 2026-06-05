@@ -70,19 +70,20 @@ export default function DashboardHome() {
     let chargebacks = 0;
     
     allOrders.forEach((t: any) => {
+      if (!t) return;
       const amount = parseFloat(t.amount || t.value || 0);
-      const status = (t.status || '').toLowerCase();
+      const status = (t.status?.code || t.status || '').toLowerCase();
       const lastPay = t.payments?.length ? t.payments[t.payments.length - 1] : null;
       const actualMethod = lastPay?.payment_method?.description || lastPay?.payment_method?.method || t.payment?.method || t.payment_method || t.method || '';
       const method = String(actualMethod).toLowerCase();
 
       const isApproved = ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active'].includes(status);
 
-      // Faturamento e Quantidade (consideramos vendas concluídas/aprovadas)
+      // Faturamento (consideramos vendas concluídas/aprovadas) e Quantidade (total)
       if (isApproved) {
         faturamento += amount;
-        quantidade += 1;
       }
+      quantidade += 1;
       
       // Filtrar por Método Selecionado
       const selectedMethodMap: Record<string, string[]> = {
@@ -132,7 +133,8 @@ export default function DashboardHome() {
     }
 
     const validOrders = allOrders.filter((t: any) => {
-      const status = (t.status || '').toLowerCase();
+      if (!t) return false;
+      const status = (t.status?.code || t.status || '').toLowerCase();
       return ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active'].includes(status);
     });
 
@@ -484,8 +486,8 @@ export default function DashboardHome() {
                         })()}</div>
                     </td>
                     <td>
-                      <span className={`status-pill ${getStatusPillClass(t.status)}`}>
-                        {translateStatus(t.status)}
+                      <span className={`status-pill ${getStatusPillClass(t.status?.code || t.status)}`}>
+                        {translateStatus(t.status?.code || t.status)}
                       </span>
                     </td>
                   </tr>
