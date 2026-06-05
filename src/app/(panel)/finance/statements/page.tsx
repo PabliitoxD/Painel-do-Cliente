@@ -29,6 +29,7 @@ export default function StatementsPage() {
   
   const [statementsData, setStatementsData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   const timeOptions = ['Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Esse mês', 'Personalizado'];
   const statusOptions = ['Todos', 'entrada', 'saída'];
@@ -49,6 +50,10 @@ export default function StatementsPage() {
         });
     });
   }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, timeRange, statusFilter]);
 
   // Lógica de filtragem
   const filteredData = useMemo(() => {
@@ -92,6 +97,14 @@ export default function StatementsPage() {
       return matchesSearch && matchesStatus && matchesTime;
     });
   }, [statementsData, searchQuery, timeRange, statusFilter]);
+
+  const perPage = 50;
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * perPage;
+    return filteredData.slice(start, start + perPage);
+  }, [filteredData, page]);
+
+  const hasMore = filteredData.length > page * perPage;
 
   // Cálculos de métricas baseados nos dados filtrados
   const metrics = useMemo(() => {
@@ -315,7 +328,7 @@ export default function StatementsPage() {
                     Carregando extrato...
                   </td>
                 </tr>
-              ) : filteredData.length > 0 ? filteredData.map((item) => {
+              ) : paginatedData.length > 0 ? paginatedData.map((item) => {
                 const isInput = item.transaction_type === 'INPUT';
                 return (
                   <tr key={item.id || Math.random()}>
@@ -355,6 +368,29 @@ export default function StatementsPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Paginação */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', padding: '1rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <button 
+            className="btn-ghost" 
+            disabled={page === 1 || isLoading} 
+            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: page === 1 ? 0.5 : 1, cursor: page === 1 ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)', color: 'white' }}
+          >
+            Anterior
+          </button>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>
+            Página {page}
+          </span>
+          <button 
+            className="btn-ghost" 
+            disabled={!hasMore || isLoading} 
+            onClick={() => setPage(prev => prev + 1)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: !hasMore ? 0.5 : 1, cursor: !hasMore ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)', color: 'white' }}
+          >
+            Próximo
+          </button>
         </div>
       </div>
 

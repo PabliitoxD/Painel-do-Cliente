@@ -28,6 +28,8 @@ export default function ChargesPage() {
   const [selected, setSelected] = useState<Row | null>(null);
   const [search, setSearch] = useState('');
   const [filterDate, setFilterDate] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   // form state
   const [cartItems, setCartItems] = useState([{ id: Date.now(), name: '', unitPrice: 0, quantity: 1 }]);
@@ -64,7 +66,7 @@ export default function ChargesPage() {
     setIsLoading(true); setError(null);
     try {
       if (tab === 'avulsa') {
-        const res: any = await chargesService.list({ page: 1, per_page: 10 });
+        const res: any = await chargesService.list({ page, per_page: 50 });
         const list = res.charges || res.data || res.items || (Array.isArray(res) ? res : []);
         
         let localCharges: any[] = [];
@@ -105,8 +107,9 @@ export default function ChargesPage() {
         });
 
         setRows(combined);
+        setHasMore(list.length >= 50);
       } else {
-        const res: any = await plansService.list({ page: 1, per_page: 10 });
+        const res: any = await plansService.list({ page, per_page: 50 });
         const list = res.plans || res.data || res.items || (Array.isArray(res) ? res : []);
         
         let localPlans: any[] = [];
@@ -147,10 +150,15 @@ export default function ChargesPage() {
         });
 
         setRows(combined);
+        setHasMore(list.length >= 50);
       }
     } catch (e: any) { setError(e.message || 'Erro ao carregar.'); }
     finally { setIsLoading(false); }
-  }, [tab]);
+  }, [tab, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [tab, search, filterDate]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -354,6 +362,29 @@ export default function ChargesPage() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Paginação */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', padding: '1rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <button 
+            className="btn-ghost" 
+            disabled={page === 1 || isLoading} 
+            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: page === 1 ? 0.5 : 1, cursor: page === 1 ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)', color: 'white' }}
+          >
+            Anterior
+          </button>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>
+            Página {page}
+          </span>
+          <button 
+            className="btn-ghost" 
+            disabled={!hasMore || isLoading} 
+            onClick={() => setPage(prev => prev + 1)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: !hasMore ? 0.5 : 1, cursor: !hasMore ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)', color: 'white' }}
+          >
+            Próximo
+          </button>
         </div>
 
         {/* Create Modal */}

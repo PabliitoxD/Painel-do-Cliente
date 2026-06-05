@@ -40,6 +40,9 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
   const [isMethodMenuOpen, setIsMethodMenuOpen] = useState(false);
   const methodOptions = ['Todos', 'Cartão de Crédito', 'Pix', 'Boleto'];
 
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
   const detailsRouter = useRouter();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('geral');
@@ -47,12 +50,16 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
   const timeOptions = ['Todos', 'Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Esse mês', 'Personalizado'];
 
   useEffect(() => {
+    setPage(1);
+  }, [statuses, apiStatuses, viewType, timeRange, paymentMethodFilter]);
+
+  useEffect(() => {
     setIsLoading(true);
     const statusList = apiStatuses || statuses;
     // Faz uma request por status e junta os resultados
     Promise.all(
       statusList.map(status =>
-        api.transactions.listOrders({ status: status.toUpperCase() })
+        api.transactions.listOrders({ status: status.toUpperCase(), page, per_page: 50 })
           .then(res => {
             const data = res?.orders || res?.data?.orders || (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
             return Array.isArray(data) ? data : [];
@@ -64,6 +71,7 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
       const all = results.flat();
       const unique = all.filter((item, idx) => all.findIndex(o => o.token === item.token) === idx);
       setOrdersData(unique);
+      setHasMore(unique.length >= 50);
     })
     .catch(err => {
       console.error("[SalesList] Erro ao buscar vendas:", err);
@@ -71,7 +79,7 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
     .finally(() => {
       setIsLoading(false);
     });
-  }, [statuses, apiStatuses, viewType]);
+  }, [statuses, apiStatuses, viewType, page]);
 
   // Filtragem (Busca + Data)
   const filteredData = useMemo(() => {
@@ -364,6 +372,29 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Paginação */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', padding: '1rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <button 
+            className="btn-ghost" 
+            disabled={page === 1 || isLoading} 
+            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: page === 1 ? 0.5 : 1, cursor: page === 1 ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)' }}
+          >
+            Anterior
+          </button>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>
+            Página {page}
+          </span>
+          <button 
+            className="btn-ghost" 
+            disabled={!hasMore || isLoading} 
+            onClick={() => setPage(prev => prev + 1)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: !hasMore ? 0.5 : 1, cursor: !hasMore ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)' }}
+          >
+            Próximo
+          </button>
         </div>
       </div>
 

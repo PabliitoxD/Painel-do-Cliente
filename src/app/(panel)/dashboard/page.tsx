@@ -58,6 +58,7 @@ export default function DashboardHome() {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   
   const [dbOrders, setDbOrders] = useState<any[]>([]);
+  const [hasReachedEnd, setHasReachedEnd] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -84,6 +85,15 @@ export default function DashboardHome() {
     chargebacksGrowth: 0,
   });
 
+  const handleRefresh = () => {
+    sessionStorage.removeItem('tronnus_dash_stats');
+    sessionStorage.removeItem('tronnus_dash_chart');
+    sessionStorage.removeItem('tronnus_dash_orders');
+    setDbOrders([]);
+    setHasReachedEnd(false);
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   // 1. Carrega dados do Cache do Navegador na montagem (para renderização instantânea)
   useEffect(() => {
     setIsMounted(true);
@@ -107,22 +117,110 @@ export default function DashboardHome() {
     }
   }, []);
 
-  // 2. Busca na API apenas uma vez na carga de montagem ou quando solicitado manualmente
+  // 2. Busca na API incrementalmente conforme necessário baseado no filtro ativo
   useEffect(() => {
-    // Apenas ativa loading cheio se não tiver nada em cache
-    if (!sessionStorage.getItem('tronnus_dash_stats')) {
-      setIsLoading(true);
+    let active = true;
+
+    // Calcular pastStart para o filtro ativo
+    const today = new Date();
+    let targetPastStart = new Date();
+    if (selectedFilter === 'Hoje') {
+      targetPastStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+      targetPastStart.setDate(targetPastStart.getDate() - 1);
+    } else if (selectedFilter === 'Últimos 7 dias') {
+      targetPastStart = new Date(today);
+      targetPastStart.setDate(targetPastStart.getDate() - 14);
+    } else if (selectedFilter === 'Este mês') {
+      targetPastStart = new Date(today.getFullYear(), today.getMonth() - 1, 1, 0, 0, 0, 0);
+    } else if (selectedFilter === 'Últimos 30 dias') {
+      targetPastStart = new Date(today);
+      targetPastStart.setDate(targetPastStart.getDate() - 60);
+    } else if (selectedFilter.startsWith('De ') && dateRange.start && dateRange.end) {
+      const start = new Date(`${dateRange.start}T00:00:00`);
+      const end = new Date(`${dateRange.end}T23:59:59`);
+      const diffMs = end.getTime() - start.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24)) || 1;
+      targetPastStart = new Date(start);
+      targetPastStart.setDate(targetPastStart.getDate() - diffDays);
     }
-    
-    api.transactions.listOrders({ per_page: 250 })
-      .then(res => {
-        const data = res?.data?.orders || res?.orders || res?.data || (Array.isArray(res) ? res : []);
-        const allOrdersFetched = Array.isArray(data) ? data : [];
-        setDbOrders(allOrdersFetched);
-      })
-      .catch(err => console.error("Erro ao buscar transações:", err))
-      .finally(() => setIsLoading(false));
-  }, [refreshTrigger]);
+
+    const loadMissingOrders = async () => {
+      // Se não houver nada em cache, ativa o loader
+      if (dbOrders.length === 0 && !sessionStorage.getItem('tronnus_dash_stats')) {
+        setIsLoading(true);
+      }
+
+      const perPage = 100;
+      let currentOrders = [...dbOrders];
+      let reachedEnd = hasReachedEnd;
+      let fetchesDone = 0;
+
+      while (active) {
+        // Verifica se a transação mais antiga que temos é anterior ao targetPastStart
+        const hasOlderOrder = currentOrders.length > 0 && 
+          new Date(currentOrders[currentOrders.length - 1].created_at || currentOrders[currentOrders.length - 1].date) < targetPastStart;
+
+        if (hasOlderOrder || reachedEnd) {
+          break;
+        }
+
+        const nextPage = Math.floor(currentOrders.length / perPage) + 1;
+
+        try {
+          const res = await api.transactions.listOrders({ page: nextPage, per_page: perPage });
+          if (!active) return;
+
+          const data = res?.data?.orders || res?.orders || res?.data || (Array.isArray(res) ? res : []);
+          const pageOrders = Array.isArray(data) ? data : [];
+
+          if (pageOrders.length === 0) {
+            reachedEnd = true;
+            setHasReachedEnd(true);
+            break;
+          }
+
+          // Mescla itens evitando duplicatas
+          const merged = [...currentOrders];
+          pageOrders.forEach((o: any) => {
+            const id = o.token || o.id;
+            if (!merged.some(x => (x.token || x.id) === id)) {
+              merged.push(o);
+            }
+          });
+
+          // Ordena decrescente por data
+          merged.sort((a, b) => new Date(b.created_at || b.date).getTime() - new Date(a.created_at || a.date).getTime());
+
+          currentOrders = merged;
+          setDbOrders(merged);
+          
+          fetchesDone++;
+          
+          if (pageOrders.length < perPage) {
+            reachedEnd = true;
+            setHasReachedEnd(true);
+            break;
+          }
+
+          // Salvaguarda para não fazer requisições infinitas
+          if (fetchesDone >= 15) {
+            break;
+          }
+        } catch (err) {
+          console.error("Erro ao carregar página de transações:", err);
+          break;
+        }
+      }
+
+      setIsLoading(false);
+    };
+
+    loadMissingOrders();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedFilter, dateRange.start, dateRange.end, refreshTrigger]);
 
   // 3. Atualiza e filtra os dados localmente sem requisições de rede lentas adicionais
   useEffect(() => {
@@ -473,7 +571,7 @@ export default function DashboardHome() {
           <button className="clear-filters" onClick={() => setSelectedFilter('Este mês')}>
             <XCircle size={14} /> Limpar filtros
           </button>
-          <RotateCcw size={16} className="text-muted" style={{ cursor: 'pointer' }} onClick={() => setRefreshTrigger(prev => prev + 1)} />
+          <RotateCcw size={16} className="text-muted" style={{ cursor: 'pointer' }} onClick={handleRefresh} />
         </div>
 
         {/* Stats Grid */}

@@ -21,14 +21,18 @@ export default function WithdrawalHistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDetails, setSelectedDetails] = useState<any>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const loadHistory = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.withdrawals.list();
+      const res = await api.withdrawals.list({ page, per_page: 50 });
       const dataRes = res?.withdraws || res?.data?.withdraws || res?.withdrawals || res?.data || (Array.isArray(res) ? res : []);
-      setHistory(Array.isArray(dataRes) ? dataRes : []);
+      const data = Array.isArray(dataRes) ? dataRes : [];
+      setHistory(data);
+      setHasMore(data.length >= 50);
     } catch (err: any) {
       console.warn("Erro ao buscar histórico de saques (silenciado):", err);
       setHistory([]); // Garante que a lista fique vazia em vez de dar erro
@@ -39,7 +43,7 @@ export default function WithdrawalHistoryPage() {
 
   useEffect(() => {
     loadHistory();
-  }, []);
+  }, [page]);
 
   return (
     <DashboardLayout>
@@ -126,6 +130,29 @@ export default function WithdrawalHistoryPage() {
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Paginação */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', padding: '1rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <button 
+            className="btn-ghost" 
+            disabled={page === 1 || isLoading} 
+            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: page === 1 ? 0.5 : 1, cursor: page === 1 ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)', color: 'white' }}
+          >
+            Anterior
+          </button>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>
+            Página {page}
+          </span>
+          <button 
+            className="btn-ghost" 
+            disabled={!hasMore || isLoading} 
+            onClick={() => setPage(prev => prev + 1)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: !hasMore ? 0.5 : 1, cursor: !hasMore ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid var(--border)', color: 'white' }}
+          >
+            Próximo
+          </button>
         </div>
       </div>
 
