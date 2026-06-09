@@ -193,8 +193,7 @@ export default function WithdrawalRequestsPage() {
             </div>
           </div>
         </div>
-
-        {/* <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', fontWeight: 600 }}>Solicitações Pendentes</h2>
+        <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', fontWeight: 600, marginTop: '2rem' }}>Solicitações Pendentes</h2>
         <div className="table-card">
           <table className="transactions-table">
             <thead>
@@ -245,7 +244,7 @@ export default function WithdrawalRequestsPage() {
               ))}
             </tbody>
           </table>
-        </div> */}
+        </div>
       </div>
 
       {isModalOpen && (
