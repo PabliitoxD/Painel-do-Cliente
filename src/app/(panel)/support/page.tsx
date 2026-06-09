@@ -14,17 +14,37 @@ export default function SupportPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulação de envio
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setError(null);
+    setSubmitted(false);
+
+    try {
+      const response = await fetch('/api/support', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Erro desconhecido ao abrir chamado.');
+      }
+
       setSubmitted(true);
       setFormData({ name: '', email: '', accountId: '', message: '' });
-      setTimeout(() => setSubmitted(false), 3000);
-    }, 1500);
+      setTimeout(() => setSubmitted(false), 5000);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao enviar chamado.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -71,7 +91,13 @@ export default function SupportPage() {
             Preencha os detalhes abaixo e nossa equipe retornará por e-mail.
           </p>
 
-          <form className="support-form" onSubmit={handleSubmit}>
+          {error && (
+            <div style={{ color: 'var(--danger)', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '0.8rem 1rem', borderRadius: '8px', marginTop: '1rem', fontSize: '0.9rem' }}>
+              {error}
+            </div>
+          )}
+
+          <form className="support-form" onSubmit={handleSubmit} style={{ marginTop: '1.5rem' }}>
             <div className="form-group">
               <label htmlFor="name">Nome Completo</label>
               <input 
