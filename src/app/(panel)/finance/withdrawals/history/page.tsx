@@ -22,6 +22,7 @@ export default function WithdrawalHistoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedDetails, setSelectedDetails] = useState<any>(null);
   const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
   const [hasMore, setHasMore] = useState(true);
 
   const loadHistory = async () => {
@@ -46,14 +47,14 @@ export default function WithdrawalHistoryPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [history]);
+  }, [history, perPage]);
 
   const paginatedHistory = useMemo(() => {
-    const start = (page - 1) * 50;
-    return history.slice(start, start + 50);
-  }, [history, page]);
+    const start = (page - 1) * perPage;
+    return history.slice(start, start + perPage);
+  }, [history, page, perPage]);
 
-  const totalPages = Math.ceil(history.length / 50) || 1;
+  const totalPages = Math.ceil(history.length / perPage) || 1;
 
   return (
     <DashboardLayout>
@@ -143,8 +144,29 @@ export default function WithdrawalHistoryPage() {
         </div>
 
         {/* Paginação */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginRight: '1rem' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Itens por página:</span>
+            <select 
+              value={perPage} 
+              onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}
+              style={{
+                background: 'rgba(0,0,0,0.2)',
+                border: '1px solid var(--border)',
+                borderRadius: '6px',
+                padding: '0.25rem 0.5rem',
+                fontSize: '0.8rem',
+                color: 'var(--text-main)',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              {[10, 20, 30, 50, 100].map(val => (
+                <option key={val} value={val} style={{ background: 'var(--surface)', color: 'white' }}>{val}</option>
+              ))}
+            </select>
+          </div>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginRight: '0.5rem' }}>
             Página <strong>{page}</strong> de <strong>{totalPages}</strong>
           </span>
           <div style={{ display: 'flex', gap: '0.25rem' }}>

@@ -41,6 +41,7 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
   const methodOptions = ['Todos', 'Cartão de Crédito', 'Pix', 'Boleto'];
 
   const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
   const [hasMore, setHasMore] = useState(true);
 
   const detailsRouter = useRouter();
@@ -51,7 +52,7 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
 
   useEffect(() => {
     setPage(1);
-  }, [statuses, apiStatuses, viewType, timeRange, paymentMethodFilter, searchQuery, dateRange]);
+  }, [statuses, apiStatuses, viewType, timeRange, paymentMethodFilter, searchQuery, dateRange, perPage]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -132,11 +133,11 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
   }, [ordersData, searchQuery, timeRange, dateRange, paymentMethodFilter]);
 
   const paginatedData = useMemo(() => {
-    const start = (page - 1) * 50;
-    return filteredData.slice(start, start + 50);
-  }, [filteredData, page]);
+    const start = (page - 1) * perPage;
+    return filteredData.slice(start, start + perPage);
+  }, [filteredData, page, perPage]);
 
-  const totalPages = Math.ceil(filteredData.length / 50) || 1;
+  const totalPages = Math.ceil(filteredData.length / perPage) || 1;
 
   const formatCurrency = (val: number) => fmtBrl(val);
 
@@ -381,8 +382,29 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
         </div>
 
         {/* Paginação */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginRight: '1rem' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Itens por página:</span>
+            <select 
+              value={perPage} 
+              onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}
+              style={{
+                background: 'rgba(0,0,0,0.2)',
+                border: '1px solid var(--border)',
+                borderRadius: '6px',
+                padding: '0.25rem 0.5rem',
+                fontSize: '0.8rem',
+                color: 'var(--text-main)',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              {[10, 20, 30, 50, 100].map(val => (
+                <option key={val} value={val} style={{ background: 'var(--surface)', color: 'white' }}>{val}</option>
+              ))}
+            </select>
+          </div>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginRight: '0.5rem' }}>
             Página <strong>{page}</strong> de <strong>{totalPages}</strong>
           </span>
           <div style={{ display: 'flex', gap: '0.25rem' }}>
