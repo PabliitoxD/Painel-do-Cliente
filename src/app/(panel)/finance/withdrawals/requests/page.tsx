@@ -10,7 +10,8 @@ import {
   AlertCircle,
   Clock,
   RefreshCcw,
-  X
+  X,
+  CheckCircle
 } from 'lucide-react';
 import { translateStatus, formatCurrency, getStatusPillClass } from '@/utils/formatters';
 
@@ -26,6 +27,21 @@ export default function WithdrawalRequestsPage() {
   const [rawAvailableBalance, setRawAvailableBalance] = useState<number>(0);
   const [pendingTotal, setPendingTotal] = useState<number>(0);
   const [withdrawalFee, setWithdrawalFee] = useState<number>(3.67);
+
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'confirm' | 'info';
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+  } | null>(null);
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setNotification({ type, title, message });
+  };
+
+  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setNotification({ type: 'confirm', title, message, onConfirm });
+  };
 
   const loadData = async () => {
     setIsLoading(true);
@@ -79,46 +95,57 @@ export default function WithdrawalRequestsPage() {
 
   const handleWithdraw = async (amount: number) => {
     if (amount < 50) {
-      alert("Valor mínimo para saque é R$ 50,00");
+      showAlert("Valor Mínimo", "O valor mínimo para solicitação de saque é de R$ 50,00.", "info");
       return;
     }
     if (amount > availableBalance) {
-      alert("Saldo disponível insuficiente.");
+      showAlert("Saldo Insuficiente", "Seu saldo disponível para saque é insuficiente para esta operação.", "error");
       return;
     }
 
     const isBiometryDone = true; // Simulado: Permitido para testes de fluxo financeiro
     
     if (!isBiometryDone) {
-      alert("Para realizar saques, você precisa validar sua biometria facial.");
-      window.location.href = '/settings/account/biometry';
+      setNotification({
+        type: 'info',
+        title: "Biometria Facial Requerida",
+        message: "Para realizar saques por motivos de segurança, você precisa validar sua biometria facial.",
+        onConfirm: () => {
+          window.location.href = '/settings/account/biometry';
+        }
+      });
       return;
     }
     
     setIsWithdrawing(true);
     try {
       await api.withdrawals.createWithdraw({ amount });
-      alert("Saque solicitado com sucesso!");
+      showAlert("Sucesso", "Solicitação de saque enviada com sucesso!", "success");
       setIsModalOpen(false);
       loadData();
     } catch (err: any) {
-      alert(err.message || "Erro ao solicitar saque. Tente novamente.");
+      showAlert("Erro", err.message || "Erro ao solicitar saque. Tente novamente.", "error");
     } finally {
       setIsWithdrawing(false);
     }
   };
 
   const handleCancelWithdrawal = async (id: string) => {
-    if (!confirm("Tem certeza que deseja cancelar esta solicitação de saque?")) return;
-    try {
-      await api.withdrawals.cancelWithdraw(id);
-      alert("Saque cancelado com sucesso!");
-      loadData();
-    } catch (err: any) {
-      console.warn("Erro ao cancelar pela API, simulando sucesso para a interface:", err);
-      alert("Saque cancelado com sucesso!");
-      loadData();
-    }
+    showConfirm(
+      "Cancelar Saque", 
+      "Tem certeza que deseja cancelar esta solicitação de saque em andamento?",
+      async () => {
+        try {
+          await api.withdrawals.cancelWithdraw(id);
+          showAlert("Cancelado", "Solicitação de saque cancelada com sucesso!", "success");
+          loadData();
+        } catch (err: any) {
+          console.warn("Erro ao cancelar pela API, simulando sucesso para a interface:", err);
+          showAlert("Cancelado", "Solicitação de saque cancelada com sucesso!", "success");
+          loadData();
+        }
+      }
+    );
   };
 
 
@@ -308,6 +335,63 @@ export default function WithdrawalRequestsPage() {
             >
               {isWithdrawing ? 'Processando...' : 'Confirmar Saque'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {notification && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(4px)' }}>
+          <div className="glass-panel animate-fade-in" style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '16px', maxWidth: '400px', width: '100%', border: '1px solid var(--border)', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+            
+            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', borderRadius: '50%', marginBottom: '1.25rem',
+              background: notification.type === 'success' ? 'rgba(34, 197, 94, 0.1)' : notification.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255, 177, 86, 0.1)',
+              color: notification.type === 'success' ? 'var(--success)' : notification.type === 'error' ? 'var(--danger)' : 'var(--warning)'
+            }}>
+              {notification.type === 'success' ? <CheckCircle size={24} /> : <AlertCircle size={24} />}
+            </div>
+
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--text-main)' }}>
+              {notification.title}
+            </h3>
+            <p className="text-muted" style={{ fontSize: '0.9rem', lineHeight: '1.5', marginBottom: '1.5rem' }}>
+              {notification.message}
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              {notification.type === 'confirm' ? (
+                <>
+                  <button 
+                    className="btn-ghost" 
+                    style={{ flex: 1, padding: '0.6rem 1.2rem', border: '1px solid var(--border)' }}
+                    onClick={() => setNotification(null)}
+                  >
+                    Voltar
+                  </button>
+                  <button 
+                    className="btn-primary" 
+                    style={{ flex: 1, padding: '0.6rem 1.2rem' }}
+                    onClick={() => {
+                      if (notification.onConfirm) notification.onConfirm();
+                      setNotification(null);
+                    }}
+                  >
+                    Confirmar
+                  </button>
+                </>
+              ) : (
+                <button 
+                  className="btn-primary" 
+                  style={{ minWidth: '120px', padding: '0.6rem 1.5rem' }}
+                  onClick={() => {
+                    if (notification.onConfirm) notification.onConfirm();
+                    setNotification(null);
+                  }}
+                >
+                  Ok
+                </button>
+              )}
+            </div>
+
           </div>
         </div>
       )}
