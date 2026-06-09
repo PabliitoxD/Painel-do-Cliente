@@ -219,47 +219,106 @@ export default function WithdrawalHistoryPage() {
       </div>
 
       {selectedDetails && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div className="glass-panel animate-fade-in" style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '16px', maxWidth: '450px', width: '100%', position: 'relative', border: '1px solid var(--border)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(4px)' }}>
+          <div className="glass-panel animate-fade-in" style={{ background: 'var(--surface)', padding: '2.5rem 2rem 2rem 2rem', borderRadius: '20px', maxWidth: '460px', width: '100%', position: 'relative', border: '1px solid var(--border)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
             <button 
               onClick={() => setSelectedDetails(null)} 
-              style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
             >
               <X size={20} />
             </button>
-            <h2 style={{ marginBottom: '1.5rem', fontSize: '1.4rem' }}>Detalhes do Saque</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
-                <span className="text-muted">Data</span>
-                <strong>{new Date(selectedDetails.created_at || selectedDetails.date).toLocaleString('pt-BR')}</strong>
+
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', marginBottom: '0.75rem', color: 'var(--primary)' }}>
+                <History size={24} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
-                <span className="text-muted">Valor</span>
-                <strong>{formatCurrency(parseFloat(selectedDetails.amount || 0))}</strong>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-main)', margin: 0 }}>Comprovante de Saque</h2>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Superfin Sandbox Panel</span>
+            </div>
+
+            {/* Dotted separator */}
+            <div style={{ borderTop: '2px dashed var(--border)', margin: '1rem 0', opacity: 0.6 }}></div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.9rem' }}>
+              {selectedDetails.id && (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span className="text-muted">ID da Transação</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-dim)' }}>#{selectedDetails.id.slice(0, 18)}...</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Data / Hora</span>
+                <strong style={{ color: 'var(--text-main)' }}>{new Date(selectedDetails.created_at || selectedDetails.createdAt || selectedDetails.date).toLocaleString('pt-BR')}</strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Valor Solicitado</span>
+                <strong style={{ color: 'var(--text-main)' }}>{formatCurrency(parseFloat(selectedDetails.amount || 0))}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Taxa de Saque</span>
+                <strong style={{ color: 'var(--danger)' }}>- {formatCurrency(parseFloat(selectedDetails.taxFee || selectedDetails.fee || 0))}</strong>
+              </div>
+              
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.5rem', margin: '0.25rem 0' }}></div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 600 }}>Valor Líquido</span>
+                <strong style={{ color: 'var(--success)', fontSize: '1.2rem' }}>
+                  {formatCurrency(parseFloat(selectedDetails.amount || 0) - parseFloat(selectedDetails.taxFee || selectedDetails.fee || 0))}
+                </strong>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="text-muted">Status</span>
-                <strong style={{ color: 'var(--primary)' }}>{translateStatus(selectedDetails.status)}</strong>
+                <span className={`status-pill ${getStatusPillClass(selectedDetails.status)}`} style={{ fontSize: '0.8rem', padding: '0.25rem 0.75rem' }}>
+                  {translateStatus(selectedDetails.status)}
+                </span>
               </div>
-              {selectedDetails.bank_account && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}>
-                  <span className="text-muted">Conta de Destino:</span>
-                  <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', fontSize: '0.9rem' }}>
-                    {selectedDetails.bank_account.bank_name} - Ag: {selectedDetails.bank_account.agency} Conta: {selectedDetails.bank_account.account}
+
+              {/* Dotted separator */}
+              <div style={{ borderTop: '2px dashed var(--border)', margin: '1rem 0', opacity: 0.6 }}></div>
+
+              {selectedDetails.bank_account ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <span className="text-muted" style={{ fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase' }}>Conta de Destino</span>
+                  <div style={{ background: 'rgba(0,0,0,0.15)', padding: '0.8rem', borderRadius: '10px', fontSize: '0.85rem', border: '1px solid var(--border)', color: 'var(--text-main)' }}>
+                    <div style={{ fontWeight: 600 }}>{selectedDetails.bank_account.bank_name}</div>
+                    <div className="text-muted" style={{ marginTop: '0.2rem', fontSize: '0.8rem' }}>
+                      Agência: {selectedDetails.bank_account.agency} | Conta: {selectedDetails.bank_account.account}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <span className="text-muted" style={{ fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase' }}>Chave PIX de Destino</span>
+                  <div style={{ background: 'rgba(0,0,0,0.15)', padding: '0.8rem', borderRadius: '10px', fontSize: '0.85rem', border: '1px solid var(--border)', color: 'var(--text-main)', fontFamily: 'monospace' }}>
+                    Chave PIX cadastrada na conta
                   </div>
                 </div>
               )}
-              {/* {(() => {
-                const justification = selectedDetails.justificativa || selectedDetails.justification || selectedDetails.reason || selectedDetails.refusal_reason || selectedDetails.notes || '';
+
+              {(() => {
+                const justification = selectedDetails.justificativa || selectedDetails.justification || selectedDetails.reason || selectedDetails.refusal_reason || selectedDetails.notes || selectedDetails.motivo || '';
                 return (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}>
-                    <span className="text-muted">Justificativa:</span>
-                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', fontSize: '0.9rem', color: justification ? 'var(--text-main)' : 'var(--text-dim)', fontStyle: justification ? 'normal' : 'italic' }}>
-                      {justification || "Nenhuma justificativa fornecida pelo backoffice."}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
+                    <span className="text-muted" style={{ fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase' }}>Motivo / Observação</span>
+                    <div style={{ 
+                      background: justification ? 'rgba(255, 177, 86, 0.03)' : 'rgba(0,0,0,0.15)', 
+                      padding: '0.8rem', 
+                      borderRadius: '10px', 
+                      fontSize: '0.85rem', 
+                      border: justification ? '1px solid rgba(255, 177, 86, 0.15)' : '1px solid var(--border)', 
+                      color: justification ? 'var(--text-main)' : 'var(--text-dim)', 
+                      fontStyle: justification ? 'normal' : 'italic',
+                      lineHeight: '1.4'
+                    }}>
+                      {justification || "Nenhuma observação ou motivo registrado pelo backoffice."}
                     </div>
                   </div>
                 );
-              })()} */}
+              })()}
             </div>
           </div>
         </div>

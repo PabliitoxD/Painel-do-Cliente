@@ -135,12 +135,12 @@ export default function WithdrawalRequestsPage() {
           </button>
         </div>
 
-        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr', gap: '1.5rem', marginBottom: '2rem' }}>
+        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1.2fr', gap: '1.5rem', marginBottom: '2rem' }}>
           <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--surface) 0%, #1a2932 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <span className="stat-title">Disponível para Saque</span>
               <div className="stat-value" style={{ fontSize: '2.2rem', color: 'var(--success)' }}>
-                {isLoading ? '...' : formatCurrency(rawAvailableBalance)}
+                {isLoading ? '...' : formatCurrency(availableBalance)}
               </div>
             </div>
             <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -151,16 +151,26 @@ export default function WithdrawalRequestsPage() {
                 className="btn-primary" 
                 style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                 onClick={() => {
-                  setWithdrawAmount(rawAvailableBalance >= 50 ? rawAvailableBalance.toFixed(2) : '');
+                  setWithdrawAmount(availableBalance >= 50 ? availableBalance.toFixed(2) : '');
                   setIsModalOpen(true);
                 }}
-                disabled={isLoading || rawAvailableBalance < 50}
+                disabled={isLoading || availableBalance < 50}
               >
                 <ArrowUpCircle size={16} /> Novo Saque
               </button>
             </div>
           </div>
           
+          <div className="stat-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <span className="stat-title">Aguardando Pagamento</span>
+              <div className="stat-value" style={{ fontSize: '2.2rem', color: 'var(--warning)' }}>
+                {isLoading ? '...' : formatCurrency(pendingTotal)}
+              </div>
+            </div>
+            <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '1.5rem' }}>Saques em processamento</p>
+          </div>
+
           <div className="stat-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <span className="stat-title">Recebíveis Futuros</span>
@@ -171,14 +181,14 @@ export default function WithdrawalRequestsPage() {
             <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '1.5rem' }}>Aguardando pagamento</p>
           </div>
 
-          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', background: 'rgba(255, 177, 86, 0.05)', borderColor: 'rgba(255, 177, 86, 0.2)' }}>
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', background: 'rgba(255, 177, 86, 0.05)', borderColor: 'rgba(255, 177, 86, 0.2)' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255, 177, 86, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--warning)', flexShrink: 0 }}>
               <AlertCircle size={20} />
             </div>
             <div>
               <h3 style={{ fontSize: '0.95rem', marginBottom: '0.25rem' }}>Informação Importante</h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', maxWidth: '400px', lineHeight: 1.5 }}>
-                Os saques são processados exclusivamente via PIX para a chave cadastrada na sua conta. {/* O prazo médio de compensação é de até 2 horas. */}
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', maxWidth: '300px', lineHeight: 1.5 }}>
+                Os saques são processados exclusivamente via PIX para a chave cadastrada na sua conta.
               </p>
             </div>
           </div>
