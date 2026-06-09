@@ -141,7 +141,7 @@ export default function ApiSettingsPage() {
                   </button>
                 </div>
                 <pre>
-{`curl -X POST "https://api.superfin.com.br/v1/transactions" \\
+{`curl -X POST "https://api.sandbox.superfin.com.br/v1/transactions" \\
   -H "Authorization: Bearer SUA_CHAVE_AQUI" \\
   -H "Content-Type: application/json" \\
   -d '{
