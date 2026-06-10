@@ -401,17 +401,38 @@ export default function DashboardHome() {
     }
   }, [allOrders, pastOrders, selectedPaymentMethod]);
 
-  // 5. Atualiza os dados do gráfico baseado nas transações carregadas
+  // 5. Atualiza os dados do gráfico baseado nas transações carregadas e no meio de pagamento selecionado
   useEffect(() => {
     if (!allOrders || allOrders.length === 0) {
       setDisplayChartData([{ name: 'Sem dados', val: 0 }]);
       return;
     }
 
+    const selectedMethodMap: Record<string, string[]> = {
+      'Pix': ['pix'],
+      'Cartão': ['credit_card', 'cartão', 'cartao', 'creditcard', 'credit'],
+      'Boleto': ['boleto', 'bank_slip', 'slip'],
+      'Recorrência': ['recurrence', 'recorrência', 'recorrencia', 'subscription']
+    };
+
     const validOrders = allOrders.filter((t: any) => {
       if (!t) return false;
+      
+      // Filter by status
       const status = (t.status?.code || t.status || '').toLowerCase();
-      return ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active', 'confirmed', 'concluido', 'concluído'].includes(status);
+      const isApproved = ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active', 'confirmed', 'concluido', 'concluído'].includes(status);
+      if (!isApproved) return false;
+
+      // Filter by selected payment method
+      const lastPay = t.payments?.length ? t.payments[t.payments.length - 1] : null;
+      const actualMethod = lastPay?.payment_method?.description || lastPay?.payment_method?.method || t.payment?.method || t.payment_method || t.method || '';
+      const method = String(actualMethod).toLowerCase();
+
+      const isMethodMatch = selectedMethodMap[selectedPaymentMethod]?.includes(method) || 
+                           (selectedPaymentMethod === 'Cartão' && (method.includes('credit') || method.includes('cart'))) ||
+                           (selectedPaymentMethod === 'Recorrência' && (t.recurrence || t.subscription));
+
+      return isMethodMatch;
     });
 
     if (validOrders.length === 0) {
@@ -463,7 +484,7 @@ export default function DashboardHome() {
     if (allOrders.length > 0) {
       sessionStorage.setItem('tronnus_dash_chart', JSON.stringify(finalChartData));
     }
-  }, [allOrders, selectedFilter]);
+  }, [allOrders, selectedFilter, selectedPaymentMethod]);
 
   const renderTrend = (growth: number) => {
     if (growth > 0) {
@@ -488,7 +509,7 @@ export default function DashboardHome() {
   };
 
   const filters = ['Hoje', 'Últimos 7 dias', 'Este mês', 'Últimos 30 dias', 'Personalizado'];
-  const paymentMethods = ['Pix', 'Cartão', 'Boleto'];
+  const paymentMethods = ['Pix', 'Cartão', 'Boleto', 'Recorrência'];
 
   return (
     <DashboardLayout>
