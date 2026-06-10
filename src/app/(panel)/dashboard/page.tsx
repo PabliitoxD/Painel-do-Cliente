@@ -160,7 +160,7 @@ export default function DashboardHome() {
       while (active) {
         // Verifica se a transação mais antiga que temos é anterior ao targetPastStart
         const hasOlderOrder = currentOrders.length > 0 && 
-          new Date(currentOrders[currentOrders.length - 1].created_at || currentOrders[currentOrders.length - 1].date) < targetPastStart;
+          new Date(currentOrders[currentOrders.length - 1].created_at || currentOrders[currentOrders.length - 1].createdAt || currentOrders[currentOrders.length - 1].date) < targetPastStart;
 
         if (hasOlderOrder || reachedEnd) {
           break;
@@ -191,7 +191,7 @@ export default function DashboardHome() {
           });
 
           // Ordena decrescente por data
-          merged.sort((a, b) => new Date(b.created_at || b.date).getTime() - new Date(a.created_at || a.date).getTime());
+          merged.sort((a, b) => new Date(b.created_at || b.createdAt || b.date).getTime() - new Date(a.created_at || a.createdAt || a.date).getTime());
 
           currentOrders = merged;
           setDbOrders(merged);
@@ -284,13 +284,13 @@ export default function DashboardHome() {
 
     const currentFiltered = dbOrders.filter((t: any) => {
       if (!t) return false;
-      const date = new Date(t.created_at || t.date);
+      const date = new Date(t.created_at || t.createdAt || t.date);
       return date >= currentStart && date <= currentEnd;
     });
 
     const pastFiltered = dbOrders.filter((t: any) => {
       if (!t) return false;
-      const date = new Date(t.created_at || t.date);
+      const date = new Date(t.created_at || t.createdAt || t.date);
       return date >= pastStart && date <= pastEnd;
     });
 
@@ -446,7 +446,7 @@ export default function DashboardHome() {
     if (selectedFilter === 'Hoje') {
       const hours = [0, 0, 0, 0];
       validOrders.forEach((t: any) => {
-        const date = new Date(t.created_at || t.date);
+        const date = new Date(t.created_at || t.createdAt || t.date);
         const hour = date.getHours();
         const amount = parseAmount(t);
         if (hour < 6) hours[0] += amount;
@@ -463,7 +463,7 @@ export default function DashboardHome() {
     } else {
       const dataMap: Record<string, number> = {};
       validOrders.forEach((t: any) => {
-        const date = new Date(t.created_at || t.date);
+        const date = new Date(t.created_at || t.createdAt || t.date);
         const dateStr = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
         const amount = parseAmount(t);
         dataMap[dateStr] = (dataMap[dateStr] || 0) + amount;
