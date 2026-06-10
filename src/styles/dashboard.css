@@ -43,14 +43,24 @@
 }
 
 .filter-select {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 0.9rem;
+  background: rgba(101, 131, 154, 0.08);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.filter-select:hover {
+  background: rgba(101, 131, 154, 0.15);
+  border-color: rgba(101, 131, 154, 0.3);
+  color: var(--text-main);
 }
 
 .filter-dropdown-container {

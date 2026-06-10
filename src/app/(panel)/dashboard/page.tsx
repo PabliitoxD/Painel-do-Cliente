@@ -12,7 +12,9 @@ import {
   AlertCircle,
   ChevronDown,
   Filter,
-  MoreHorizontal
+  MoreHorizontal,
+  Calendar,
+  X
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -527,65 +529,27 @@ export default function DashboardHome() {
         {/* Filters */}
         <div className="dashboard-actions">
           <div className="filter-dropdown-container">
-            <button className="filter-select" onClick={() => { setIsFilterOpen(!isFilterOpen); setShowCustomDate(false); }}>
-              {selectedFilter.length > 20 ? selectedFilter.substring(0, 18) + '...' : selectedFilter} <ChevronDown size={16} />
+            <button className="filter-select" onClick={() => setIsFilterOpen(!isFilterOpen)}>
+              <Filter size={14} /> {selectedFilter.length > 20 ? selectedFilter.substring(0, 18) + '...' : selectedFilter} <ChevronDown size={16} />
             </button>
             {isFilterOpen && (
               <div className="filter-menu glass-panel">
                 {filters.map(f => (
                   <button 
                     key={f} 
-                    className={`filter-item ${selectedFilter === f && !showCustomDate ? 'active' : ''}`}
+                    className={`filter-item ${selectedFilter === f ? 'active' : ''}`}
                     onClick={() => { 
+                      setIsFilterOpen(false);
                       if (f === 'Personalizado') {
                         setShowCustomDate(true);
                       } else {
                         setSelectedFilter(f); 
-                        setIsFilterOpen(false); 
                       }
                     }}
                   >
                     {f}
                   </button>
                 ))}
-                
-                {showCustomDate && (
-                  <div className="custom-date-picker animate-fade-in" style={{ padding: '0.75rem', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <input 
-                        type="date" 
-                        value={dateRange.start} 
-                        onChange={e => setDateRange({...dateRange, start: e.target.value})} 
-                        style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.5rem', color: 'var(--text-main)', fontSize: '0.8rem', width: '100%' }} 
-                      />
-                      <span style={{ color: 'var(--text-muted)' }}>até</span>
-                      <input 
-                        type="date" 
-                        value={dateRange.end} 
-                        onChange={e => setDateRange({...dateRange, end: e.target.value})} 
-                        style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.5rem', color: 'var(--text-main)', fontSize: '0.8rem', width: '100%' }} 
-                      />
-                    </div>
-                    <button 
-                      className="btn-primary"
-                      style={{ padding: '0.5rem', fontSize: '0.85rem', width: '100%' }}
-                      onClick={() => {
-                        const formatDateStr = (dStr: string) => {
-                          if (!dStr) return '?';
-                          const parts = dStr.split('-');
-                          if (parts.length !== 3) return dStr;
-                          return `${parts[2]}/${parts[1]}/${parts[0]}`;
-                        };
-                        const startFormatted = formatDateStr(dateRange.start);
-                        const endFormatted = formatDateStr(dateRange.end);
-                        setSelectedFilter(`De ${startFormatted} até ${endFormatted}`);
-                        setIsFilterOpen(false);
-                      }}
-                    >
-                      Aplicar Período
-                    </button>
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -875,6 +839,82 @@ export default function DashboardHome() {
           </div>
         </div>
       </div>
+
+      {showCustomDate && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(4px)' }}>
+          <div className="glass-panel animate-fade-in" style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '16px', maxWidth: '400px', width: '100%', position: 'relative', border: '1px solid var(--border)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+            <button 
+              onClick={() => setShowCustomDate(false)} 
+              style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+            >
+              <X size={20} />
+            </button>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(101, 131, 154, 0.1)', color: 'var(--primary)' }}>
+                <Calendar size={20} />
+              </div>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 600, margin: 0 }}>Período Personalizado</h2>
+            </div>
+            
+            <p className="text-muted" style={{ fontSize: '0.85rem', marginBottom: '1.5rem', lineHeight: '1.4' }}>
+              Escolha as datas desejadas para realizar a filtragem dos dados do dashboard.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div>
+                <label className="text-muted" style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.8rem', fontWeight: 500 }}>Data Inicial</label>
+                <input 
+                  type="date" 
+                  value={dateRange.start} 
+                  onChange={e => setDateRange({...dateRange, start: e.target.value})} 
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.75rem', color: 'var(--text-main)', outline: 'none', fontSize: '0.9rem' }} 
+                />
+              </div>
+              <div>
+                <label className="text-muted" style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.8rem', fontWeight: 500 }}>Data Final</label>
+                <input 
+                  type="date" 
+                  value={dateRange.end} 
+                  onChange={e => setDateRange({...dateRange, end: e.target.value})} 
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.75rem', color: 'var(--text-main)', outline: 'none', fontSize: '0.9rem' }} 
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button 
+                className="btn-ghost" 
+                style={{ flex: 1, padding: '0.75rem', fontWeight: 600, border: '1px solid var(--border)' }} 
+                onClick={() => setShowCustomDate(false)}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn-primary"
+                style={{ flex: 1, padding: '0.75rem', fontWeight: 600 }}
+                onClick={() => {
+                  const formatDateStr = (dStr: string) => {
+                    if (!dStr) return '?';
+                    const parts = dStr.split('-');
+                    if (parts.length !== 3) return dStr;
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                  };
+                  const startFormatted = formatDateStr(dateRange.start);
+                  const endFormatted = formatDateStr(dateRange.end);
+                  setSelectedFilter(`De ${startFormatted} até ${endFormatted}`);
+                  setShowCustomDate(false);
+                }}
+                disabled={!dateRange.start || !dateRange.end}
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
