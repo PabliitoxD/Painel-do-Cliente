@@ -15,23 +15,29 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { translateStatus, formatCurrency, getStatusPillClass } from '@/utils/formatters';
+import { Pagination } from '@/components/ui/Pagination';
 
 export default function WithdrawalHistoryPage() {
   const [history, setHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDetails, setSelectedDetails] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const perPage = 10;
 
   const loadHistory = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.withdrawals.list();
+      const res: any = await api.withdrawals.list({ page: currentPage, per_page: perPage });
       const dataRes = res?.withdraws || res?.data?.withdraws || res?.withdrawals || res?.data || (Array.isArray(res) ? res : []);
       setHistory(Array.isArray(dataRes) ? dataRes : []);
+      const meta = res?.meta || res?.data?.meta;
+      setTotalCount(meta?.total_count ?? meta?.totalCount ?? (Array.isArray(dataRes) ? dataRes : []).length);
     } catch (err: any) {
       console.warn("Erro ao buscar histórico de saques (silenciado):", err);
-      setHistory([]); // Garante que a lista fique vazia em vez de dar erro
+      setHistory([]);
     } finally {
       setIsLoading(false);
     }
@@ -39,7 +45,7 @@ export default function WithdrawalHistoryPage() {
 
   useEffect(() => {
     loadHistory();
-  }, []);
+  }, [currentPage]);
 
   return (
     <DashboardLayout>
@@ -126,6 +132,7 @@ export default function WithdrawalHistoryPage() {
               })}
             </tbody>
           </table>
+          <Pagination currentPage={currentPage} totalItems={totalCount} perPage={perPage} onPageChange={setCurrentPage} />
         </div>
       </div>
 

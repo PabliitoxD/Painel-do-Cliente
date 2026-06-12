@@ -18,6 +18,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { translateStatus, formatCurrency } from '@/utils/formatters';
+import { Pagination } from '@/components/ui/Pagination';
 
 export default function RecurringPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,6 +27,9 @@ export default function RecurringPage() {
   const [selectedSubscription, setSelectedSubscription] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const perPage = 10;
 
   const [stats, setStats] = useState({
     active: 0,
@@ -37,8 +41,10 @@ export default function RecurringPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.subscriptions.list({ per_page: 100 });
+      const res: any = await api.subscriptions.list({ page: currentPage, per_page: perPage });
       const data = res.subscriptions || [];
+      const meta = res?.meta || res?.data?.meta;
+      setTotalCount(meta?.total_count ?? meta?.totalCount ?? data.length);
       setSubscriptions(data);
 
       // Calcular estatísticas básicas
@@ -47,14 +53,15 @@ export default function RecurringPage() {
       let overdue = 0;
 
       data.forEach((sub: any) => {
-        const status = (sub.status || '').toLowerCase();
-        const price = parseFloat(sub.price || sub.plan?.price || 0);
-        
-        if (status === 'active' || status === 'ativa') {
+        // status é número: 1=Aguardando ativação, 2=Ativo, 3=Excedido/Atrasado, 4=Cancelado
+        const st = Number(sub.status);
+        const price = parseFloat(sub.subscription_plans?.[0]?.price || sub.price || 0);
+
+        if (st === 2) {
           active++;
           mrr += price;
         }
-        if (status === 'overdue' || status === 'atrasada' || status === 'waiting_payment') {
+        if (st === 3) {
           overdue++;
         }
       });
@@ -70,35 +77,38 @@ export default function RecurringPage() {
 
   useEffect(() => {
     loadSubscriptions();
-  }, []);
+  }, [currentPage]);
 
   // Filtragem dos dados
   const filteredData = useMemo(() => {
     return subscriptions.filter(item => {
-      const label = (item.customer?.name || item.plan?.name || item.token || '').toLowerCase();
+      const label = (item.customer?.name || item.subscription_plans?.[0]?.name || item.id || '').toLowerCase();
       const matchesSearch = label.includes(searchQuery.toLowerCase());
-      
-      const status = (item.status || '').toLowerCase();
-      const matchesStatus = statusFilter === 'Todos' || 
-                           (statusFilter === 'ativa' && (status === 'active' || status === 'ativa')) ||
-                           (statusFilter === 'atrasada' && (status === 'overdue' || status === 'atrasada' || status === 'waiting_payment')) ||
-                           (statusFilter === 'cancelada' && (status === 'cancelled' || status === 'cancelada'));
+
+      const st = Number(item.status);
+      const matchesStatus = statusFilter === 'Todos' ||
+                           (statusFilter === 'ativa' && st === 2) ||
+                           (statusFilter === 'atrasada' && st === 3) ||
+                           (statusFilter === 'cancelada' && st === 4);
       
       return matchesSearch && matchesStatus;
     });
   }, [subscriptions, searchQuery, statusFilter]);
+
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '—';
     return new Date(dateStr).toLocaleDateString('pt-BR');
   };
 
-  const getStatusStyle = (status: string) => {
-    const s = status.toLowerCase();
-    if (s === 'active' || s === 'ativa') return { bg: 'rgba(49, 120, 44, 0.1)', color: 'var(--success)', label: 'Ativa' };
-    if (s === 'overdue' || s === 'atrasada' || s === 'waiting_payment') return { bg: 'rgba(255, 177, 86, 0.1)', color: 'var(--warning)', label: 'Atrasada' };
-    if (s === 'cancelled' || s === 'cancelada') return { bg: 'rgba(203, 86, 86, 0.1)', color: 'var(--danger)', label: 'Cancelada' };
-    return { bg: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-dim)', label: translateStatus(status) };
+  const getStatusStyle = (status: any) => {
+    const st = Number(status);
+    if (st === 1) return { bg: 'rgba(255, 177, 86, 0.1)', color: 'var(--warning)', label: 'Aguardando ativação' };
+    if (st === 2) return { bg: 'rgba(49, 120, 44, 0.1)', color: 'var(--success)', label: 'Ativo' };
+    if (st === 3) return { bg: 'rgba(255, 177, 86, 0.1)', color: 'var(--warning)', label: 'Excedido' };
+    if (st === 4) return { bg: 'rgba(203, 86, 86, 0.1)', color: 'var(--danger)', label: 'Cancelado' };
+    return { bg: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-dim)', label: String(status) };
   };
 
   return (
@@ -208,15 +218,15 @@ export default function RecurringPage() {
                 </tr>
               ) : filteredData.map((item) => {
                 const statusInfo = getStatusStyle(item.status);
-                const periodicity = item.plan?.periodicity || 1;
-                const freqLabel = periodicity === 1 ? 'Mensal' : periodicity === 3 ? 'Trimestral' : periodicity === 6 ? 'Semestral' : periodicity === 12 ? 'Anual' : 'Personalizada';
+                const subPlan = item.subscription_plans?.[0];
+                const price = parseFloat(subPlan?.price || item.price || 0);
 
                 return (
-                  <tr key={item.token}>
-                    <td className="id-text" style={{ fontWeight: 600 }}>#{item.token.slice(0, 8)}</td>
+                  <tr key={item.id || Math.random()}>
+                    <td className="id-text" style={{ fontWeight: 600 }}>#{(item.id || '—').slice(0, 8)}</td>
                     <td>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                        <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{item.plan?.name || 'Assinatura'}</span>
+                        <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{item.code || 'Assinatura'}</span>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                           <User size={12} /> {item.customer?.name || 'Cliente'}
                         </span>
@@ -224,24 +234,24 @@ export default function RecurringPage() {
                     </td>
                     <td className="text-muted">{formatDate(item.created_at)}</td>
                     <td>
-                      <span style={{ 
-                        padding: '0.3rem 0.6rem', 
-                        borderRadius: '6px', 
-                        fontSize: '0.75rem', 
-                        background: 'rgba(101, 131, 154, 0.1)', 
+                      <span style={{
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '6px',
+                        fontSize: '0.75rem',
+                        background: 'rgba(101, 131, 154, 0.1)',
                         color: 'var(--primary)',
                         fontWeight: 600
                       }}>
-                        {freqLabel}
+                        Mensal
                       </span>
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Calendar size={14} className="text-dim" />
-                        <span style={{ fontWeight: 500 }}>{formatDate(item.next_billing_date)}</span>
+                        <span style={{ fontWeight: 500 }}>{item.expiration_day ? `Dia ${item.expiration_day}` : '—'}</span>
                       </div>
                     </td>
-                    <td style={{ fontWeight: 700, fontSize: '1rem' }}>{formatCurrency(parseFloat(item.price || item.plan?.price || 0))}</td>
+                    <td style={{ fontWeight: 700, fontSize: '1rem' }}>{formatCurrency(price)}</td>
                     <td>
                       <span className="status-pill" style={{ 
                         background: statusInfo.bg, 
@@ -261,6 +271,7 @@ export default function RecurringPage() {
               })}
             </tbody>
           </table>
+          <Pagination currentPage={currentPage} totalItems={totalCount} perPage={perPage} onPageChange={setCurrentPage} />
         </div>
 
         {/* MODAL DETALHES DA ASSINATURA */}
@@ -293,7 +304,7 @@ export default function RecurringPage() {
                   <div style={{ textAlign:'right' }}>
                     <p style={{ color:'var(--text-dim)', fontSize:'0.85rem', marginBottom:'0.25rem' }}>Valor Recorrente</p>
                     <p style={{ fontSize:'1.25rem', fontWeight:700, color:'var(--primary)' }}>
-                      {formatCurrency(parseFloat(selectedSubscription.price || selectedSubscription.plan?.price || 0))}
+                      {formatCurrency(parseFloat(selectedSubscription.subscription_plans?.[0]?.price || selectedSubscription.price || 0))}
                     </p>
                   </div>
                 </div>
@@ -331,19 +342,16 @@ export default function RecurringPage() {
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem', background:'var(--background)', padding:'1.25rem', borderRadius:'12px', border:'1px solid var(--border)' }}>
                     <div>
                       <p style={{ fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:'0.2rem' }}>Produto/Plano Assinado</p>
-                      <p style={{ fontWeight:500 }}>{selectedSubscription.plan?.name || 'Assinatura Padrão'}</p>
+                      <p style={{ fontWeight:500 }}>{selectedSubscription.code || 'Assinatura'}</p>
                     </div>
                     <div>
                       <p style={{ fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:'0.2rem' }}>ID da Assinatura</p>
-                      <p style={{ fontWeight:500, fontFamily:'monospace' }}>{selectedSubscription.token}</p>
+                      <p style={{ fontWeight:500, fontFamily:'monospace' }}>{selectedSubscription.id}</p>
                     </div>
                     <div>
-                      <p style={{ fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:'0.2rem' }}>Ciclo (Recorrência)</p>
+                      <p style={{ fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:'0.2rem' }}>Dia de Vencimento</p>
                       <p style={{ fontWeight:500 }}>
-                        {selectedSubscription.plan?.periodicity === 1 ? 'Mensal' : 
-                         selectedSubscription.plan?.periodicity === 3 ? 'Trimestral' : 
-                         selectedSubscription.plan?.periodicity === 6 ? 'Semestral' : 
-                         selectedSubscription.plan?.periodicity === 12 ? 'Anual' : 'Personalizada'}
+                        {selectedSubscription.expiration_day ? `Dia ${selectedSubscription.expiration_day}` : '—'}
                       </p>
                     </div>
                     <div>

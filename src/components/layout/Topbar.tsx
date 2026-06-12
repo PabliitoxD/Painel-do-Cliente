@@ -26,15 +26,15 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       </div>
 
       <div className="topbar-actions">
-        <button className="icon-btn" onClick={() => setIsNotifOpen(!isNotifOpen)}>
+        {/* <button className="icon-btn" onClick={() => setIsNotifOpen(!isNotifOpen)}>
           <Bell size={18} />
           {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
         </button>
 
         {isNotifOpen && (
           <NotificationDropdown onClose={() => setIsNotifOpen(false)} />
-        )}
-        
+        )} */}
+
         <button className="icon-btn" onClick={toggleTheme}>
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>

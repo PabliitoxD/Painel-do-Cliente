@@ -142,7 +142,7 @@ function LoginContent() {
           {error && <div className="login-error animate-fade-in">{error}</div>}
         </div>
 
-        <form className="login-form" onSubmit={handleSubmit}>
+        {/* <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email">E-mail</label>
             <input
@@ -188,7 +188,7 @@ function LoginContent() {
           </div>
         </form>
 
-        <div className="login-divider"><span>OU</span></div>
+        <div className="login-divider"><span>OU</span></div> */}
 
         {/* Hidden input exigido pelo SDK OneID (mesmo da web-2) */}
         <input type="hidden" id="leavening_company_token" value={ONEID_COMPANY_TOKEN} />

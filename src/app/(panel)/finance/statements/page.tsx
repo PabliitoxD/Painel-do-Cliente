@@ -15,12 +15,13 @@ import {
   X
 } from 'lucide-react';
 import { translateStatus, formatCurrency, getStatusPillClass } from '@/utils/formatters';
+import { Pagination } from '@/components/ui/Pagination';
 
 
 
 export default function StatementsPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [timeRange, setTimeRange] = useState('Últimos 7 dias');
+  const [timeRange, setTimeRange] = useState('Todos');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [isTimeMenuOpen, setIsTimeMenuOpen] = useState(false);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
@@ -29,17 +30,23 @@ export default function StatementsPage() {
   
   const [statementsData, setStatementsData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const perPage = 10;
 
-  const timeOptions = ['Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Esse mês', 'Personalizado'];
+  const timeOptions = ['Todos', 'Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Esse mês', 'Personalizado'];
   const statusOptions = ['Todos', 'entrada', 'saída'];
 
   useEffect(() => {
     import('@/services/api/client').then(({ fetchApi }) => {
       setIsLoading(true);
-      fetchApi('/account_statements')
+      const qs = new URLSearchParams({ page: String(currentPage), per_page: String(perPage) }).toString();
+      fetchApi(`/account_statements?${qs}`)
         .then((res: any) => {
           const items = res?.account_statements || res?.data?.account_statements || (Array.isArray(res) ? res : []);
           setStatementsData(items);
+          const meta = res?.meta || res?.data?.meta;
+          setTotalCount(meta?.total_count ?? meta?.totalCount ?? items.length);
         })
         .catch(err => {
           console.error("[Statements] Erro ao buscar extrato:", err);
@@ -48,7 +55,7 @@ export default function StatementsPage() {
           setIsLoading(false);
         });
     });
-  }, []);
+  }, [currentPage]);
 
   // Lógica de filtragem
   const filteredData = useMemo(() => {
@@ -106,6 +113,9 @@ export default function StatementsPage() {
 
     return { inflows, outflows, balance: lastBalance };
   }, [filteredData]);
+
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, timeRange, statusFilter]);
+
 
   const formatCurrency = (val: number) => {
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -285,9 +295,9 @@ export default function StatementsPage() {
             )}
           </div>
 
-          {(statusFilter !== 'Todos' || searchQuery !== '' || timeRange !== 'Últimos 7 dias') && (
-            <button 
-              onClick={() => { setStatusFilter('Todos'); setSearchQuery(''); setTimeRange('Últimos 7 dias'); }}
+          {(statusFilter !== 'Todos' || searchQuery !== '' || timeRange !== 'Todos') && (
+            <button
+              onClick={() => { setStatusFilter('Todos'); setSearchQuery(''); setTimeRange('Todos'); }}
               style={{ padding: '0.5rem', color: 'var(--danger)', opacity: 0.8, cursor: 'pointer', background: 'transparent', border: 'none' }}
               title="Limpar filtros"
             >
@@ -355,6 +365,7 @@ export default function StatementsPage() {
               )}
             </tbody>
           </table>
+          <Pagination currentPage={currentPage} totalItems={totalCount} perPage={perPage} onPageChange={setCurrentPage} />
         </div>
       </div>
 

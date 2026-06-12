@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Search, Plus, X, Receipt, Trash2, ShoppingCart, DollarSign, FileText, Link as LinkIcon, RefreshCcw, Tag, AlertTriangle, CheckCircle, Clock, User } from 'lucide-react';
 import { chargesService, plansService, subscriptionsService, ApiCharge, ApiSubscription, ApiPlan, CreateChargePayload, CreatePlanPayload, frequencyToPeriodicity, periodicityLabel } from '@/services/api/charges';
 import { translateStatus, getStatusPillClass, formatCurrency } from '@/utils/formatters';
+import { Pagination } from '@/components/ui/Pagination';
 
 type TabType = 'avulsa' | 'recorrente';
 
@@ -28,6 +29,9 @@ export default function ChargesPage() {
   const [selected, setSelected] = useState<Row | null>(null);
   const [search, setSearch] = useState('');
   const [filterDate, setFilterDate] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const perPage = 10;
 
   // form state
   const [cartItems, setCartItems] = useState([{ id: Date.now(), name: '', unitPrice: 0, quantity: 1 }]);
@@ -64,7 +68,7 @@ export default function ChargesPage() {
     setIsLoading(true); setError(null);
     try {
       if (tab === 'avulsa') {
-        const res: any = await chargesService.list({ page: 1, per_page: 10 });
+        const res: any = await chargesService.list({ page: currentPage, per_page: perPage });
         const list = res.charges || res.data || res.items || (Array.isArray(res) ? res : []);
         
         let localCharges: any[] = [];
@@ -105,8 +109,10 @@ export default function ChargesPage() {
         });
 
         setRows(combined);
+        const meta = res?.meta || res?.data?.meta;
+        setTotalCount(meta?.total_count ?? meta?.totalCount ?? combined.length);
       } else {
-        const res: any = await plansService.list({ page: 1, per_page: 10 });
+        const res: any = await plansService.list({ page: currentPage, per_page: perPage });
         const list = res.plans || res.data || res.items || (Array.isArray(res) ? res : []);
         
         let localPlans: any[] = [];
@@ -147,10 +153,12 @@ export default function ChargesPage() {
         });
 
         setRows(combined);
+        const meta = res?.meta || res?.data?.meta;
+        setTotalCount(meta?.total_count ?? meta?.totalCount ?? combined.length);
       }
     } catch (e: any) { setError(e.message || 'Erro ao carregar.'); }
     finally { setIsLoading(false); }
-  }, [tab]);
+  }, [tab, currentPage]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -272,6 +280,8 @@ export default function ChargesPage() {
     });
   }, [rows, search, filterDate]);
 
+  useEffect(() => { setCurrentPage(1); }, [search, filterDate]);
+
   const checkoutUrl = (r: Row) => {
     return `${typeof window !== 'undefined' ? window.location.origin : ''}/c/${r.token}`;
   };
@@ -354,6 +364,7 @@ export default function ChargesPage() {
               ))}
             </tbody>
           </table>
+          <Pagination currentPage={currentPage} totalItems={totalCount} perPage={perPage} onPageChange={setCurrentPage} />
         </div>
 
         {/* Create Modal */}

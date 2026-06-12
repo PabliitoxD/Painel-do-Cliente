@@ -41,78 +41,51 @@ export default function DashboardHome() {
   const [isLoading, setIsLoading] = useState(true);
   const [displayChartData, setDisplayChartData] = useState<any[]>([]);
 
+  // Dados fake fixos para os 3 cards iniciais
+  const FAKE_STATS = {
+    faturamento: 84750.00,
+    quantidade: 312,
+    metodo: {
+      'Pix': { valor: 52300.00, aprovados: 198, total: 210, conversao: 94.3 },
+      'Cartão': { valor: 28450.00, aprovados: 96, total: 115, conversao: 83.5 },
+      'Boleto': { valor: 4000.00, aprovados: 18, total: 32, conversao: 56.3 },
+    } as Record<string, { valor: number; aprovados: number; total: number; conversao: number }>,
+  };
+
   const [stats, setStats] = useState({
-    faturamento: 0,
-    quantidade: 0,
-    metodoSelecionado: 0,
-    taxaConversao: 0,
-    metodoTotal: 0,
-    metodoAprovados: 0,
+    faturamento: FAKE_STATS.faturamento,
+    quantidade: FAKE_STATS.quantidade,
+    metodoSelecionado: FAKE_STATS.metodo['Pix'].valor,
+    taxaConversao: FAKE_STATS.metodo['Pix'].conversao,
+    metodoTotal: FAKE_STATS.metodo['Pix'].total,
+    metodoAprovados: FAKE_STATS.metodo['Pix'].aprovados,
     estornos: 0,
     cancelamentos: 0,
     chargebacks: 0,
   });
 
-  // Calcula os totais sempre que as transações da API ou o método de pagamento mudam
+  // Usa dados fake fixos para os 3 cards principais, e calcula estornos/cancel/chargebacks da API
   useEffect(() => {
-    let faturamento = 0;
-    let quantidade = 0;
-    let metodoSelecionado = 0;
-    let metodoSelecionadoTotal = 0;
-    let metodoSelecionadoAprovados = 0;
     let estornos = 0;
     let cancelamentos = 0;
     let chargebacks = 0;
-    
+
     allOrders.forEach((t: any) => {
-      const amount = parseFloat(t.amount || t.value || 0);
       const status = (t.status || '').toLowerCase();
-      const lastPay = t.payments?.length ? t.payments[t.payments.length - 1] : null;
-      const actualMethod = lastPay?.payment_method?.description || lastPay?.payment_method?.method || t.payment?.method || t.payment_method || t.method || '';
-      const method = String(actualMethod).toLowerCase();
-
-      const isApproved = ['approved', 'paid', 'aprovada', 'pago', 'completed', 'active'].includes(status);
-
-      // Faturamento e Quantidade (consideramos vendas concluídas/aprovadas)
-      if (isApproved) {
-        faturamento += amount;
-        quantidade += 1;
-      }
-      
-      // Filtrar por Método Selecionado
-      const selectedMethodMap: Record<string, string[]> = {
-        'Pix': ['pix'],
-        'Cartão': ['credit_card', 'cartão', 'cartao', 'creditcard', 'credit'],
-        'Boleto': ['boleto', 'bank_slip', 'slip'],
-        'Recorrência': ['recurrence', 'recorrência', 'recorrencia', 'subscription']
-      };
-      
-      const isMethodMatch = selectedMethodMap[selectedPaymentMethod]?.includes(method) || 
-                           (selectedPaymentMethod === 'Cartão' && (method.includes('credit') || method.includes('cart'))) ||
-                           (selectedPaymentMethod === 'Recorrência' && (t.recurrence || t.subscription));
-
-      if (isMethodMatch) {
-        metodoSelecionadoTotal++;
-        if (isApproved) {
-          metodoSelecionado += amount;
-          metodoSelecionadoAprovados++;
-        }
-      }
-      
       if (['refunded', 'estornado', 'reembolsado'].includes(status)) estornos++;
       if (['canceled', 'cancelado', 'cancelled', 'failed'].includes(status)) cancelamentos++;
       if (status === 'chargeback') chargebacks++;
     });
 
-    const taxaConversao = metodoSelecionadoTotal > 0 ? (metodoSelecionadoAprovados / metodoSelecionadoTotal) * 100 : 0;
+    const metodoData = FAKE_STATS.metodo[selectedPaymentMethod] || { valor: 0, aprovados: 0, total: 0, conversao: 0 };
 
     setStats({
-      faturamento,
-      quantidade,
-      metodoSelecionado,
-      taxaConversao,
-      metodoTotal: metodoSelecionadoTotal,
-      metodoAprovados: metodoSelecionadoAprovados,
+      faturamento: FAKE_STATS.faturamento,
+      quantidade: FAKE_STATS.quantidade,
+      metodoSelecionado: metodoData.valor,
+      taxaConversao: metodoData.conversao,
+      metodoTotal: metodoData.total,
+      metodoAprovados: metodoData.aprovados,
       estornos,
       cancelamentos,
       chargebacks
@@ -408,7 +381,7 @@ export default function DashboardHome() {
           <div className="table-card">
             <div className="card-header">
               <h2>Últimas transações</h2>
-              <button className="btn-ghost">Ver histórico</button>
+              {/* <button className="btn-ghost">Ver histórico</button> */}
             </div>
             <table className="transactions-table">
               <thead>

@@ -17,6 +17,7 @@ import {
   Eye
 } from 'lucide-react';
 import { translateStatus, translateMethod, getStatusPillClass, formatCurrency as fmtBrl } from '@/utils/formatters';
+import { Pagination } from '@/components/ui/Pagination';
 
 interface SalesListProps {
   title: string;
@@ -28,8 +29,9 @@ interface SalesListProps {
 
 export function SalesList({ title, description, statuses, apiStatuses, viewType = 'all' }: SalesListProps) {
   const [ordersData, setOrdersData] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [timeRange, setTimeRange] = useState('Todos');
   const [isTimeMenuOpen, setIsTimeMenuOpen] = useState(false);
@@ -39,6 +41,8 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('Todos');
   const [isMethodMenuOpen, setIsMethodMenuOpen] = useState(false);
   const methodOptions = ['Todos', 'Cartão de Crédito', 'Pix', 'Boleto'];
+  const [currentPage, setCurrentPage] = useState(1);
+  const perPage = 10;
 
   const detailsRouter = useRouter();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -49,29 +53,47 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
   useEffect(() => {
     setIsLoading(true);
     const statusList = apiStatuses || statuses;
-    // Faz uma request por status e junta os resultados
-    Promise.all(
-      statusList.map(status =>
-        api.transactions.listOrders({ status: status.toUpperCase() })
-          .then(res => {
-            const data = res?.orders || res?.data?.orders || (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
-            return Array.isArray(data) ? data : [];
-          })
-          .catch(() => [])
-      )
-    ).then(results => {
-      // Junta tudo e remove duplicatas por token
-      const all = results.flat();
-      const unique = all.filter((item, idx) => all.findIndex(o => o.token === item.token) === idx);
-      setOrdersData(unique);
-    })
-    .catch(err => {
-      console.error("[SalesList] Erro ao buscar vendas:", err);
-    })
-    .finally(() => {
-      setIsLoading(false);
-    });
-  }, [statuses, apiStatuses, viewType]);
+    // Busca por status com paginação server-side
+    // Quando há múltiplos statuses, usamos o primeiro e mandamos page/per_page
+    // Para simplificar, se houver 1 status, paginamos direto; se vários, buscamos todos da API paginados
+    if (statusList.length === 1) {
+      api.transactions.listOrders({ status: statusList[0].toUpperCase(), page: currentPage, per_page: perPage })
+        .then((res: any) => {
+          const data = res?.orders || res?.data?.orders || (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
+          setOrdersData(Array.isArray(data) ? data : []);
+          const meta = res?.meta || res?.data?.meta;
+          setTotalCount(meta?.total_count ?? meta?.totalCount ?? (Array.isArray(data) ? data : []).length);
+        })
+        .catch(err => {
+          console.error("[SalesList] Erro ao buscar vendas:", err);
+        })
+        .finally(() => setIsLoading(false));
+    } else {
+      // Múltiplos statuses: busca cada um com page/per_page
+      Promise.all(
+        statusList.map(status =>
+          api.transactions.listOrders({ status: status.toUpperCase(), page: currentPage, per_page: perPage })
+            .then((res: any) => {
+              const data = res?.orders || res?.data?.orders || (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
+              const meta = res?.meta || res?.data?.meta;
+              return { data: Array.isArray(data) ? data : [], total: meta?.total_count ?? meta?.totalCount ?? 0 };
+            })
+            .catch(() => ({ data: [], total: 0 }))
+        )
+      ).then(results => {
+        const all = results.flatMap(r => r.data);
+        const unique = all.filter((item, idx) => all.findIndex(o => o.token === item.token) === idx);
+        setOrdersData(unique);
+        // Soma dos totals de cada status
+        const total = results.reduce((acc, r) => acc + r.total, 0);
+        setTotalCount(total);
+      })
+      .catch(err => {
+        console.error("[SalesList] Erro ao buscar vendas:", err);
+      })
+      .finally(() => setIsLoading(false));
+    }
+  }, [statuses, apiStatuses, viewType, currentPage]);
 
   // Filtragem (Busca + Data)
   const filteredData = useMemo(() => {
@@ -123,6 +145,9 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
       return matchesSearch && matchesTime && matchesMethod;
     });
   }, [ordersData, searchQuery, timeRange, dateRange, paymentMethodFilter]);
+
+  // Reset page when filters change
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, timeRange, paymentMethodFilter]);
 
   const formatCurrency = (val: number) => fmtBrl(val);
 
@@ -364,6 +389,7 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
               )}
             </tbody>
           </table>
+          <Pagination currentPage={currentPage} totalItems={totalCount} perPage={perPage} onPageChange={setCurrentPage} />
         </div>
       </div>
 
