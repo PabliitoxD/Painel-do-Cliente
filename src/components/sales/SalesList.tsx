@@ -200,12 +200,23 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
             <button 
               className="btn-ghost" 
               onClick={() => setIsTimeMenuOpen(!isTimeMenuOpen)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.8rem 1.2rem', borderRadius: '12px', background: 'var(--background)' }}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem', 
+                padding: '0.8rem 1.2rem', 
+                borderRadius: '12px', 
+                background: (timeRange !== 'Todos' || showCustomDate) ? 'rgba(101, 131, 154, 0.15)' : 'var(--surface)',
+                border: (timeRange !== 'Todos' || showCustomDate) ? '1px solid var(--primary)' : '1px solid var(--border)',
+                color: (timeRange !== 'Todos' || showCustomDate) ? 'var(--primary)' : 'var(--text-main)',
+                fontWeight: (timeRange !== 'Todos' || showCustomDate) ? 600 : 400,
+                transition: 'all 0.2s'
+              }}
             >
               <Calendar size={18} /> {timeRange} <ChevronDown size={14} />
             </button>
             {isTimeMenuOpen && (
-              <div className="filter-menu glass-panel animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 100, width: '250px', padding: '0.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <div className="filter-menu glass-panel animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 100, width: '250px', padding: '0.5rem', borderRadius: '12px', background: '#17242d', border: '1px solid var(--primary)', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
                 {timeOptions.map(opt => (
                   <button 
                     key={opt}
@@ -232,13 +243,13 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
                         type="date" 
                         value={dateRange.start} 
                         onChange={e => setDateRange({...dateRange, start: e.target.value})} 
-                        style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.5rem', color: 'var(--text-main)', fontSize: '0.8rem', width: '100%' }} 
+                        style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--primary)', borderRadius: '8px', padding: '0.6rem', color: 'white', colorScheme: 'dark', fontSize: '0.85rem', width: '100%', outline: 'none' }} 
                       />
                       <input 
                         type="date" 
                         value={dateRange.end} 
                         onChange={e => setDateRange({...dateRange, end: e.target.value})} 
-                        style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.5rem', color: 'var(--text-main)', fontSize: '0.8rem', width: '100%' }} 
+                        style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--primary)', borderRadius: '8px', padding: '0.6rem', color: 'white', colorScheme: 'dark', fontSize: '0.85rem', width: '100%', outline: 'none' }} 
                       />
                     </div>
                     <button 
@@ -263,12 +274,23 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
             <button 
               className="btn-ghost" 
               onClick={() => setIsMethodMenuOpen(!isMethodMenuOpen)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.8rem 1.2rem', borderRadius: '12px', background: 'var(--background)' }}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem', 
+                padding: '0.8rem 1.2rem', 
+                borderRadius: '12px', 
+                background: paymentMethodFilter !== 'Todos' ? 'rgba(101, 131, 154, 0.15)' : 'var(--surface)',
+                border: paymentMethodFilter !== 'Todos' ? '1px solid var(--primary)' : '1px solid var(--border)',
+                color: paymentMethodFilter !== 'Todos' ? 'var(--primary)' : 'var(--text-main)',
+                fontWeight: paymentMethodFilter !== 'Todos' ? 600 : 400,
+                transition: 'all 0.2s'
+              }}
             >
               <Wallet size={18} /> {paymentMethodFilter === 'Todos' ? 'Método' : paymentMethodFilter} <ChevronDown size={14} />
             </button>
             {isMethodMenuOpen && (
-              <div className="filter-menu glass-panel animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 100, width: '200px', padding: '0.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <div className="filter-menu glass-panel animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 100, width: '200px', padding: '0.5rem', borderRadius: '12px', background: '#17242d', border: '1px solid var(--primary)', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
                 {methodOptions.map(opt => (
                   <button 
                     key={opt}
@@ -361,11 +383,10 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
                       <td>
                         <button
                           className="btn-ghost"
-                          onClick={() => detailsRouter.push(`/sales/${item.token || item.id}`)}
-                          style={{ padding: '0.4rem', borderRadius: '8px' }}
-                          title="Detalhes da Venda"
+                          onClick={() => setSelectedOrder(item)}
+                          style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.85rem' }}
                         >
-                          <Eye size={18} />
+                          Detalhes
                         </button>
                       </td>
                     </tr>
