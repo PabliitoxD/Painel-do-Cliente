@@ -27,7 +27,7 @@ export const withdrawalsService = {
    * Cancel a withdrawal request
    */
   cancelWithdraw: (id: string) => {
-    return fetchApi<any>(`/withdrawals/${id}/cancel`, {
+    return fetchApi<any>(`/withdraws/${id}/cancel`, {
       method: 'POST',
     });
   },
