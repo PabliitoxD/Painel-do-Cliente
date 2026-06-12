@@ -11,6 +11,10 @@ export async function fetchApi<T>(
   const headers: HeadersInit = {
     ...(options.body && { 'Content-Type': 'application/json' }),
     ...(token && { Authorization: token }),
+    ...(sellerId && { 'X-Seller-Token': sellerId }),
+    ...(sellerKey && { 'X-Seller-Key': sellerKey }),
+    ...(sellerId && { 'seller-token': sellerId }),
+    ...(sellerKey && { 'seller-key': sellerKey }),
     ...options.headers,
   };
 
