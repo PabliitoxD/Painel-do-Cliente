@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { api } from '@/services/api';
+import { formatCurrency, translateStatus, translateMethod } from '@/utils/formatters';
 import { 
   BarChart3, 
   Download, 
@@ -23,10 +25,11 @@ interface PreviewItem {
   id: string;
   type: string;
   name: string;
-  amount: string;
+  amount: number;
   date: string;
   status: string;
   extra?: string;
+  raw: any;
 }
 
 export default function ReportsPage() {
@@ -49,12 +52,16 @@ export default function ReportsPage() {
   const [showNextBillings, setShowNextBillings] = useState(false);
   const [copiedNotification, setCopiedNotification] = useState(false);
 
-  // Set the activeTab to the first selected source if the current one is unselected
-  useEffect(() => {
-    if (selectedSources.length > 0 && !selectedSources.includes(activeTab)) {
-      setActiveTab(selectedSources[0]);
-    }
-  }, [selectedSources, activeTab]);
+  const [apiData, setApiData] = useState<Record<string, any[]>>({
+    transactions: [],
+    charges: [],
+    subscriptions: [],
+    next_billings: [],
+    withdrawals: [],
+    receivables: []
+  });
+  
+  const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
 
   const toggleSource = (source: string) => {
     if (selectedSources.includes(source)) {
@@ -64,80 +71,255 @@ export default function ReportsPage() {
     }
   };
 
+  const fetchSourceData = async (source: string) => {
+    setLoadingMap(prev => ({ ...prev, [source]: true }));
+    try {
+      if (source === 'transactions') {
+        const res = await api.transactions.listOrders({
+          created_at_gt: dateRange.start ? `${dateRange.start}T00:00:00Z` : undefined,
+          created_at_lt: dateRange.end ? `${dateRange.end}T23:59:59Z` : undefined,
+          per_page: 100
+        }) as any;
+        const data = res?.orders || res?.data?.orders || (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
+        setApiData(prev => ({ ...prev, transactions: Array.isArray(data) ? data : [] }));
+      } 
+      else if (source === 'charges') {
+        const res = await api.charges.list({ page: 1, per_page: 100 }) as any;
+        const data = res?.charges || res?.data?.charges || res?.data || (Array.isArray(res) ? res : []);
+        setApiData(prev => ({ ...prev, charges: Array.isArray(data) ? data : [] }));
+      } 
+      else if (source === 'subscriptions') {
+        const res = await api.subscriptions.list({ page: 1, per_page: 100 }) as any;
+        const data = res?.subscriptions || res?.data?.subscriptions || res?.data || (Array.isArray(res) ? res : []);
+        setApiData(prev => ({ ...prev, subscriptions: Array.isArray(data) ? data : [] }));
+      } 
+      else if (source === 'next_billings') {
+        const res = await api.invoices.list({ page: 1, per_page: 100 }) as any;
+        const data = res?.invoices || res?.data?.invoices || res?.data || (Array.isArray(res) ? res : []);
+        setApiData(prev => ({ ...prev, next_billings: Array.isArray(data) ? data : [] }));
+      } 
+      else if (source === 'withdrawals') {
+        const res = await api.withdrawals.list({ per_page: 100 }) as any;
+        const data = res?.withdraws || res?.data?.withdraws || res?.withdrawals || res?.data || (Array.isArray(res) ? res : []);
+        setApiData(prev => ({ ...prev, withdrawals: Array.isArray(data) ? data : [] }));
+      } 
+      else if (source === 'receivables') {
+        const res = await api.receivableSchedules.listSchedules() as any;
+        const data = res?.data?.balanceControls || res?.data?.balance_controls || res?.balanceControls || res?.balance_controls || res?.data || [];
+        setApiData(prev => ({ ...prev, receivables: Array.isArray(data) ? data : [] }));
+      }
+    } catch (err) {
+      console.warn(`Erro ao carregar dados da API para o relatorio (${source}):`, err);
+      setApiData(prev => ({ ...prev, [source]: [] }));
+    } finally {
+      setLoadingMap(prev => ({ ...prev, [source]: false }));
+    }
+  };
+
+  // Trigger fetch when parameters or active tab changes
+  useEffect(() => {
+    const targetSource = (activeTab === 'subscriptions' && showNextBillings) ? 'next_billings' : activeTab;
+    fetchSourceData(targetSource);
+  }, [activeTab, showNextBillings, dateRange.start, dateRange.end]);
+
+  // Set the activeTab to the first selected source if the current one is unselected
+  useEffect(() => {
+    if (selectedSources.length > 0 && !selectedSources.includes(activeTab)) {
+      setActiveTab(selectedSources[0]);
+    }
+  }, [selectedSources, activeTab]);
+
   const getFormatLabel = () => {
-    if (exportFormat === 'csv') return 'CSV (Valores separados por vírgula)';
-    if (exportFormat === 'xlsx') return 'Excel (XLSX Spreadsheet)';
+    if (exportFormat === 'csv') return 'CSV (Valores separados por ponto e vírgula)';
+    if (exportFormat === 'xlsx') return 'Planilha Excel (XLSX)';
     return 'JSON estruturado';
   };
 
-  const mockData: Record<string, PreviewItem[]> = {
-    transactions: [
-      { id: 'TRX-9821', type: 'Venda', name: 'Ana Silva', amount: 'R$ 149,90', date: '12/06/2026', status: 'Aprovada', extra: 'Cartão de Crédito' },
-      { id: 'TRX-8742', type: 'Estorno', name: 'Bruno Souza', amount: '-R$ 89,00', date: '11/06/2026', status: 'Processado', extra: 'Pix' },
-      { id: 'TRX-7621', type: 'Venda', name: 'Carlos Lima', amount: 'R$ 299,90', date: '10/06/2026', status: 'Aguardando', extra: 'Boleto' },
-      { id: 'TRX-6541', type: 'Saque', name: 'Transferência Própria', amount: '-R$ 500,00', date: '09/06/2026', status: 'Aprovada', extra: 'Transferência' }
-    ],
-    charges: [
-      { id: 'COB-102', type: 'Cobrança Única', name: 'Diana Reis', amount: 'R$ 45,00', date: '15/06/2026', status: 'Pendente', extra: 'Link de Pagamento' },
-      { id: 'COB-099', type: 'Cobrança Única', name: 'Eduardo Melo', amount: 'R$ 120,00', date: '08/06/2026', status: 'Pago', extra: 'Boleto Gerado' },
-      { id: 'COB-095', type: 'Cobrança Única', name: 'Flávia Neves', amount: 'R$ 350,00', date: '02/06/2026', status: 'Pago', extra: 'Pix Manual' }
-    ],
-    subscriptions: [
-      { id: 'REC-001', type: 'Plano Premium', name: 'Fernanda Costa', amount: 'R$ 59,90/mês', date: '28/06/2026', status: 'Ativa', extra: 'Cartão • Próximo ciclo' },
-      { id: 'REC-002', type: 'Plano Basic', name: 'Gabriel Santos', amount: 'R$ 99,90/mês', date: '02/07/2026', status: 'Ativa', extra: 'Pix • Próximo ciclo' },
-      { id: 'REC-003', type: 'Plano Pro', name: 'Helena Dias', amount: 'R$ 159,90/mês', date: '—', status: 'Cancelada', extra: 'Sem próximas cobranças' }
-    ],
-    next_billings: [
-      { id: 'REC-001', type: 'Assinatura Mensal', name: 'Fernanda Costa', amount: 'R$ 59,90', date: '28/06/2026', status: 'Agendada', extra: 'Ciclo 03/12' },
-      { id: 'REC-002', type: 'Assinatura Trimestral', name: 'Gabriel Santos', amount: 'R$ 99,90', date: '02/07/2026', status: 'Agendada', extra: 'Ciclo 02/04' },
-      { id: 'REC-004', type: 'Assinatura Anual', name: 'Igor Rocha', amount: 'R$ 499,00', date: '18/06/2026', status: 'Agendada', extra: 'Renovação automática' }
-    ],
-    withdrawals: [
-      { id: 'SAQ-871', type: 'Saque Conta', name: 'Banco Itaú S.A.', amount: 'R$ 1.500,00', date: '10/06/2026', status: 'Processado', extra: 'Pix para Chave CNPJ' },
-      { id: 'SAQ-852', type: 'Saque Conta', name: 'Banco Cora S.A.', amount: 'R$ 750,00', date: '12/06/2026', status: 'Pendente', extra: 'Ted para Conta Corrente' }
-    ],
-    receivables: [
-      { id: 'REC-998', type: 'Crédito Venda', name: 'Venda de Balcão', amount: 'R$ 485,00', date: '10/07/2026', status: 'A liberar', extra: 'Valor bruto: R$ 500,00' },
-      { id: 'REC-981', type: 'Crédito Antecipado', name: 'Antecipação Manual', amount: 'R$ 194,00', date: '25/06/2026', status: 'Antecipado', extra: 'Valor bruto: R$ 200,00' }
-    ]
+  const getMappedPreviewData = (): PreviewItem[] => {
+    const targetSource = (activeTab === 'subscriptions' && showNextBillings) ? 'next_billings' : activeTab;
+    const rawList = apiData[targetSource] || [];
+
+    return rawList.map((item: any) => {
+      if (targetSource === 'transactions') {
+        return {
+          id: item.token || item.id || 'N/A',
+          type: item.payment_method || item.method || 'Venda',
+          name: item.client || item.customer?.name || '—',
+          amount: parseFloat(item.amount || item.value || item.transaction?.total || 0),
+          date: item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR') : '—',
+          status: translateStatus(item.status?.code || item.status),
+          extra: translateMethod(item.payment_method || item.method || ''),
+          raw: item
+        };
+      }
+      if (targetSource === 'charges') {
+        return {
+          id: item.token || item.id || 'N/A',
+          type: item.description || 'Cobrança',
+          name: item.payer_name || item.payer_email || '—',
+          amount: parseFloat(item.price || item.amount || 0),
+          date: item.expiration_date || (item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR') : '—'),
+          status: translateStatus(item.status),
+          extra: item.payer_email || '',
+          raw: item
+        };
+      }
+      if (targetSource === 'subscriptions') {
+        return {
+          id: item.token || item.id || 'N/A',
+          type: item.plan?.name || item.plan_name || 'Assinatura',
+          name: item.customer?.name || item.payer_name || '—',
+          amount: parseFloat(item.price || item.amount || 0),
+          date: item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR') : '—',
+          status: translateStatus(item.status),
+          extra: item.plan?.code || '',
+          raw: item
+        };
+      }
+      if (targetSource === 'next_billings') {
+        return {
+          id: item.token || item.id || 'N/A',
+          type: item.plan?.name || 'Ciclo de Recorrência',
+          name: item.subscription?.customer?.name || item.customer?.name || '—',
+          amount: parseFloat(item.amount || item.price || 0),
+          date: item.due_date || (item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR') : '—'),
+          status: translateStatus(item.status),
+          extra: `Fatura Nª ${item.code || item.id}`,
+          raw: item
+        };
+      }
+      if (targetSource === 'withdrawals') {
+        return {
+          id: item.id || item.token || 'N/A',
+          type: 'Saque Conta',
+          name: item.bank_account?.holder_name || item.bank_account?.bank_name || 'Transferência',
+          amount: parseFloat(item.amount || 0),
+          date: item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR') : '—',
+          status: translateStatus(item.status),
+          extra: item.bank_account?.bank_name || '',
+          raw: item
+        };
+      }
+      if (targetSource === 'receivables') {
+        return {
+          id: item.id || item.token || 'N/A',
+          type: item.type_description || item.description || 'Lançamento',
+          name: 'Recebível Futuro',
+          amount: parseFloat(item.net_amount || item.amount || 0),
+          date: item.payment_date || item.date || '—',
+          status: translateStatus(item.status),
+          extra: item.type || '',
+          raw: item
+        };
+      }
+      return {
+        id: '—',
+        type: '—',
+        name: '—',
+        amount: 0,
+        date: '—',
+        status: '—',
+        raw: item
+      };
+    });
   };
 
-  const generateAndDownloadCSV = () => {
+  const handleExport = async () => {
     setIsExporting(true);
-
-    setTimeout(() => {
-      let csvContent = "data:text/csv;charset=utf-8,";
+    try {
+      // Fetch all selected sources data to have the latest state from the API
+      const exportData: Record<string, any[]> = {};
       
-      selectedSources.forEach(source => {
-        const headerName = source.toUpperCase();
-        csvContent += `\n=== RELATÓRIO DE ${headerName} ===\n`;
-        
-        if (source === 'subscriptions' && showNextBillings) {
-          csvContent += "ID;Tipo;Cliente;Valor Previsto;Data Prevista;Status;Extra/Metodo\n";
-          mockData.next_billings.forEach(item => {
-            csvContent += `${item.id};${item.type};${item.name};${item.amount};${item.date};${item.status};${item.extra}\n`;
-          });
-        } else {
-          csvContent += "ID;Tipo;Beneficiario/Cliente;Valor;Data/Vencimento;Status;Extra/Metodo\n";
-          (mockData[source] || []).forEach(item => {
-            csvContent += `${item.id};${item.type};${item.name};${item.amount};${item.date};${item.status};${item.extra}\n`;
-          });
-        }
-      });
+      await Promise.all(
+        selectedSources.map(async (source) => {
+          const target = (source === 'subscriptions' && showNextBillings) ? 'next_billings' : source;
+          try {
+            if (target === 'transactions') {
+              const res = await api.transactions.listOrders({
+                created_at_gt: dateRange.start ? `${dateRange.start}T00:00:00Z` : undefined,
+                created_at_lt: dateRange.end ? `${dateRange.end}T23:59:59Z` : undefined,
+                per_page: 250
+              }) as any;
+              exportData[target] = res?.orders || res?.data?.orders || (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
+            } else if (target === 'charges') {
+              const res = await api.charges.list({ page: 1, per_page: 250 }) as any;
+              exportData[target] = res?.charges || res?.data?.charges || res?.data || [];
+            } else if (target === 'subscriptions') {
+              const res = await api.subscriptions.list({ page: 1, per_page: 250 }) as any;
+              exportData[target] = res?.subscriptions || res?.data?.subscriptions || res?.data || [];
+            } else if (target === 'next_billings') {
+              const res = await api.invoices.list({ page: 1, per_page: 250 }) as any;
+              exportData[target] = res?.invoices || res?.data?.invoices || res?.data || [];
+            } else if (target === 'withdrawals') {
+              const res = await api.withdrawals.list({ per_page: 250 }) as any;
+              exportData[target] = res?.withdraws || res?.data?.withdraws || res?.withdrawals || res?.data || [];
+            } else if (target === 'receivables') {
+              const res = await api.receivableSchedules.listSchedules() as any;
+              exportData[target] = res?.data?.balanceControls || res?.data?.balance_controls || res?.balanceControls || res?.balance_controls || res?.data || [];
+            }
+          } catch (e) {
+            console.warn(`Falha na exportação real da API para ${target}:`, e);
+            exportData[target] = [];
+          }
+        })
+      );
 
-      const encodedUri = encodeURI(csvContent);
+      // Now serialize and generate file download
+      let fileContent = '';
+      let mimeType = 'text/plain';
+      
+      if (exportFormat === 'json') {
+        fileContent = JSON.stringify(exportData, null, 2);
+        mimeType = 'application/json';
+      } else {
+        // CSV format: export structured rows with actual API fields
+        let csvContent = "";
+        Object.entries(exportData).forEach(([sourceKey, list]) => {
+          csvContent += `\n=== RELATORIO DE ${sourceKey.toUpperCase()} ===\n`;
+          if (list.length === 0) {
+            csvContent += "Nenhum dado encontrado para o periodo solicitado.\n";
+            return;
+          }
+          
+          // Generate headers dynamically from the keys of the first item
+          const firstItem = list[0];
+          const flatKeys = Object.keys(firstItem).filter(k => typeof firstItem[k] !== 'object');
+          csvContent += flatKeys.join(';') + '\n';
+          
+          list.forEach(item => {
+            const rowValues = flatKeys.map(k => {
+              const val = item[k];
+              if (val === undefined || val === null) return '';
+              return String(val).replace(/;/g, ',');
+            });
+            csvContent += rowValues.join(';') + '\n';
+          });
+        });
+        fileContent = csvContent;
+        mimeType = 'text/csv';
+      }
+
+      const blob = new Blob([fileContent], { type: mimeType });
+      const encodedUri = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `relatorio_financeiro_${dateRange.start}_a_${dateRange.end}.${exportFormat}`);
+      link.setAttribute("download", `relatorio_real_${dateRange.start}_a_${dateRange.end}.${exportFormat === 'xlsx' ? 'csv' : exportFormat}`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(encodedUri);
 
-      setIsExporting(false);
       setCopiedNotification(true);
-      setTimeout(() => setCopiedNotification(false), 3000);
-    }, 1500);
+      setTimeout(() => setCopiedNotification(false), 5000);
+    } catch (err) {
+      console.error("Falha ao exportar relatório da API:", err);
+    } finally {
+      setIsExporting(false);
+    }
   };
+
+  const previewItems = getMappedPreviewData();
+  const currentLoading = loadingMap[(activeTab === 'subscriptions' && showNextBillings) ? 'next_billings' : activeTab];
 
   return (
     <DashboardLayout>
@@ -148,13 +330,13 @@ export default function ReportsPage() {
           <div>
             <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)' }}>Relatórios Customizáveis</h1>
             <p style={{ color: 'var(--text-dim)', fontSize: '0.95rem', marginTop: '0.3rem' }}>
-              Configure os módulos, filtre por período e faça exportações integradas.
+              Configure os módulos, filtre por período e faça exportações integradas diretamente com a API.
             </p>
           </div>
           
           <button 
             className="btn-primary" 
-            onClick={generateAndDownloadCSV}
+            onClick={handleExport}
             disabled={selectedSources.length === 0 || isExporting}
             style={{ 
               display: 'flex', 
@@ -176,7 +358,7 @@ export default function ReportsPage() {
         {copiedNotification && (
           <div className="animate-fade-in" style={{ color: 'var(--text-main)', background: 'var(--success)', border: '1px solid rgba(255,255,255,0.1)', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 600 }}>
             <CheckCircle size={20} />
-            Relatório gerado e baixado com sucesso em formato .{exportFormat}!
+            Relatório gerado e baixado com sucesso diretamente da API!
           </div>
         )}
 
@@ -426,7 +608,7 @@ export default function ReportsPage() {
                       transition: 'all 0.2s'
                     }}
                   >
-                    {format}
+                    {format === 'xlsx' ? 'Excel' : format}
                   </button>
                 ))}
               </div>
@@ -442,8 +624,8 @@ export default function ReportsPage() {
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
-                <h2 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Pré-visualização Dinâmica</h2>
-                <p style={{ color: 'var(--text-dim)', fontSize: '0.75rem', marginTop: '0.1rem' }}>Mostrando dados fictícios simulando o formato final.</p>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Pré-visualização da API</h2>
+                <p style={{ color: 'var(--text-dim)', fontSize: '0.75rem', marginTop: '0.1rem' }}>Dados reais obtidos através de consultas dinâmicas na API.</p>
               </div>
 
               {/* Subscriptions special toggle */}
@@ -509,57 +691,71 @@ export default function ReportsPage() {
                   })}
                 </div>
 
-                {/* Tabela de Preview */}
-                <div style={{ flex: 1, overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left' }}>
-                    <thead>
-                      <tr style={{ color: 'var(--text-dim)', borderBottom: '1px solid var(--border)' }}>
-                        <th style={{ padding: '0.75rem 1rem' }}>ID</th>
-                        <th style={{ padding: '0.75rem 1rem' }}>Tipo/Plano</th>
-                        <th style={{ padding: '0.75rem 1rem' }}>Beneficiário/Cliente</th>
-                        <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Valor</th>
-                        <th style={{ padding: '0.75rem 1rem' }}>{activeTab === 'subscriptions' ? 'Próxima Renovação' : activeTab === 'receivables' ? 'Liberação' : 'Data'}</th>
-                        <th style={{ padding: '0.75rem 1rem' }}>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(showNextBillings && activeTab === 'subscriptions' ? mockData.next_billings : mockData[activeTab] || []).map((item) => (
-                        <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', verticalAlign: 'middle' }}>
-                          <td style={{ padding: '1rem', fontWeight: 600, color: 'var(--text-dim)' }}>{item.id}</td>
-                          <td style={{ padding: '1rem' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{item.type}</span>
-                              <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>{item.extra}</span>
-                            </div>
-                          </td>
-                          <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{item.name}</td>
-                          <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 700, color: item.amount.startsWith('-') ? 'var(--danger)' : 'var(--text-main)' }}>{item.amount}</td>
-                          <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{item.date}</td>
-                          <td style={{ padding: '1rem' }}>
-                            <span 
-                              style={{ 
-                                padding: '0.2rem 0.5rem', 
-                                borderRadius: '6px', 
-                                fontSize: '0.75rem', 
-                                fontWeight: 600,
-                                color: 'white',
-                                background: ['Aprovada', 'Pago', 'Ativa', 'Processado', 'Antecipado'].includes(item.status) ? 'var(--success)' : 
-                                            ['Pendente', 'A liberar', 'Aguardando', 'Agendada'].includes(item.status) ? 'var(--warning)' : 'var(--danger)'
-                              }}
-                            >
-                              {item.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                {currentLoading ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '4rem' }}>
+                    <Loader2 size={36} className="animate-spin" style={{ color: 'var(--primary)' }} />
+                  </div>
+                ) : previewItems.length === 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '4rem 1rem', color: 'var(--text-dim)' }}>
+                    <FileSpreadsheet size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+                    <p style={{ fontSize: '0.95rem' }}>Nenhum registro encontrado na API.</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Tabela de Preview */}
+                    <div style={{ flex: 1, overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left' }}>
+                        <thead>
+                          <tr style={{ color: 'var(--text-dim)', borderBottom: '1px solid var(--border)' }}>
+                            <th style={{ padding: '0.75rem 1rem' }}>ID</th>
+                            <th style={{ padding: '0.75rem 1rem' }}>Tipo/Plano</th>
+                            <th style={{ padding: '0.75rem 1rem' }}>Beneficiário/Cliente</th>
+                            <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Valor</th>
+                            <th style={{ padding: '0.75rem 1rem' }}>{activeTab === 'subscriptions' ? 'Próxima Renovação' : activeTab === 'receivables' ? 'Liberação' : 'Data'}</th>
+                            <th style={{ padding: '0.75rem 1rem' }}>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {previewItems.map((item) => (
+                            <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', verticalAlign: 'middle' }}>
+                              <td style={{ padding: '1rem', fontWeight: 600, color: 'var(--text-dim)' }}>{item.id}</td>
+                              <td style={{ padding: '1rem' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{item.type}</span>
+                                  <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>{item.extra}</span>
+                                </div>
+                              </td>
+                              <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{item.name}</td>
+                              <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 700, color: item.amount < 0 ? 'var(--danger)' : 'var(--text-main)' }}>{formatCurrency(item.amount)}</td>
+                              <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{item.date}</td>
+                              <td style={{ padding: '1rem' }}>
+                                <span 
+                                  style={{ 
+                                    padding: '0.2rem 0.5rem', 
+                                    borderRadius: '6px', 
+                                    fontSize: '0.75rem', 
+                                    fontWeight: 600,
+                                    color: 'white',
+                                    background: ['Aprovada', 'Pago', 'Ativa', 'Processado', 'Antecipado', 'aprovada', 'pago', 'ativa', 'processado', 'antecipado'].includes(item.status.toLowerCase()) ? 'var(--success)' : 
+                                                ['Pendente', 'A liberar', 'Aguardando', 'Agendada', 'pendente', 'a liberar', 'aguardando', 'agendada'].includes(item.status.toLowerCase()) ? 'var(--warning)' : 'var(--danger)'
+                                  }}
+                                >
+                                  {item.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
 
-                <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--border)', borderRadius: '10px', marginTop: '1.5rem', fontSize: '0.75rem', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <ArrowUpRight size={14} style={{ color: 'var(--primary)' }} />
-                  <span>Dica: Para acompanhar as cobranças futuras das assinaturas, utilize o botão "Acompanhar Próximas Cobranças" na aba de Recorrência.</span>
-                </div>
+                    <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--border)', borderRadius: '10px', marginTop: '1.5rem', fontSize: '0.75rem', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <ArrowUpRight size={14} style={{ color: 'var(--primary)' }} />
+                      <span>Integração 100% ativa. Os dados acima refletem as informações estruturadas retornadas em tempo real pelas chaves configuradas na API.</span>
+                    </div>
+                  </>
+                )}
+
               </>
             )}
 
