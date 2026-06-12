@@ -21,7 +21,7 @@ import { Pagination } from '@/components/ui/Pagination';
 
 export default function StatementsPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [timeRange, setTimeRange] = useState('Últimos 7 dias');
+  const [timeRange, setTimeRange] = useState('Todos');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [isTimeMenuOpen, setIsTimeMenuOpen] = useState(false);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
@@ -30,19 +30,23 @@ export default function StatementsPage() {
   
   const [statementsData, setStatementsData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(50);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const perPage = 10;
 
-  const timeOptions = ['Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Esse mês', 'Personalizado'];
+  const timeOptions = ['Todos', 'Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Esse mês', 'Personalizado'];
   const statusOptions = ['Todos', 'entrada', 'saída'];
 
   useEffect(() => {
     import('@/services/api/client').then(({ fetchApi }) => {
       setIsLoading(true);
-      fetchApi('/account_statements')
+      const qs = new URLSearchParams({ page: String(currentPage), per_page: String(perPage) }).toString();
+      fetchApi(`/account_statements?${qs}`)
         .then((res: any) => {
           const items = res?.account_statements || res?.data?.account_statements || (Array.isArray(res) ? res : []);
           setStatementsData(items);
+          const meta = res?.meta || res?.data?.meta;
+          setTotalCount(meta?.total_count ?? meta?.totalCount ?? items.length);
         })
         .catch(err => {
           console.error("[Statements] Erro ao buscar extrato:", err);
@@ -51,11 +55,7 @@ export default function StatementsPage() {
           setIsLoading(false);
         });
     });
-  }, []);
-
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery, timeRange, statusFilter]);
+  }, [currentPage]);
 
   // Lógica de filtragem
   const filteredData = useMemo(() => {
@@ -100,14 +100,6 @@ export default function StatementsPage() {
     });
   }, [statementsData, searchQuery, timeRange, statusFilter]);
 
-  const paginatedData = useMemo(() => {
-    const start = (page - 1) * perPage;
-    return filteredData.slice(start, start + perPage);
-  }, [filteredData, page, perPage]);
-
-  const hasMore = filteredData.length > page * perPage;
-  const totalPages = Math.ceil(filteredData.length / perPage) || 1;
-
   // Cálculos de métricas baseados nos dados filtrados
   const metrics = useMemo(() => {
     const inflows = filteredData
@@ -121,6 +113,9 @@ export default function StatementsPage() {
 
     return { inflows, outflows, balance: lastBalance };
   }, [filteredData]);
+
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, timeRange, statusFilter]);
+
 
   const formatCurrency = (val: number) => {
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -300,9 +295,9 @@ export default function StatementsPage() {
             )}
           </div>
 
-          {(statusFilter !== 'Todos' || searchQuery !== '' || timeRange !== 'Últimos 7 dias') && (
-            <button 
-              onClick={() => { setStatusFilter('Todos'); setSearchQuery(''); setTimeRange('Últimos 7 dias'); }}
+          {(statusFilter !== 'Todos' || searchQuery !== '' || timeRange !== 'Todos') && (
+            <button
+              onClick={() => { setStatusFilter('Todos'); setSearchQuery(''); setTimeRange('Todos'); }}
               style={{ padding: '0.5rem', color: 'var(--danger)', opacity: 0.8, cursor: 'pointer', background: 'transparent', border: 'none' }}
               title="Limpar filtros"
             >
@@ -330,7 +325,7 @@ export default function StatementsPage() {
                     Carregando extrato...
                   </td>
                 </tr>
-              ) : paginatedData.length > 0 ? paginatedData.map((item) => {
+              ) : filteredData.length > 0 ? filteredData.map((item) => {
                 const isInput = item.transaction_type === 'INPUT';
                 return (
                   <tr key={item.id || Math.random()}>
@@ -370,32 +365,7 @@ export default function StatementsPage() {
               )}
             </tbody>
           </table>
-        </div>
-
-        {/* Paginação */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginRight: '1rem' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Itens por página:</span>
-            <select 
-              value={perPage} 
-              onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}
-              style={{
-                background: 'rgba(0,0,0,0.2)',
-                border: '1px solid var(--border)',
-                borderRadius: '6px',
-                padding: '0.25rem 0.5rem',
-                fontSize: '0.8rem',
-                color: 'var(--text-main)',
-                outline: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              {[10, 20, 30, 50, 100].map(val => (
-                <option key={val} value={val} style={{ background: 'var(--surface)', color: 'white' }}>{val}</option>
-              ))}
-            </select>
-          </div>
-          <Pagination currentPage={page} totalItems={filteredData.length} perPage={perPage} onPageChange={setPage} />
+          <Pagination currentPage={currentPage} totalItems={totalCount} perPage={perPage} onPageChange={setCurrentPage} />
         </div>
       </div>
 
