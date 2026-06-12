@@ -17,6 +17,7 @@ import {
   Eye
 } from 'lucide-react';
 import { translateStatus, translateMethod, getStatusPillClass, formatCurrency as fmtBrl } from '@/utils/formatters';
+import { Pagination } from '@/components/ui/Pagination';
 
 interface SalesListProps {
   title: string;
@@ -404,55 +405,7 @@ export function SalesList({ title, description, statuses, apiStatuses, viewType 
               ))}
             </select>
           </div>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginRight: '0.5rem' }}>
-            Página <strong>{page}</strong> de <strong>{totalPages}</strong>
-          </span>
-          <div style={{ display: 'flex', gap: '0.25rem' }}>
-            <button 
-              disabled={page === 1 || isLoading} 
-              onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-              style={{ 
-                opacity: page === 1 ? 0.3 : 1, 
-                cursor: page === 1 ? 'not-allowed' : 'pointer', 
-                background: 'rgba(255,255,255,0.02)', 
-                padding: '0.35rem 0.6rem', 
-                borderRadius: '6px', 
-                border: '1px solid var(--border)', 
-                fontSize: '0.8rem', 
-                color: 'var(--text-main)', 
-                display: 'flex', 
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: '28px',
-                height: '28px',
-                transition: 'all 0.2s'
-              }}
-            >
-              &lt;
-            </button>
-            <button 
-              disabled={page >= totalPages || isLoading} 
-              onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-              style={{ 
-                opacity: page >= totalPages ? 0.3 : 1, 
-                cursor: page >= totalPages ? 'not-allowed' : 'pointer', 
-                background: 'rgba(255,255,255,0.02)', 
-                padding: '0.35rem 0.6rem', 
-                borderRadius: '6px', 
-                border: '1px solid var(--border)', 
-                fontSize: '0.8rem', 
-                color: 'var(--text-main)', 
-                display: 'flex', 
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: '28px',
-                height: '28px',
-                transition: 'all 0.2s'
-              }}
-            >
-              &gt;
-            </button>
-          </div>
+          <Pagination currentPage={page} totalItems={filteredData.length} perPage={perPage} onPageChange={setPage} />
         </div>
       </div>
 

@@ -4,10 +4,12 @@ export const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 };
 
-export const translateStatus = (status: string) => {
-  const s = status?.toLowerCase();
+export const translateStatus = (status: any) => {
+  const raw = typeof status === 'string' ? status : (status?.code || status?.name || status?.label || '');
+  const s = String(raw).toLowerCase();
   switch (s) {
     case 'processed':
+    case 'processado':
       return 'Pagamento Processado';
     case 'approved':
     case 'paid':
@@ -50,7 +52,7 @@ export const translateStatus = (status: string) => {
     case 'reprovado':
       return 'Reprovado';
     default:
-      return status || 'N/A';
+      return String(raw || status || 'N/A');
   }
 };
 
@@ -63,10 +65,11 @@ export const translateMethod = (method: string) => {
   return method || 'N/A';
 };
 
-export const getStatusPillClass = (status: string) => {
-  const s = status?.toLowerCase();
+export const getStatusPillClass = (status: any) => {
+  const raw = typeof status === 'string' ? status : (status?.code || status?.name || status?.label || '');
+  const s = String(raw).toLowerCase();
   // Verde: aprovada
-  if (['approved', 'paid', 'aprovada', 'pago', 'active', 'confirmed', 'concluido', 'concluído', 'processed'].includes(s)) return 'aprovada';
+  if (['approved', 'paid', 'aprovada', 'pago', 'active', 'confirmed', 'concluido', 'concluído', 'processed', 'processado'].includes(s)) return 'aprovada';
   
   // Vermelho: recusada (para cancelados, estornados, negados e chargebacks)
   if (['canceled', 'cancelado', 'cancelled', 'not_paid', 'refunded', 'estornado', 'reembolsado', 'expired', 'expirado', 'suspended', 'denied', 'negado', 'reprovado', 'chargeback', 'in_chargeback'].includes(s)) return 'recusada';

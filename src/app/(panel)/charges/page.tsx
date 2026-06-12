@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Search, Plus, X, Receipt, Trash2, ShoppingCart, DollarSign, FileText, Link as LinkIcon, RefreshCcw, Tag, AlertTriangle, CheckCircle, Clock, User } from 'lucide-react';
 import { chargesService, plansService, subscriptionsService, ApiCharge, ApiSubscription, ApiPlan, CreateChargePayload, CreatePlanPayload, frequencyToPeriodicity, periodicityLabel } from '@/services/api/charges';
 import { translateStatus, getStatusPillClass, formatCurrency } from '@/utils/formatters';
+import { Pagination } from '@/components/ui/Pagination';
 
 type TabType = 'avulsa' | 'recorrente';
 
@@ -393,55 +394,7 @@ export default function ChargesPage() {
               ))}
             </select>
           </div>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginRight: '0.5rem' }}>
-            Página <strong>{page}</strong> de <strong>{totalPages}</strong>
-          </span>
-          <div style={{ display: 'flex', gap: '0.25rem' }}>
-            <button 
-              disabled={page === 1 || isLoading} 
-              onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-              style={{ 
-                opacity: page === 1 ? 0.3 : 1, 
-                cursor: page === 1 ? 'not-allowed' : 'pointer', 
-                background: 'rgba(255,255,255,0.02)', 
-                padding: '0.35rem 0.6rem', 
-                borderRadius: '6px', 
-                border: '1px solid var(--border)', 
-                fontSize: '0.8rem', 
-                color: 'var(--text-main)', 
-                display: 'flex', 
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: '28px',
-                height: '28px',
-                transition: 'all 0.2s'
-              }}
-            >
-              &lt;
-            </button>
-            <button 
-              disabled={page >= totalPages || isLoading} 
-              onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-              style={{ 
-                opacity: page >= totalPages ? 0.3 : 1, 
-                cursor: page >= totalPages ? 'not-allowed' : 'pointer', 
-                background: 'rgba(255,255,255,0.02)', 
-                padding: '0.35rem 0.6rem', 
-                borderRadius: '6px', 
-                border: '1px solid var(--border)', 
-                fontSize: '0.8rem', 
-                color: 'var(--text-main)', 
-                display: 'flex', 
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: '28px',
-                height: '28px',
-                transition: 'all 0.2s'
-              }}
-            >
-              &gt;
-            </button>
-          </div>
+          <Pagination currentPage={page} totalItems={filtered.length} perPage={perPage} onPageChange={setPage} />
         </div>
 
         {/* Create Modal */}
