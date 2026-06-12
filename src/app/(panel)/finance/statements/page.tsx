@@ -37,6 +37,45 @@ export default function StatementsPage() {
   const timeOptions = ['Todos', 'Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Esse mês', 'Personalizado'];
   const statusOptions = ['Todos', 'entrada', 'saída'];
 
+  const getSpecificTypeDetails = (item: any) => {
+    const isInput = item.transaction_type === 'INPUT';
+    const op = String(item.operation || item.type || item.description || '').toLowerCase();
+    
+    if (op.includes('withdraw') || op.includes('saque')) {
+      return {
+        label: 'Saque',
+        iconColor: 'var(--warning)',
+        bgColor: 'rgba(245, 158, 11, 0.1)',
+      };
+    }
+    if (op.includes('refund') || op.includes('reembolso') || op.includes('estorno')) {
+      return {
+        label: 'Estorno',
+        iconColor: 'var(--danger)',
+        bgColor: 'rgba(239, 68, 68, 0.1)',
+      };
+    }
+    if (op.includes('chargeback')) {
+      return {
+        label: 'Chargeback',
+        iconColor: 'var(--danger)',
+        bgColor: 'rgba(220, 38, 38, 0.1)',
+      };
+    }
+    if (op.includes('sale') || op.includes('venda') || item.order_id) {
+      return {
+        label: 'Venda',
+        iconColor: 'var(--success)',
+        bgColor: 'rgba(16, 185, 129, 0.1)',
+      };
+    }
+    return {
+      label: isInput ? 'Entrada' : 'Saída',
+      iconColor: isInput ? 'var(--success)' : 'var(--danger)',
+      bgColor: isInput ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+    };
+  };
+
   useEffect(() => {
     import('@/services/api/client').then(({ fetchApi }) => {
       setIsLoading(true);
@@ -327,6 +366,7 @@ export default function StatementsPage() {
                 </tr>
               ) : filteredData.length > 0 ? filteredData.map((item) => {
                 const isInput = item.transaction_type === 'INPUT';
+                const typeDetails = getSpecificTypeDetails(item);
                 return (
                   <tr key={item.id || Math.random()}>
                     <td>
@@ -335,19 +375,19 @@ export default function StatementsPage() {
                           width: '32px',
                           height: '32px',
                           borderRadius: '8px',
-                          background: isInput ? 'rgba(49, 120, 44, 0.1)' : 'rgba(203, 86, 86, 0.1)',
+                          background: typeDetails.bgColor,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: isInput ? 'var(--success)' : 'var(--danger)'
+                          color: typeDetails.iconColor
                         }}>
                           {isInput ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}
                         </div>
-                        <span style={{ fontWeight: 500 }}>{isInput ? 'Entrada' : 'Saída'}</span>
+                        <span style={{ fontWeight: 500 }}>{typeDetails.label}</span>
                       </div>
                     </td>
                     <td className="text-muted">{new Date(item.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-                    <td>{item.order_id || item.id}</td>
+                    <td>{item.description || item.product || item.items?.[0]?.name || item.order_id || item.id || 'Movimentação'}</td>
                     <td style={{ fontWeight: 600, color: isInput ? 'var(--success)' : 'var(--danger)' }}>
                       {isInput ? '+ ' : '- '}{formatCurrency(parseFloat(item.amount || 0))}
                     </td>
