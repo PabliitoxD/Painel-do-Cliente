@@ -1,4 +1,4 @@
-import { LayoutDashboard, RefreshCcw, Users, HelpCircle, Receipt } from 'lucide-react';
+import { LayoutDashboard, RefreshCcw, Users, HelpCircle, Receipt, BarChart3 } from 'lucide-react';
 import { NavItem } from './types';
 
 import { financeMenu } from './finance';
@@ -12,6 +12,7 @@ export const NAV_ITEMS: NavItem[] = [
   salesMenu,
   { label: 'Recorrência', href: '/recurring', icon: RefreshCcw },
   { label: 'Cobranças', href: '/charges', icon: Receipt },
+  { label: 'Relatórios', href: '/reports', icon: BarChart3 },
   // { label: 'Recebedores', href: '/receivers', icon: Users },
   // teamMenu,
   settingsMenu,
