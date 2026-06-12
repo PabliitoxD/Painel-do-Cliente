@@ -21,14 +21,16 @@ import {
   ChevronUp,
   Loader2,
   Split,
+  X,
 } from 'lucide-react';
 import { translateStatus, translateMethod, getStatusPillClass, formatCurrency } from '@/utils/formatters';
 
 interface TransactionDetailsProps {
   orderId: string;
+  onClose?: () => void;
 }
 
-export function TransactionDetails({ orderId }: TransactionDetailsProps) {
+export function TransactionDetails({ orderId, onClose }: TransactionDetailsProps) {
   const router = useRouter();
   const [order, setOrder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -122,7 +124,11 @@ export function TransactionDetails({ orderId }: TransactionDetailsProps) {
   };
 
   if (isLoading) {
-    return (
+    return onClose ? (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+        <Loader2 size={32} className="animate-spin" style={{ color: 'var(--primary)' }} />
+      </div>
+    ) : (
       <DashboardLayout>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
           <Loader2 size={32} className="animate-spin" style={{ color: 'var(--primary)' }} />
@@ -132,7 +138,12 @@ export function TransactionDetails({ orderId }: TransactionDetailsProps) {
   }
 
   if (!order) {
-    return (
+    return onClose ? (
+      <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-dim)' }}>
+        <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem' }}>Transação não encontrada.</p>
+        <button className="btn-primary" onClick={onClose}>Fechar</button>
+      </div>
+    ) : (
       <DashboardLayout>
         <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-dim)' }}>
           <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem' }}>Transação não encontrada.</p>
@@ -146,20 +157,19 @@ export function TransactionDetails({ orderId }: TransactionDetailsProps) {
   const methodRaw = paymentPaid?.paymentMethod?.method || order?.payments?.[0]?.paymentMethod?.method || order?.payment_method || order?.method || '';
   const isCard = methodRaw.toLowerCase().includes('credit') || methodRaw.toLowerCase().includes('cart');
 
-  return (
-    <DashboardLayout>
-      <div className="animate-fade-in">
+  const renderContent = () => (
+    <div className="animate-fade-in" style={{ padding: onClose ? '0.5rem' : 0 }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
           <button
-            onClick={() => router.back()}
+            onClick={() => onClose ? onClose() : router.back()}
             style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-main)', transition: 'all 0.2s' }}
           >
-            <ArrowLeft size={20} />
+            {onClose ? <X size={20} /> : <ArrowLeft size={20} />}
           </button>
           <div>
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 700 }}>Detalhes da Transação</h1>
+            <h1 style={{ fontSize: '1.6rem', fontWeight: 700 }}>{onClose ? 'Detalhes da Venda' : 'Detalhes da Transação'}</h1>
             <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>
               Token: {order.token || orderId}
             </p>
@@ -459,9 +469,6 @@ export function TransactionDetails({ orderId }: TransactionDetailsProps) {
             </div>
           </div>
         )}
-
-      </div>
-
       <style jsx>{`
         @media (max-width: 992px) {
           .stats-grid {
@@ -474,8 +481,10 @@ export function TransactionDetails({ orderId }: TransactionDetailsProps) {
           }
         }
       `}</style>
-    </DashboardLayout>
+    </div>
   );
+
+  return onClose ? renderContent() : <DashboardLayout>{renderContent()}</DashboardLayout>;
 }
 
 /* Componente auxiliar de Info Row */
